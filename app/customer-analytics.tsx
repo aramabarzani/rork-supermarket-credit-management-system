@@ -152,41 +152,74 @@ const CustomerAnalyticsScreen = () => {
             ({bestPayingQuery.data?.count || 0})
           </KurdishText>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#8b5cf6' }]}
+          onPress={() => setSelectedTab('yearly')}
+        >
+          <Calendar size={20} color="white" />
+          <KurdishText style={styles.actionText}>زۆرترین قەرز ساڵانە</KurdishText>
+          <KurdishText style={styles.actionCount}>
+            ({yearlyQuery.data?.count || 0})
+          </KurdishText>
+        </TouchableOpacity>
       </View>
     </View>
   );
 
-  const renderCustomerList = (customers: any[], title: string, showDebt = true, showPaid = false) => (
+  const renderCustomerList = (customers: any[], title: string, showDebt = true, showPaid = false, showCreatedDate = false) => (
     <View style={styles.listContainer}>
       <KurdishText style={styles.listTitle}>{title}</KurdishText>
-      {customers.map((customer, index) => (
-        <View key={customer.id} style={styles.customerCard}>
-          <View style={styles.customerInfo}>
-            <KurdishText style={styles.customerName}>{customer.name}</KurdishText>
-            <KurdishText style={styles.customerPhone}>{customer.phone}</KurdishText>
-            <KurdishText style={styles.customerGroup}>گروپ: {customer.group}</KurdishText>
-          </View>
-          <View style={styles.customerStats}>
-            {showDebt && (
-              <KurdishText style={styles.debtAmount}>
-                قەرز: {formatCurrency(customer.totalDebt - customer.totalPaid)}
-              </KurdishText>
-            )}
-            {showPaid && (
-              <KurdishText style={styles.paidAmount}>
-                پارەدان: {formatCurrency(customer.totalPaid)}
-              </KurdishText>
-            )}
-            <View style={[styles.statusBadge, { 
-              backgroundColor: customer.status === 'active' ? '#4caf50' : '#f44336' 
-            }]}>
-              <KurdishText style={styles.statusText}>
-                {customer.status === 'active' ? 'چالاک' : 'بێکار'}
-              </KurdishText>
+      <KurdishText style={styles.listSubtitle}>
+        کۆی کڕیاران: {customers.length}
+      </KurdishText>
+      {customers.length === 0 ? (
+        <View style={styles.emptyState}>
+          <KurdishText style={styles.emptyText}>هیچ کڕیارێک نەدۆزرایەوە</KurdishText>
+        </View>
+      ) : (
+        customers.map((customer, index) => (
+          <View key={customer.id} style={styles.customerCard}>
+            <View style={styles.customerInfo}>
+              <KurdishText style={styles.customerName}>{customer.name}</KurdishText>
+              <KurdishText style={styles.customerPhone}>{customer.phone}</KurdishText>
+              <KurdishText style={styles.customerGroup}>گروپ: {customer.group}</KurdishText>
+              {showCreatedDate && (
+                <KurdishText style={styles.customerDate}>
+                  بەرواری دروستکردن: {new Date(customer.createdAt).toLocaleDateString('ku')}
+                </KurdishText>
+              )}
+              {customer.lastPaymentDate && (
+                <KurdishText style={styles.customerDate}>
+                  دوایین پارەدان: {new Date(customer.lastPaymentDate).toLocaleDateString('ku')}
+                </KurdishText>
+              )}
+            </View>
+            <View style={styles.customerStats}>
+              {showDebt && (
+                <KurdishText style={styles.debtAmount}>
+                  قەرز: {formatCurrency(customer.totalDebt - customer.totalPaid)}
+                </KurdishText>
+              )}
+              {showPaid && (
+                <KurdishText style={styles.paidAmount}>
+                  پارەدان: {formatCurrency(customer.totalPaid)}
+                </KurdishText>
+              )}
+              <View style={styles.ratingContainer}>
+                <KurdishText style={styles.ratingText}>پلەبەندی: {customer.rating}/5</KurdishText>
+              </View>
+              <View style={[styles.statusBadge, { 
+                backgroundColor: customer.status === 'active' ? '#4caf50' : '#f44336' 
+              }]}>
+                <KurdishText style={styles.statusText}>
+                  {customer.status === 'active' ? 'چالاک' : 'بێکار'}
+                </KurdishText>
+              </View>
             </View>
           </View>
-        </View>
-      ))}
+        ))
+      )}
     </View>
   );
 
@@ -195,31 +228,102 @@ const CustomerAnalyticsScreen = () => {
       case 'overview':
         return renderOverview();
       case 'inactive':
-        return renderCustomerList(
-          inactiveQuery.data?.customers || [], 
-          'کڕیارانی بێکار'
+        return (
+          <View>
+            {renderCustomerList(
+              inactiveQuery.data?.customers || [], 
+              'کڕیارانی بێکار (Inactive)',
+              true,
+              false,
+              false
+            )}
+            <View style={styles.summaryCard}>
+              <KurdishText style={styles.summaryTitle}>کورتەی گشتی</KurdishText>
+              <KurdishText style={styles.summaryText}>
+                کۆی قەرز: {formatCurrency(inactiveQuery.data?.totalDebt || 0)}
+              </KurdishText>
+              <KurdishText style={styles.summaryDescription}>
+                ئەم کڕیارانە بەرەوپێش پارەدان یان قەرزیان نیە لە ماوەی ٣ مانگی ڕابردوودا
+              </KurdishText>
+            </View>
+          </View>
         );
       case 'new':
-        return renderCustomerList(
-          newCustomersQuery.data?.customers || [], 
-          'کڕیارانی نوێی ئەم مانگە'
+        return (
+          <View>
+            {renderCustomerList(
+              newCustomersQuery.data?.customers || [], 
+              'کڕیارانی نوێی ئەم مانگە',
+              true,
+              false,
+              true
+            )}
+            <View style={styles.summaryCard}>
+              <KurdishText style={styles.summaryTitle}>کورتەی گشتی</KurdishText>
+              <KurdishText style={styles.summaryText}>
+                کۆی قەرز: {formatCurrency(newCustomersQuery.data?.totalDebt || 0)}
+              </KurdishText>
+              <KurdishText style={styles.summaryDescription}>
+                کڕیارانی نوێ کە لە مانگی ئێستادا زیادکراون
+              </KurdishText>
+            </View>
+          </View>
         );
       case 'highDebt':
-        return renderCustomerList(
-          highDebtQuery.data?.customers || [], 
-          'کڕیارانی زۆر قەرزدار لە ئەم مانگە'
+        return (
+          <View>
+            {renderCustomerList(
+              highDebtQuery.data?.customers || [], 
+              'کڕیارانی زۆر قەرزدار لە ئەم مانگە'
+            )}
+            <View style={styles.summaryCard}>
+              <KurdishText style={styles.summaryTitle}>کورتەی گشتی</KurdishText>
+              <KurdishText style={styles.summaryText}>
+                کۆی قەرز: {formatCurrency(highDebtQuery.data?.totalDebt || 0)}
+              </KurdishText>
+              <KurdishText style={styles.summaryDescription}>
+                کڕیارانی زۆر قەرزدار کە قەرزیان لە ١٠٠,٠٠٠ د.ع زیاترە لە مانگی ئێستادا
+              </KurdishText>
+            </View>
+          </View>
         );
       case 'bestPaying':
-        return renderCustomerList(
-          bestPayingQuery.data?.customers || [], 
-          'کڕیارانی باشترین پارەدان لە ئەم مانگە',
-          false,
-          true
+        return (
+          <View>
+            {renderCustomerList(
+              bestPayingQuery.data?.customers || [], 
+              'کڕیارانی باشترین پارەدان لە ئەم مانگە',
+              false,
+              true
+            )}
+            <View style={styles.summaryCard}>
+              <KurdishText style={styles.summaryTitle}>کورتەی گشتی</KurdishText>
+              <KurdishText style={styles.summaryText}>
+                کۆی پارەدان: {formatCurrency(bestPayingQuery.data?.totalPaid || 0)}
+              </KurdishText>
+              <KurdishText style={styles.summaryDescription}>
+                کڕیارانی باشترین پارەدان لە مانگی ئێستادا
+              </KurdishText>
+            </View>
+          </View>
         );
       case 'yearly':
-        return renderCustomerList(
-          yearlyQuery.data?.customers || [], 
-          'کڕیارانی زۆرترین قەرز بە ساڵانە'
+        return (
+          <View>
+            {renderCustomerList(
+              yearlyQuery.data?.customers || [], 
+              'کڕیارانی زۆرترین قەرز بە ساڵانە'
+            )}
+            <View style={styles.summaryCard}>
+              <KurdishText style={styles.summaryTitle}>کورتەی گشتی - ساڵی ٢٠٢٤</KurdishText>
+              <KurdishText style={styles.summaryText}>
+                کۆی قەرز: {formatCurrency(yearlyQuery.data?.totalDebt || 0)}
+              </KurdishText>
+              <KurdishText style={styles.summaryDescription}>
+                کڕیارانی زۆر قەرزدار بە ڕیزبەندی ساڵانە
+              </KurdishText>
+            </View>
+          </View>
         );
       default:
         return renderOverview();
@@ -435,6 +539,63 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'white',
     fontWeight: '500',
+  },
+  listSubtitle: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 16,
+    fontWeight: '500',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  customerDate: {
+    fontSize: 12,
+    color: '#64748b',
+    marginTop: 2,
+  },
+  ratingContainer: {
+    marginBottom: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    color: '#f59e0b',
+    fontWeight: '500',
+  },
+  summaryCard: {
+    backgroundColor: 'white',
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 8,
+  },
+  summaryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6366f1',
+    marginBottom: 8,
+  },
+  summaryDescription: {
+    fontSize: 12,
+    color: '#64748b',
+    lineHeight: 18,
   },
 });
 
