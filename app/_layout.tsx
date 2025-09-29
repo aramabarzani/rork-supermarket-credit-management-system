@@ -3,6 +3,8 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Platform, View, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { trpc, trpcClient } from "@/lib/trpc";
 import { AuthProvider } from "@/hooks/auth-context";
 import { DebtProvider } from "@/hooks/debt-context";
 import { UsersProvider } from "@/hooks/users-context";
@@ -163,6 +165,9 @@ const styles = StyleSheet.create({
   },
 });
 
+// Create a single QueryClient instance
+const queryClient = new QueryClient();
+
 export default function RootLayout() {
   const [isHydrated, setIsHydrated] = useState(Platform.OS !== 'web');
 
@@ -207,22 +212,26 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={styles.container}>
-        <SettingsProvider>
-          <AuthProvider>
-            <SecurityProvider>
-              <DebtProvider>
-                <ReceiptProvider>
-                  <UsersProvider>
-                    <NotificationProvider>
-                      <RootLayoutNav />
-                      <SessionTimeoutWarning />
-                    </NotificationProvider>
-                  </UsersProvider>
-                </ReceiptProvider>
-              </DebtProvider>
-            </SecurityProvider>
-          </AuthProvider>
-        </SettingsProvider>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <QueryClientProvider client={queryClient}>
+            <SettingsProvider>
+              <AuthProvider>
+                <SecurityProvider>
+                  <DebtProvider>
+                    <ReceiptProvider>
+                      <UsersProvider>
+                        <NotificationProvider>
+                          <RootLayoutNav />
+                          <SessionTimeoutWarning />
+                        </NotificationProvider>
+                      </UsersProvider>
+                    </ReceiptProvider>
+                  </DebtProvider>
+                </SecurityProvider>
+              </AuthProvider>
+            </SettingsProvider>
+          </QueryClientProvider>
+        </trpc.Provider>
       </GestureHandlerRootView>
     </ErrorBoundary>
   );
