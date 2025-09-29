@@ -142,8 +142,8 @@ export default function DetailedFinancialReports() {
     if (Platform.OS === 'web') {
       console.log('Export detailed report');
     } else {
-      const { Alert } = require('react-native');
-      Alert.alert('تصدير', 'سيتم تصدير التقرير المفصل');
+      const { Alert: RNAlert } = require('react-native');
+      RNAlert.alert('تصدير', 'سيتم تصدير التقرير المفصل');
     }
   };
 
