@@ -6,6 +6,9 @@ import {
   getHighDebtCustomersThisMonthRoute,
   getBestPayingCustomersThisMonthRoute,
   getHighestDebtCustomersYearlyRoute,
+  getBestPayingCustomersYearlyRoute,
+  getCustomersByGroupRoute,
+  getCustomerActivityLogRoute,
   getCustomerStatsRoute
 } from "./routes/customers/analytics/route";
 
@@ -20,6 +23,9 @@ export const appRouter = createTRPCRouter({
       getHighDebtThisMonth: getHighDebtCustomersThisMonthRoute,
       getBestPayingThisMonth: getBestPayingCustomersThisMonthRoute,
       getHighestDebtYearly: getHighestDebtCustomersYearlyRoute,
+      getBestPayingYearly: getBestPayingCustomersYearlyRoute,
+      getByGroup: getCustomersByGroupRoute,
+      getActivityLog: getCustomerActivityLogRoute,
       getStats: getCustomerStatsRoute,
     }),
   }),

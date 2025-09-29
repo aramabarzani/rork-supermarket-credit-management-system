@@ -26,7 +26,7 @@ import { GradientCard } from '@/components/GradientCard';
 
 const CustomerAnalyticsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<'overview' | 'inactive' | 'new' | 'highDebt' | 'bestPaying' | 'yearly'>('overview');
+  const [selectedTab, setSelectedTab] = useState<'overview' | 'inactive' | 'new' | 'highDebt' | 'bestPaying' | 'yearly' | 'bestPayingYearly' | 'groups' | 'activity'>('overview');
 
   // Queries
   const statsQuery = trpc.customers.analytics.getStats.useQuery();
@@ -35,6 +35,9 @@ const CustomerAnalyticsScreen = () => {
   const highDebtQuery = trpc.customers.analytics.getHighDebtThisMonth.useQuery({ minDebt: 100000 });
   const bestPayingQuery = trpc.customers.analytics.getBestPayingThisMonth.useQuery();
   const yearlyQuery = trpc.customers.analytics.getHighestDebtYearly.useQuery({ year: 2024 });
+  const bestPayingYearlyQuery = trpc.customers.analytics.getBestPayingYearly.useQuery({ year: 2024 });
+  const groupsQuery = trpc.customers.analytics.getByGroup.useQuery();
+  const activityQuery = trpc.customers.analytics.getActivityLog.useQuery({ limit: 20 });
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -46,6 +49,9 @@ const CustomerAnalyticsScreen = () => {
         highDebtQuery.refetch(),
         bestPayingQuery.refetch(),
         yearlyQuery.refetch(),
+        bestPayingYearlyQuery.refetch(),
+        groupsQuery.refetch(),
+        activityQuery.refetch(),
       ]);
     } catch {
       if (Platform.OS !== 'web') {
@@ -163,6 +169,28 @@ const CustomerAnalyticsScreen = () => {
             ({yearlyQuery.data?.count || 0})
           </KurdishText>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#10b981' }]}
+          onPress={() => setSelectedTab('bestPayingYearly')}
+        >
+          <Award size={20} color="white" />
+          <KurdishText style={styles.actionText}>باشترین پارەدان ساڵانە</KurdishText>
+          <KurdishText style={styles.actionCount}>
+            ({bestPayingYearlyQuery.data?.count || 0})
+          </KurdishText>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#f59e0b' }]}
+          onPress={() => setSelectedTab('groups')}
+        >
+          <Users size={20} color="white" />
+          <KurdishText style={styles.actionText}>کڕیاران بە گرووپ</KurdishText>
+          <KurdishText style={styles.actionCount}>
+            ({groupsQuery.data?.totalGroups || 0})
+          </KurdishText>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -222,6 +250,144 @@ const CustomerAnalyticsScreen = () => {
       )}
     </View>
   );
+
+  const renderGroupsView = () => (
+    <View style={styles.listContainer}>
+      <KurdishText style={styles.listTitle}>کڕیاران بە گرووپ</KurdishText>
+      <KurdishText style={styles.listSubtitle}>
+        کۆی گرووپەکان: {groupsQuery.data?.totalGroups || 0}
+      </KurdishText>
+      {groupsQuery.data?.groups.map((group, index) => (
+        <View key={index} style={styles.groupCard}>
+          <View style={styles.groupHeader}>
+            <KurdishText style={styles.groupName}>{group.groupName}</KurdishText>
+            <View style={styles.groupStats}>
+              <KurdishText style={styles.groupCount}>{group.count} کڕیار</KurdishText>
+              <KurdishText style={styles.groupRating}>
+                پلەبەندی ناوەند: {group.averageRating.toFixed(1)}/5
+              </KurdishText>
+            </View>
+          </View>
+          <View style={styles.groupSummary}>
+            <KurdishText style={styles.groupDebt}>
+              کۆی قەرز: {formatCurrency(group.totalDebt)}
+            </KurdishText>
+            <KurdishText style={styles.groupPaid}>
+              کۆی پارەدان: {formatCurrency(group.totalPaid)}
+            </KurdishText>
+          </View>
+          <View style={styles.groupCustomers}>
+            {group.customers.slice(0, 3).map((customer) => (
+              <View key={customer.id} style={styles.miniCustomerCard}>
+                <KurdishText style={styles.miniCustomerName}>{customer.name}</KurdishText>
+                <KurdishText style={styles.miniCustomerPhone}>{customer.phone}</KurdishText>
+              </View>
+            ))}
+            {group.customers.length > 3 && (
+              <KurdishText style={styles.moreCustomers}>
+                +{group.customers.length - 3} کڕیاری تر
+              </KurdishText>
+            )}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+
+  const renderActivityView = () => (
+    <View style={styles.listContainer}>
+      <KurdishText style={styles.listTitle}>تۆماری چالاکی کڕیاران</KurdishText>
+      <KurdishText style={styles.listSubtitle}>
+        کۆی چالاکیەکان: {activityQuery.data?.totalCount || 0}
+      </KurdishText>
+      
+      {/* Activity Summary */}
+      <View style={styles.activitySummary}>
+        <View style={styles.activityStat}>
+          <KurdishText style={styles.activityStatNumber}>
+            {formatCurrency(activityQuery.data?.summary.totalDebtAdded || 0)}
+          </KurdishText>
+          <KurdishText style={styles.activityStatLabel}>کۆی قەرزی زیادکراو</KurdishText>
+        </View>
+        <View style={styles.activityStat}>
+          <KurdishText style={styles.activityStatNumber}>
+            {formatCurrency(activityQuery.data?.summary.totalPaymentsMade || 0)}
+          </KurdishText>
+          <KurdishText style={styles.activityStatLabel}>کۆی پارەدان</KurdishText>
+        </View>
+        <View style={styles.activityStat}>
+          <KurdishText style={styles.activityStatNumber}>
+            {activityQuery.data?.summary.profileViews || 0}
+          </KurdishText>
+          <KurdishText style={styles.activityStatLabel}>بینینی پڕۆفایل</KurdishText>
+        </View>
+      </View>
+
+      {/* Activity List */}
+      {activityQuery.data?.activities.map((activity) => (
+        <View key={activity.id} style={styles.activityCard}>
+          <View style={styles.activityHeader}>
+            <View style={styles.activityInfo}>
+              <KurdishText style={styles.activityCustomer}>{activity.customerName}</KurdishText>
+              <KurdishText style={styles.activityDescription}>{activity.description}</KurdishText>
+              <KurdishText style={styles.activityEmployee}>
+                کارمەند: {activity.employeeName}
+              </KurdishText>
+            </View>
+            <View style={styles.activityMeta}>
+              {activity.amount && (
+                <KurdishText style={[
+                  styles.activityAmount,
+                  { color: activity.type === 'debt_added' ? '#dc2626' : '#16a34a' }
+                ]}>
+                  {formatCurrency(activity.amount)}
+                </KurdishText>
+              )}
+              <KurdishText style={styles.activityTime}>
+                {new Date(activity.timestamp).toLocaleString('ku')}
+              </KurdishText>
+              <View style={[
+                styles.activityTypeBadge,
+                { backgroundColor: getActivityTypeColor(activity.type) }
+              ]}>
+                <KurdishText style={styles.activityTypeText}>
+                  {getActivityTypeLabel(activity.type)}
+                </KurdishText>
+              </View>
+            </View>
+          </View>
+        </View>
+      ))}
+      
+      {activityQuery.data?.hasMore && (
+        <TouchableOpacity style={styles.loadMoreButton}>
+          <KurdishText style={styles.loadMoreText}>بارکردنی زیاتر</KurdishText>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const getActivityTypeColor = (type: string) => {
+    switch (type) {
+      case 'debt_added': return '#dc2626';
+      case 'payment_made': return '#16a34a';
+      case 'profile_viewed': return '#3b82f6';
+      case 'profile_updated': return '#f59e0b';
+      case 'note_added': return '#8b5cf6';
+      default: return '#64748b';
+    }
+  };
+
+  const getActivityTypeLabel = (type: string) => {
+    switch (type) {
+      case 'debt_added': return 'قەرز';
+      case 'payment_made': return 'پارەدان';
+      case 'profile_viewed': return 'بینین';
+      case 'profile_updated': return 'نوێکردنەوە';
+      case 'note_added': return 'تێبینی';
+      default: return 'نەناسراو';
+    }
+  };
 
   const renderTabContent = () => {
     switch (selectedTab) {
@@ -325,6 +491,30 @@ const CustomerAnalyticsScreen = () => {
             </View>
           </View>
         );
+      case 'bestPayingYearly':
+        return (
+          <View>
+            {renderCustomerList(
+              bestPayingYearlyQuery.data?.customers || [], 
+              'کڕیارانی باشترین پارەدان بە ساڵانە',
+              false,
+              true
+            )}
+            <View style={styles.summaryCard}>
+              <KurdishText style={styles.summaryTitle}>کورتەی گشتی - ساڵی ٢٠٢٤</KurdishText>
+              <KurdishText style={styles.summaryText}>
+                کۆی پارەدان: {formatCurrency(bestPayingYearlyQuery.data?.totalPaid || 0)}
+              </KurdishText>
+              <KurdishText style={styles.summaryDescription}>
+                کڕیارانی باشترین پارەدان بە ڕیزبەندی ساڵانە
+              </KurdishText>
+            </View>
+          </View>
+        );
+      case 'groups':
+        return renderGroupsView();
+      case 'activity':
+        return renderActivityView();
       default:
         return renderOverview();
     }
@@ -350,6 +540,9 @@ const CustomerAnalyticsScreen = () => {
             { key: 'highDebt', label: 'زۆر قەرز', icon: TrendingUp },
             { key: 'bestPaying', label: 'باشترین', icon: Award },
             { key: 'yearly', label: 'ساڵانە', icon: Calendar },
+            { key: 'bestPayingYearly', label: 'باشترین ساڵانە', icon: Award },
+            { key: 'groups', label: 'گرووپەکان', icon: Users },
+            { key: 'activity', label: 'چالاکی', icon: BarChart3 },
           ].map((tab) => {
             const IconComponent = tab.icon;
             return (
@@ -596,6 +789,183 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#64748b',
     lineHeight: 18,
+  },
+  // Group styles
+  groupCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  groupName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1e293b',
+  },
+  groupStats: {
+    alignItems: 'flex-end',
+  },
+  groupCount: {
+    fontSize: 14,
+    color: '#6366f1',
+    fontWeight: '600',
+  },
+  groupRating: {
+    fontSize: 12,
+    color: '#f59e0b',
+    marginTop: 2,
+  },
+  groupSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  groupDebt: {
+    fontSize: 14,
+    color: '#dc2626',
+    fontWeight: '600',
+  },
+  groupPaid: {
+    fontSize: 14,
+    color: '#16a34a',
+    fontWeight: '600',
+  },
+  groupCustomers: {
+    gap: 8,
+  },
+  miniCustomerCard: {
+    backgroundColor: '#f8fafc',
+    padding: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  miniCustomerName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#1e293b',
+  },
+  miniCustomerPhone: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  moreCustomers: {
+    fontSize: 12,
+    color: '#6366f1',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  // Activity styles
+  activitySummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    gap: 8,
+  },
+  activityStat: {
+    flex: 1,
+    backgroundColor: 'white',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  activityStatNumber: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  activityStatLabel: {
+    fontSize: 10,
+    color: '#64748b',
+    textAlign: 'center',
+  },
+  activityCard: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  activityInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  activityCustomer: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  activityDescription: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  activityEmployee: {
+    fontSize: 12,
+    color: '#6366f1',
+  },
+  activityMeta: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  activityAmount: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#64748b',
+  },
+  activityTypeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  activityTypeText: {
+    fontSize: 10,
+    color: 'white',
+    fontWeight: '500',
+  },
+  loadMoreButton: {
+    backgroundColor: '#6366f1',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  loadMoreText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
 

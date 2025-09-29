@@ -203,6 +203,178 @@ export const getHighestDebtCustomersYearlyRoute = publicProcedure
     };
   });
 
+// Get best paying customers yearly (218)
+export const getBestPayingCustomersYearlyRoute = publicProcedure
+  .input(z.object({
+    year: z.number().optional().default(new Date().getFullYear())
+  }))
+  .query(({ input }) => {
+    const yearlyBestPayers = mockCustomers
+      .filter(customer => {
+        const createdYear = new Date(customer.createdAt).getFullYear();
+        return createdYear <= input.year && customer.totalPaid > 0;
+      })
+      .sort((a, b) => b.totalPaid - a.totalPaid);
+
+    return {
+      customers: yearlyBestPayers,
+      count: yearlyBestPayers.length,
+      totalPaid: yearlyBestPayers.reduce((sum, c) => sum + c.totalPaid, 0),
+      year: input.year
+    };
+  });
+
+// Get customers by group (219)
+export const getCustomersByGroupRoute = publicProcedure
+  .query(() => {
+    const groupedCustomers = mockCustomers.reduce((groups, customer) => {
+      const group = customer.group || 'بێ گرووپ';
+      if (!groups[group]) {
+        groups[group] = [];
+      }
+      groups[group].push(customer);
+      return groups;
+    }, {} as Record<string, typeof mockCustomers>);
+
+    const groupStats = Object.entries(groupedCustomers).map(([groupName, customers]) => ({
+      groupName,
+      customers,
+      count: customers.length,
+      totalDebt: customers.reduce((sum, c) => sum + (c.totalDebt - c.totalPaid), 0),
+      totalPaid: customers.reduce((sum, c) => sum + c.totalPaid, 0),
+      averageRating: customers.reduce((sum, c) => sum + (c.rating || 0), 0) / customers.length
+    }));
+
+    return {
+      groups: groupStats,
+      totalGroups: groupStats.length
+    };
+  });
+
+// Customer activity log (220)
+interface CustomerActivity {
+  id: string;
+  customerId: string;
+  customerName: string;
+  type: 'debt_added' | 'payment_made' | 'profile_viewed' | 'profile_updated' | 'note_added';
+  description: string;
+  amount?: number;
+  timestamp: string;
+  employeeId: string;
+  employeeName: string;
+  metadata?: Record<string, any>;
+}
+
+// Mock activity data
+const mockActivities: CustomerActivity[] = [
+  {
+    id: '1',
+    customerId: '1',
+    customerName: 'ئەحمەد محەمەد',
+    type: 'debt_added',
+    description: 'زیادکردنی قەرزی نوێ',
+    amount: 50000,
+    timestamp: '2024-12-29T10:30:00Z',
+    employeeId: 'emp1',
+    employeeName: 'کارمەند یەک',
+    metadata: { category: 'خواردن' }
+  },
+  {
+    id: '2',
+    customerId: '2',
+    customerName: 'فاتیمە ئەحمەد',
+    type: 'payment_made',
+    description: 'پارەدانی بەشێک لە قەرز',
+    amount: 25000,
+    timestamp: '2024-12-29T09:15:00Z',
+    employeeId: 'emp2',
+    employeeName: 'کارمەند دوو'
+  },
+  {
+    id: '3',
+    customerId: '1',
+    customerName: 'ئەحمەد محەمەد',
+    type: 'profile_viewed',
+    description: 'بینینی زانیاری کڕیار',
+    timestamp: '2024-12-29T08:45:00Z',
+    employeeId: 'emp1',
+    employeeName: 'کارمەند یەک'
+  },
+  {
+    id: '4',
+    customerId: '3',
+    customerName: 'محەمەد ئەلی',
+    type: 'profile_updated',
+    description: 'نوێکردنەوەی زانیاری کڕیار',
+    timestamp: '2024-12-28T16:20:00Z',
+    employeeId: 'admin',
+    employeeName: 'بەڕێوەبەر'
+  },
+  {
+    id: '5',
+    customerId: '4',
+    customerName: 'زەینەب حەسەن',
+    type: 'note_added',
+    description: 'زیادکردنی تێبینی نوێ',
+    timestamp: '2024-12-28T14:10:00Z',
+    employeeId: 'emp1',
+    employeeName: 'کارمەند یەک',
+    metadata: { note: 'کڕیاری زۆر باش و متمانەپێکراو' }
+  }
+];
+
+export const getCustomerActivityLogRoute = publicProcedure
+  .input(z.object({
+    customerId: z.string().optional(),
+    limit: z.number().optional().default(50),
+    offset: z.number().optional().default(0),
+    type: z.enum(['debt_added', 'payment_made', 'profile_viewed', 'profile_updated', 'note_added']).optional()
+  }))
+  .query(({ input }) => {
+    let filteredActivities = mockActivities;
+
+    // Filter by customer ID if provided
+    if (input.customerId) {
+      filteredActivities = filteredActivities.filter(activity => 
+        activity.customerId === input.customerId
+      );
+    }
+
+    // Filter by activity type if provided
+    if (input.type) {
+      filteredActivities = filteredActivities.filter(activity => 
+        activity.type === input.type
+      );
+    }
+
+    // Sort by timestamp (newest first)
+    filteredActivities.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    // Apply pagination
+    const paginatedActivities = filteredActivities.slice(
+      input.offset, 
+      input.offset + input.limit
+    );
+
+    return {
+      activities: paginatedActivities,
+      totalCount: filteredActivities.length,
+      hasMore: input.offset + input.limit < filteredActivities.length,
+      summary: {
+        totalDebtAdded: filteredActivities
+          .filter(a => a.type === 'debt_added')
+          .reduce((sum, a) => sum + (a.amount || 0), 0),
+        totalPaymentsMade: filteredActivities
+          .filter(a => a.type === 'payment_made')
+          .reduce((sum, a) => sum + (a.amount || 0), 0),
+        profileViews: filteredActivities.filter(a => a.type === 'profile_viewed').length,
+        profileUpdates: filteredActivities.filter(a => a.type === 'profile_updated').length
+      }
+    };
+  });
+
 // Get customer statistics
 export const getCustomerStatsRoute = publicProcedure
   .query(() => {
