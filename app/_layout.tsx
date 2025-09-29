@@ -144,6 +144,48 @@ function RootLayoutNav() {
           title: "چالاکیەکانی کارمەند",
         }} 
       />
+      <Stack.Screen 
+        name="notification-management" 
+        options={{ 
+          title: "بەڕێوەبردنی ئاگاداری",
+        }} 
+      />
+      <Stack.Screen 
+        name="customer-analytics" 
+        options={{ 
+          title: "شیکاری کڕیارەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="financial-dashboard" 
+        options={{ 
+          title: "داشبۆردی دارایی",
+        }} 
+      />
+      <Stack.Screen 
+        name="detailed-financial-reports" 
+        options={{ 
+          title: "ڕاپۆرتی دارایی ورد",
+        }} 
+      />
+      <Stack.Screen 
+        name="detailed-customer-reports" 
+        options={{ 
+          title: "ڕاپۆرتی کڕیار ورد",
+        }} 
+      />
+      <Stack.Screen 
+        name="edit-customer" 
+        options={{ 
+          title: "دەستکاری کڕیار",
+        }} 
+      />
+      <Stack.Screen 
+        name="send-notification" 
+        options={{ 
+          title: "ناردنی ئاگاداری",
+        }} 
+      />
 
     </Stack>
   );
