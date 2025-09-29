@@ -19,3 +19,10 @@ const t = initTRPC.context<Context>().create({
 
 export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
+
+// Protected procedure (add authentication logic here)
+export const protectedProcedure = t.procedure.use(async ({ next }) => {
+  // Add authentication check here
+  // For now, we'll just pass through
+  return next();
+});

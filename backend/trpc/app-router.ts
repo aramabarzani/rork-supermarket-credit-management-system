@@ -11,6 +11,19 @@ import {
   getCustomerActivityLogRoute,
   getCustomerStatsRoute
 } from "./routes/customers/analytics/route";
+import {
+  systemBalanceProcedure,
+  customerBalanceProcedure,
+  employeeBalanceProcedure
+} from "./routes/financial/system-balance/route";
+import {
+  monthlyReportProcedure,
+  yearlyReportProcedure,
+  irregularPaymentsProcedure,
+  topDebtorsProcedure,
+  topPayersProcedure,
+  exportReportProcedure
+} from "./routes/financial/reports/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -27,6 +40,21 @@ export const appRouter = createTRPCRouter({
       getByGroup: getCustomersByGroupRoute,
       getActivityLog: getCustomerActivityLogRoute,
       getStats: getCustomerStatsRoute,
+    }),
+  }),
+  financial: createTRPCRouter({
+    balance: createTRPCRouter({
+      system: systemBalanceProcedure,
+      customer: customerBalanceProcedure,
+      employee: employeeBalanceProcedure,
+    }),
+    reports: createTRPCRouter({
+      monthly: monthlyReportProcedure,
+      yearly: yearlyReportProcedure,
+      irregularPayments: irregularPaymentsProcedure,
+      topDebtors: topDebtorsProcedure,
+      topPayers: topPayersProcedure,
+      export: exportReportProcedure,
     }),
   }),
 });
