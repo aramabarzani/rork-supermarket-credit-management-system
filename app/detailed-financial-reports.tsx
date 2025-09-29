@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Platform,
+  Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -142,7 +143,6 @@ export default function DetailedFinancialReports() {
     if (Platform.OS === 'web') {
       console.log('Export detailed report');
     } else {
-      const { Alert } = require('react-native');
       Alert.alert('تصدير', 'سيتم تصدير التقرير المفصل');
     }
   };
