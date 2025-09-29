@@ -1,2 +1,721 @@
-import React from "react";
-import React, { useState } from 'react';\nimport {\n  View,\n  Text,\n  StyleSheet,\n  ScrollView,\n  TouchableOpacity,\n  TextInput,\n  Modal\n} from 'react-native';\nimport { SafeAreaView } from 'react-native-safe-area-context';\nimport { Stack } from 'expo-router';\nimport {\n  Bell,\n  Send,\n  MessageSquare,\n  Settings,\n  Phone,\n  Mail,\n  Users,\n  TrendingUp,\n  Calendar,\n  Filter\n} from 'lucide-react-native';\nimport { KurdishText } from '@/components/KurdishText';\nimport { NotificationManager } from '@/components/NotificationManager';\nimport { GradientCard } from '@/components/GradientCard';\n\ninterface QuickAction {\n  id: string;\n  title: string;\n  description: string;\n  icon: React.ComponentType<any>;\n  color: string;\n  action: () => void;\n}\n\ninterface NotificationStats {\n  totalSent: number;\n  deliveryRate: number;\n  todaySent: number;\n  thisWeekSent: number;\n  channels: {\n    sms: number;\n    email: number;\n    whatsapp: number;\n    viber: number;\n  };\n}\n\nexport default function NotificationManagementPage() {\n  const [showNotificationManager, setShowNotificationManager] = useState(false);\n  const [showQuickSend, setShowQuickSend] = useState(false);\n  const [selectedChannel, setSelectedChannel] = useState<'sms' | 'email' | 'whatsapp'>('sms');\n  const [quickMessage, setQuickMessage] = useState('');\n  const [recipient, setRecipient] = useState('');\n\n  // Mock data - in real app, fetch from API\n  const stats: NotificationStats = {\n    totalSent: 4290,\n    deliveryRate: 94.2,\n    todaySent: 156,\n    thisWeekSent: 892,\n    channels: {\n      sms: 1250,\n      email: 890,\n      whatsapp: 2150,\n      viber: 890\n    }\n  };\n\n  const quickActions: QuickAction[] = [\n    {\n      id: 'send_sms',\n      title: 'ناردنی SMS',\n      description: 'ناردنی پەیامی خێرا بە SMS',\n      icon: Phone,\n      color: '#4CAF50',\n      action: () => {\n        setSelectedChannel('sms');\n        setShowQuickSend(true);\n      }\n    },\n    {\n      id: 'send_email',\n      title: 'ناردنی ئیمەیڵ',\n      description: 'ناردنی ئیمەیڵی خێرا',\n      icon: Mail,\n      color: '#2196F3',\n      action: () => {\n        setSelectedChannel('email');\n        setShowQuickSend(true);\n      }\n    },\n    {\n      id: 'send_whatsapp',\n      title: 'ناردنی واتساپ',\n      description: 'ناردنی پەیامی واتساپ',\n      icon: MessageSquare,\n      color: '#FF9800',\n      action: () => {\n        setSelectedChannel('whatsapp');\n        setShowQuickSend(true);\n      }\n    },\n    {\n      id: 'bulk_notification',\n      title: 'ئاگاداری گشتی',\n      description: 'ناردنی پەیام بۆ چەندین کەس',\n      icon: Users,\n      color: '#9C27B0',\n      action: () => setShowNotificationManager(true)\n    },\n    {\n      id: 'view_stats',\n      title: 'ئامارەکان',\n      description: 'بینینی ئامارەکانی ئاگاداری',\n      icon: TrendingUp,\n      color: '#FF5722',\n      action: () => setShowNotificationManager(true)\n    },\n    {\n      id: 'schedule',\n      title: 'ئاگاداری کاتی',\n      description: 'دانانی ئاگاداری بۆ کاتی دیاریکراو',\n      icon: Calendar,\n      color: '#607D8B',\n      action: () => setShowNotificationManager(true)\n    }\n  ];\n\n  const recentNotifications = [\n    {\n      id: '1',\n      type: 'debt_reminder',\n      recipient: 'ئەحمەد محەمەد',\n      channel: 'SMS',\n      status: 'delivered',\n      timestamp: '10:30 ص',\n      message: 'یادەوەری قەرز - 150,000 دینار'\n    },\n    {\n      id: '2',\n      type: 'payment_confirmation',\n      recipient: 'فاتمە ئەحمەد',\n      channel: 'WhatsApp',\n      status: 'delivered',\n      timestamp: '09:45 ص',\n      message: 'پشتڕاستکردنەوەی پارەدان - 75,000 دینار'\n    },\n    {\n      id: '3',\n      type: 'receipt',\n      recipient: 'عەلی حەسەن',\n      channel: 'Email',\n      status: 'sent',\n      timestamp: '09:15 ص',\n      message: 'وەسڵی پارەدان - #R001234'\n    },\n    {\n      id: '4',\n      type: 'high_debt_warning',\n      recipient: 'سارا محەمەد',\n      channel: 'SMS',\n      status: 'failed',\n      timestamp: '08:30 ص',\n      message: 'ئاگاداری قەرزی زۆر - 500,000 دینار'\n    }\n  ];\n\n  const handleQuickSend = () => {\n    if (!quickMessage.trim() || !recipient.trim()) {\n      return;\n    }\n\n    console.log('Quick send:', {\n      channel: selectedChannel,\n      recipient,\n      message: quickMessage\n    });\n\n    // Reset form\n    setQuickMessage('');\n    setRecipient('');\n    setShowQuickSend(false);\n  };\n\n  const getStatusColor = (status: string) => {\n    switch (status) {\n      case 'delivered': return '#4CAF50';\n      case 'sent': return '#FF9800';\n      case 'failed': return '#F44336';\n      default: return '#666';\n    }\n  };\n\n  const getStatusText = (status: string) => {\n    switch (status) {\n      case 'delivered': return 'گەیشتووە';\n      case 'sent': return 'نێردراوە';\n      case 'failed': return 'شکستخواردووە';\n      default: return status;\n    }\n  };\n\n  return (\n    <SafeAreaView style={styles.container}>\n      <Stack.Screen \n        options={{\n          title: 'بەڕێوەبردنی ئاگاداری',\n          headerStyle: { backgroundColor: '#007AFF' },\n          headerTintColor: '#fff',\n          headerTitleStyle: { fontWeight: 'bold' }\n        }} \n      />\n\n      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>\n        {/* Stats Overview */}\n        <View style={styles.statsContainer}>\n          <GradientCard\n            colors={['#4CAF50', '#45A049']}\n            style={styles.statCard}\n          >\n            <View style={styles.statContent}>\n              <Bell size={32} color=\"#fff\" />\n              <View style={styles.statText}>\n                <Text style={styles.statNumber}>{stats.totalSent.toLocaleString()}</Text>\n                <KurdishText style={styles.statLabel}>کۆی ئاگاداری</KurdishText>\n              </View>\n            </View>\n          </GradientCard>\n\n          <GradientCard\n            colors={['#2196F3', '#1976D2']}\n            style={styles.statCard}\n          >\n            <View style={styles.statContent}>\n              <TrendingUp size={32} color=\"#fff\" />\n              <View style={styles.statText}>\n                <Text style={styles.statNumber}>{stats.deliveryRate}%</Text>\n                <KurdishText style={styles.statLabel}>ڕێژەی سەرکەوتن</KurdishText>\n              </View>\n            </View>\n          </GradientCard>\n        </View>\n\n        <View style={styles.statsContainer}>\n          <GradientCard\n            colors={['#FF9800', '#F57C00']}\n            style={styles.statCard}\n          >\n            <View style={styles.statContent}>\n              <Calendar size={32} color=\"#fff\" />\n              <View style={styles.statText}>\n                <Text style={styles.statNumber}>{stats.todaySent}</Text>\n                <KurdishText style={styles.statLabel}>ئەمڕۆ</KurdishText>\n              </View>\n            </View>\n          </GradientCard>\n\n          <GradientCard\n            colors={['#9C27B0', '#7B1FA2']}\n            style={styles.statCard}\n          >\n            <View style={styles.statContent}>\n              <Filter size={32} color=\"#fff\" />\n              <View style={styles.statText}>\n                <Text style={styles.statNumber}>{stats.thisWeekSent}</Text>\n                <KurdishText style={styles.statLabel}>ئەم هەفتەیە</KurdishText>\n              </View>\n            </View>\n          </GradientCard>\n        </View>\n\n        {/* Quick Actions */}\n        <View style={styles.section}>\n          <KurdishText style={styles.sectionTitle}>کردارە خێراکان</KurdishText>\n          <View style={styles.quickActions}>\n            {quickActions.map((action) => {\n              const IconComponent = action.icon;\n              return (\n                <TouchableOpacity\n                  key={action.id}\n                  style={styles.quickActionCard}\n                  onPress={action.action}\n                >\n                  <View style={[styles.quickActionIcon, { backgroundColor: action.color }]}>\n                    <IconComponent size={24} color=\"#fff\" />\n                  </View>\n                  <KurdishText style={styles.quickActionTitle}>{action.title}</KurdishText>\n                  <Text style={styles.quickActionDescription}>{action.description}</Text>\n                </TouchableOpacity>\n              );\n            })}\n          </View>\n        </View>\n\n        {/* Channel Stats */}\n        <View style={styles.section}>\n          <KurdishText style={styles.sectionTitle}>ئامارەکانی کەناڵەکان</KurdishText>\n          <View style={styles.channelStats}>\n            <View style={styles.channelStat}>\n              <View style={styles.channelIcon}>\n                <Phone size={20} color=\"#4CAF50\" />\n              </View>\n              <View style={styles.channelInfo}>\n                <Text style={styles.channelName}>SMS</Text>\n                <Text style={styles.channelCount}>{stats.channels.sms.toLocaleString()}</Text>\n              </View>\n            </View>\n\n            <View style={styles.channelStat}>\n              <View style={styles.channelIcon}>\n                <Mail size={20} color=\"#2196F3\" />\n              </View>\n              <View style={styles.channelInfo}>\n                <Text style={styles.channelName}>Email</Text>\n                <Text style={styles.channelCount}>{stats.channels.email.toLocaleString()}</Text>\n              </View>\n            </View>\n\n            <View style={styles.channelStat}>\n              <View style={styles.channelIcon}>\n                <MessageSquare size={20} color=\"#FF9800\" />\n              </View>\n              <View style={styles.channelInfo}>\n                <Text style={styles.channelName}>WhatsApp</Text>\n                <Text style={styles.channelCount}>{stats.channels.whatsapp.toLocaleString()}</Text>\n              </View>\n            </View>\n\n            <View style={styles.channelStat}>\n              <View style={styles.channelIcon}>\n                <MessageSquare size={20} color=\"#9C27B0\" />\n              </View>\n              <View style={styles.channelInfo}>\n                <Text style={styles.channelName}>Viber</Text>\n                <Text style={styles.channelCount}>{stats.channels.viber.toLocaleString()}</Text>\n              </View>\n            </View>\n          </View>\n        </View>\n\n        {/* Recent Notifications */}\n        <View style={styles.section}>\n          <View style={styles.sectionHeader}>\n            <KurdishText style={styles.sectionTitle}>ئاگاداری نوێکان</KurdishText>\n            <TouchableOpacity onPress={() => setShowNotificationManager(true)}>\n              <Text style={styles.viewAllText}>بینینی هەموو</Text>\n            </TouchableOpacity>\n          </View>\n          \n          <View style={styles.notificationsList}>\n            {recentNotifications.map((notification) => (\n              <View key={notification.id} style={styles.notificationItem}>\n                <View style={styles.notificationContent}>\n                  <View style={styles.notificationHeader}>\n                    <KurdishText style={styles.notificationRecipient}>\n                      {notification.recipient}\n                    </KurdishText>\n                    <Text style={styles.notificationTime}>{notification.timestamp}</Text>\n                  </View>\n                  <Text style={styles.notificationMessage}>{notification.message}</Text>\n                  <View style={styles.notificationFooter}>\n                    <Text style={styles.notificationChannel}>{notification.channel}</Text>\n                    <Text style={[styles.notificationStatus, { color: getStatusColor(notification.status) }]}>\n                      {getStatusText(notification.status)}\n                    </Text>\n                  </View>\n                </View>\n              </View>\n            ))}\n          </View>\n        </View>\n\n        {/* Advanced Features Button */}\n        <TouchableOpacity\n          style={styles.advancedButton}\n          onPress={() => setShowNotificationManager(true)}\n        >\n          <Settings size={24} color=\"#fff\" />\n          <KurdishText style={styles.advancedButtonText}>تایبەتمەندی پێشکەوتوو</KurdishText>\n        </TouchableOpacity>\n      </ScrollView>\n\n      {/* Quick Send Modal */}\n      <Modal\n        visible={showQuickSend}\n        animationType=\"slide\"\n        presentationStyle=\"pageSheet\"\n        onRequestClose={() => setShowQuickSend(false)}\n      >\n        <SafeAreaView style={styles.modalContainer}>\n          <View style={styles.modalHeader}>\n            <KurdishText style={styles.modalTitle}>\n              ناردنی {selectedChannel === 'sms' ? 'SMS' : selectedChannel === 'email' ? 'ئیمەیڵ' : 'واتساپ'}\n            </KurdishText>\n            <TouchableOpacity onPress={() => setShowQuickSend(false)}>\n              <Text style={styles.cancelButton}>پاشگەزبوونەوە</Text>\n            </TouchableOpacity>\n          </View>\n\n          <View style={styles.modalContent}>\n            <View style={styles.inputGroup}>\n              <KurdishText style={styles.inputLabel}>وەرگر</KurdishText>\n              <TextInput\n                style={styles.input}\n                placeholder={selectedChannel === 'email' ? 'ئیمەیڵ' : 'ژمارەی تەلەفۆن'}\n                value={recipient}\n                onChangeText={setRecipient}\n                keyboardType={selectedChannel === 'email' ? 'email-address' : 'phone-pad'}\n              />\n            </View>\n\n            <View style={styles.inputGroup}>\n              <KurdishText style={styles.inputLabel}>پەیام</KurdishText>\n              <TextInput\n                style={[styles.input, styles.messageInput]}\n                placeholder=\"پەیامەکەت لێرە بنووسە...\"\n                value={quickMessage}\n                onChangeText={setQuickMessage}\n                multiline\n                numberOfLines={4}\n                textAlignVertical=\"top\"\n              />\n            </View>\n\n            <TouchableOpacity\n              style={[styles.sendButton, (!quickMessage.trim() || !recipient.trim()) && styles.sendButtonDisabled]}\n              onPress={handleQuickSend}\n              disabled={!quickMessage.trim() || !recipient.trim()}\n            >\n              <Send size={20} color=\"#fff\" />\n              <KurdishText style={styles.sendButtonText}>ناردن</KurdishText>\n            </TouchableOpacity>\n          </View>\n        </SafeAreaView>\n      </Modal>\n\n      {/* Notification Manager Modal */}\n      <Modal\n        visible={showNotificationManager}\n        animationType=\"slide\"\n        presentationStyle=\"fullScreen\"\n        onRequestClose={() => setShowNotificationManager(false)}\n      >\n        <NotificationManager onClose={() => setShowNotificationManager(false)} />\n      </Modal>\n    </SafeAreaView>\n  );\n}\n\nconst styles = StyleSheet.create({\n  container: {\n    flex: 1,\n    backgroundColor: '#f5f5f5'\n  },\n  content: {\n    flex: 1,\n    padding: 16\n  },\n  statsContainer: {\n    flexDirection: 'row',\n    gap: 12,\n    marginBottom: 16\n  },\n  statCard: {\n    flex: 1,\n    borderRadius: 12,\n    padding: 16\n  },\n  statContent: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    gap: 12\n  },\n  statText: {\n    flex: 1\n  },\n  statNumber: {\n    fontSize: 24,\n    fontWeight: 'bold',\n    color: '#fff',\n    marginBottom: 4\n  },\n  statLabel: {\n    fontSize: 14,\n    color: '#fff',\n    opacity: 0.9\n  },\n  section: {\n    marginBottom: 24\n  },\n  sectionHeader: {\n    flexDirection: 'row',\n    justifyContent: 'space-between',\n    alignItems: 'center',\n    marginBottom: 16\n  },\n  sectionTitle: {\n    fontSize: 20,\n    fontWeight: 'bold',\n    color: '#333'\n  },\n  viewAllText: {\n    fontSize: 14,\n    color: '#007AFF'\n  },\n  quickActions: {\n    flexDirection: 'row',\n    flexWrap: 'wrap',\n    gap: 12\n  },\n  quickActionCard: {\n    width: '48%',\n    backgroundColor: '#fff',\n    borderRadius: 12,\n    padding: 16,\n    alignItems: 'center',\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 2 },\n    shadowOpacity: 0.1,\n    shadowRadius: 4,\n    elevation: 3\n  },\n  quickActionIcon: {\n    width: 48,\n    height: 48,\n    borderRadius: 24,\n    justifyContent: 'center',\n    alignItems: 'center',\n    marginBottom: 12\n  },\n  quickActionTitle: {\n    fontSize: 16,\n    fontWeight: '600',\n    color: '#333',\n    marginBottom: 4,\n    textAlign: 'center'\n  },\n  quickActionDescription: {\n    fontSize: 12,\n    color: '#666',\n    textAlign: 'center',\n    lineHeight: 16\n  },\n  channelStats: {\n    backgroundColor: '#fff',\n    borderRadius: 12,\n    padding: 16,\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 2 },\n    shadowOpacity: 0.1,\n    shadowRadius: 4,\n    elevation: 3\n  },\n  channelStat: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    paddingVertical: 12,\n    borderBottomWidth: 1,\n    borderBottomColor: '#f0f0f0'\n  },\n  channelIcon: {\n    width: 40,\n    height: 40,\n    borderRadius: 20,\n    backgroundColor: '#f5f5f5',\n    justifyContent: 'center',\n    alignItems: 'center',\n    marginRight: 12\n  },\n  channelInfo: {\n    flex: 1\n  },\n  channelName: {\n    fontSize: 16,\n    fontWeight: '600',\n    color: '#333',\n    marginBottom: 2\n  },\n  channelCount: {\n    fontSize: 14,\n    color: '#666'\n  },\n  notificationsList: {\n    backgroundColor: '#fff',\n    borderRadius: 12,\n    shadowColor: '#000',\n    shadowOffset: { width: 0, height: 2 },\n    shadowOpacity: 0.1,\n    shadowRadius: 4,\n    elevation: 3\n  },\n  notificationItem: {\n    borderBottomWidth: 1,\n    borderBottomColor: '#f0f0f0'\n  },\n  notificationContent: {\n    padding: 16\n  },\n  notificationHeader: {\n    flexDirection: 'row',\n    justifyContent: 'space-between',\n    alignItems: 'center',\n    marginBottom: 8\n  },\n  notificationRecipient: {\n    fontSize: 16,\n    fontWeight: '600',\n    color: '#333'\n  },\n  notificationTime: {\n    fontSize: 12,\n    color: '#666'\n  },\n  notificationMessage: {\n    fontSize: 14,\n    color: '#666',\n    marginBottom: 8,\n    lineHeight: 20\n  },\n  notificationFooter: {\n    flexDirection: 'row',\n    justifyContent: 'space-between',\n    alignItems: 'center'\n  },\n  notificationChannel: {\n    fontSize: 12,\n    color: '#007AFF',\n    backgroundColor: '#f0f8ff',\n    paddingHorizontal: 8,\n    paddingVertical: 4,\n    borderRadius: 12\n  },\n  notificationStatus: {\n    fontSize: 12,\n    fontWeight: '600'\n  },\n  advancedButton: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    backgroundColor: '#007AFF',\n    borderRadius: 12,\n    padding: 16,\n    gap: 8,\n    marginBottom: 32\n  },\n  advancedButtonText: {\n    fontSize: 16,\n    fontWeight: 'bold',\n    color: '#fff'\n  },\n  modalContainer: {\n    flex: 1,\n    backgroundColor: '#f5f5f5'\n  },\n  modalHeader: {\n    flexDirection: 'row',\n    justifyContent: 'space-between',\n    alignItems: 'center',\n    padding: 16,\n    backgroundColor: '#fff',\n    borderBottomWidth: 1,\n    borderBottomColor: '#e0e0e0'\n  },\n  modalTitle: {\n    fontSize: 18,\n    fontWeight: 'bold',\n    color: '#333'\n  },\n  cancelButton: {\n    fontSize: 16,\n    color: '#007AFF'\n  },\n  modalContent: {\n    flex: 1,\n    padding: 16\n  },\n  inputGroup: {\n    marginBottom: 20\n  },\n  inputLabel: {\n    fontSize: 16,\n    fontWeight: '600',\n    color: '#333',\n    marginBottom: 8\n  },\n  input: {\n    borderWidth: 1,\n    borderColor: '#e0e0e0',\n    borderRadius: 8,\n    paddingHorizontal: 12,\n    paddingVertical: 12,\n    backgroundColor: '#fff',\n    fontSize: 16\n  },\n  messageInput: {\n    height: 100,\n    textAlignVertical: 'top'\n  },\n  sendButton: {\n    flexDirection: 'row',\n    alignItems: 'center',\n    justifyContent: 'center',\n    backgroundColor: '#4CAF50',\n    borderRadius: 8,\n    padding: 16,\n    gap: 8,\n    marginTop: 20\n  },\n  sendButtonDisabled: {\n    backgroundColor: '#ccc'\n  },\n  sendButtonText: {\n    fontSize: 16,\n    fontWeight: 'bold',\n    color: '#fff'\n  }\n});
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Modal
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Stack } from 'expo-router';
+import {
+  Bell,
+  Send,
+  MessageSquare,
+  Settings,
+  Phone,
+  Mail,
+  Users,
+  TrendingUp,
+  Calendar,
+  Filter
+} from 'lucide-react-native';
+import { KurdishText } from '@/components/KurdishText';
+import { NotificationManager } from '@/components/NotificationManager';
+import { GradientCard } from '@/components/GradientCard';
+
+interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  color: string;
+  action: () => void;
+}
+
+interface NotificationStats {
+  totalSent: number;
+  deliveryRate: number;
+  todaySent: number;
+  thisWeekSent: number;
+  channels: {
+    sms: number;
+    email: number;
+    whatsapp: number;
+    viber: number;
+  };
+}
+
+export default function NotificationManagementPage() {
+  const [showNotificationManager, setShowNotificationManager] = useState(false);
+  const [showQuickSend, setShowQuickSend] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<'sms' | 'email' | 'whatsapp'>('sms');
+  const [quickMessage, setQuickMessage] = useState('');
+  const [recipient, setRecipient] = useState('');
+
+  // Mock data - in real app, fetch from API
+  const stats: NotificationStats = {
+    totalSent: 4290,
+    deliveryRate: 94.2,
+    todaySent: 156,
+    thisWeekSent: 892,
+    channels: {
+      sms: 1250,
+      email: 890,
+      whatsapp: 2150,
+      viber: 890
+    }
+  };
+
+  const quickActions: QuickAction[] = [
+    {
+      id: 'send_sms',
+      title: 'ناردنی SMS',
+      description: 'ناردنی پەیامی خێرا بە SMS',
+      icon: Phone,
+      color: '#4CAF50',
+      action: () => {
+        setSelectedChannel('sms');
+        setShowQuickSend(true);
+      }
+    },
+    {
+      id: 'send_email',
+      title: 'ناردنی ئیمەیڵ',
+      description: 'ناردنی ئیمەیڵی خێرا',
+      icon: Mail,
+      color: '#2196F3',
+      action: () => {
+        setSelectedChannel('email');
+        setShowQuickSend(true);
+      }
+    },
+    {
+      id: 'send_whatsapp',
+      title: 'ناردنی واتساپ',
+      description: 'ناردنی پەیامی واتساپ',
+      icon: MessageSquare,
+      color: '#FF9800',
+      action: () => {
+        setSelectedChannel('whatsapp');
+        setShowQuickSend(true);
+      }
+    },
+    {
+      id: 'bulk_notification',
+      title: 'ئاگاداری گشتی',
+      description: 'ناردنی پەیام بۆ چەندین کەس',
+      icon: Users,
+      color: '#9C27B0',
+      action: () => setShowNotificationManager(true)
+    },
+    {
+      id: 'view_stats',
+      title: 'ئامارەکان',
+      description: 'بینینی ئامارەکانی ئاگاداری',
+      icon: TrendingUp,
+      color: '#FF5722',
+      action: () => setShowNotificationManager(true)
+    },
+    {
+      id: 'schedule',
+      title: 'ئاگاداری کاتی',
+      description: 'دانانی ئاگاداری بۆ کاتی دیاریکراو',
+      icon: Calendar,
+      color: '#607D8B',
+      action: () => setShowNotificationManager(true)
+    }
+  ];
+
+  const recentNotifications = [
+    {
+      id: '1',
+      type: 'debt_reminder',
+      recipient: 'ئەحمەد محەمەد',
+      channel: 'SMS',
+      status: 'delivered',
+      timestamp: '10:30 ص',
+      message: 'یادەوەری قەرز - 150,000 دینار'
+    },
+    {
+      id: '2',
+      type: 'payment_confirmation',
+      recipient: 'فاتمە ئەحمەد',
+      channel: 'WhatsApp',
+      status: 'delivered',
+      timestamp: '09:45 ص',
+      message: 'پشتڕاستکردنەوەی پارەدان - 75,000 دینار'
+    },
+    {
+      id: '3',
+      type: 'receipt',
+      recipient: 'عەلی حەسەن',
+      channel: 'Email',
+      status: 'sent',
+      timestamp: '09:15 ص',
+      message: 'وەسڵی پارەدان - #R001234'
+    },
+    {
+      id: '4',
+      type: 'high_debt_warning',
+      recipient: 'سارا محەمەد',
+      channel: 'SMS',
+      status: 'failed',
+      timestamp: '08:30 ص',
+      message: 'ئاگاداری قەرزی زۆر - 500,000 دینار'
+    }
+  ];
+
+  const handleQuickSend = () => {
+    if (!quickMessage.trim() || !recipient.trim()) {
+      return;
+    }
+
+    console.log('Quick send:', {
+      channel: selectedChannel,
+      recipient,
+      message: quickMessage
+    });
+
+    // Reset form
+    setQuickMessage('');
+    setRecipient('');
+    setShowQuickSend(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'delivered': return '#4CAF50';
+      case 'sent': return '#FF9800';
+      case 'failed': return '#F44336';
+      default: return '#666';
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'delivered': return 'گەیشتووە';
+      case 'sent': return 'نێردراوە';
+      case 'failed': return 'شکستخواردووە';
+      default: return status;
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <Stack.Screen 
+        options={{
+          title: 'بەڕێوەبردنی ئاگاداری',
+          headerStyle: { backgroundColor: '#007AFF' },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: 'bold' }
+        }} 
+      />
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Stats Overview */}
+        <View style={styles.statsContainer}>
+          <GradientCard
+            colors={['#4CAF50', '#45A049']}
+            style={styles.statCard}
+          >
+            <View style={styles.statContent}>
+              <Bell size={32} color="#fff" />
+              <View style={styles.statText}>
+                <Text style={styles.statNumber}>{stats.totalSent.toLocaleString()}</Text>
+                <KurdishText style={styles.statLabel}>کۆی ئاگاداری</KurdishText>
+              </View>
+            </View>
+          </GradientCard>
+
+          <GradientCard
+            colors={['#2196F3', '#1976D2']}
+            style={styles.statCard}
+          >
+            <View style={styles.statContent}>
+              <TrendingUp size={32} color="#fff" />
+              <View style={styles.statText}>
+                <Text style={styles.statNumber}>{stats.deliveryRate}%</Text>
+                <KurdishText style={styles.statLabel}>ڕێژەی سەرکەوتن</KurdishText>
+              </View>
+            </View>
+          </GradientCard>
+        </View>
+
+        <View style={styles.statsContainer}>
+          <GradientCard
+            colors={['#FF9800', '#F57C00']}
+            style={styles.statCard}
+          >
+            <View style={styles.statContent}>
+              <Calendar size={32} color="#fff" />
+              <View style={styles.statText}>
+                <Text style={styles.statNumber}>{stats.todaySent}</Text>
+                <KurdishText style={styles.statLabel}>ئەمڕۆ</KurdishText>
+              </View>
+            </View>
+          </GradientCard>
+
+          <GradientCard
+            colors={['#9C27B0', '#7B1FA2']}
+            style={styles.statCard}
+          >
+            <View style={styles.statContent}>
+              <Filter size={32} color="#fff" />
+              <View style={styles.statText}>
+                <Text style={styles.statNumber}>{stats.thisWeekSent}</Text>
+                <KurdishText style={styles.statLabel}>ئەم هەفتەیە</KurdishText>
+              </View>
+            </View>
+          </GradientCard>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <KurdishText style={styles.sectionTitle}>کردارە خێراکان</KurdishText>
+          <View style={styles.quickActions}>
+            {quickActions.map((action) => {
+              const IconComponent = action.icon;
+              return (
+                <TouchableOpacity
+                  key={action.id}
+                  style={styles.quickActionCard}
+                  onPress={action.action}
+                >
+                  <View style={[styles.quickActionIcon, { backgroundColor: action.color }]}>
+                    <IconComponent size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionTitle}>{action.title}</KurdishText>
+                  <Text style={styles.quickActionDescription}>{action.description}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Channel Stats */}
+        <View style={styles.section}>
+          <KurdishText style={styles.sectionTitle}>ئامارەکانی کەناڵەکان</KurdishText>
+          <View style={styles.channelStats}>
+            <View style={styles.channelStat}>
+              <View style={styles.channelIcon}>
+                <Phone size={20} color="#4CAF50" />
+              </View>
+              <View style={styles.channelInfo}>
+                <Text style={styles.channelName}>SMS</Text>
+                <Text style={styles.channelCount}>{stats.channels.sms.toLocaleString()}</Text>
+              </View>
+            </View>
+
+            <View style={styles.channelStat}>
+              <View style={styles.channelIcon}>
+                <Mail size={20} color="#2196F3" />
+              </View>
+              <View style={styles.channelInfo}>
+                <Text style={styles.channelName}>Email</Text>
+                <Text style={styles.channelCount}>{stats.channels.email.toLocaleString()}</Text>
+              </View>
+            </View>
+
+            <View style={styles.channelStat}>
+              <View style={styles.channelIcon}>
+                <MessageSquare size={20} color="#FF9800" />
+              </View>
+              <View style={styles.channelInfo}>
+                <Text style={styles.channelName}>WhatsApp</Text>
+                <Text style={styles.channelCount}>{stats.channels.whatsapp.toLocaleString()}</Text>
+              </View>
+            </View>
+
+            <View style={styles.channelStat}>
+              <View style={styles.channelIcon}>
+                <MessageSquare size={20} color="#9C27B0" />
+              </View>
+              <View style={styles.channelInfo}>
+                <Text style={styles.channelName}>Viber</Text>
+                <Text style={styles.channelCount}>{stats.channels.viber.toLocaleString()}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Recent Notifications */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <KurdishText style={styles.sectionTitle}>ئاگاداری نوێکان</KurdishText>
+            <TouchableOpacity onPress={() => setShowNotificationManager(true)}>
+              <Text style={styles.viewAllText}>بینینی هەموو</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.notificationsList}>
+            {recentNotifications.map((notification) => (
+              <View key={notification.id} style={styles.notificationItem}>
+                <View style={styles.notificationContent}>
+                  <View style={styles.notificationHeader}>
+                    <KurdishText style={styles.notificationRecipient}>
+                      {notification.recipient}
+                    </KurdishText>
+                    <Text style={styles.notificationTime}>{notification.timestamp}</Text>
+                  </View>
+                  <Text style={styles.notificationMessage}>{notification.message}</Text>
+                  <View style={styles.notificationFooter}>
+                    <Text style={styles.notificationChannel}>{notification.channel}</Text>
+                    <Text style={[styles.notificationStatus, { color: getStatusColor(notification.status) }]}>
+                      {getStatusText(notification.status)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        {/* Advanced Features Button */}
+        <TouchableOpacity
+          style={styles.advancedButton}
+          onPress={() => setShowNotificationManager(true)}
+        >
+          <Settings size={24} color="#fff" />
+          <KurdishText style={styles.advancedButtonText}>تایبەتمەندی پێشکەوتوو</KurdishText>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Quick Send Modal */}
+      <Modal
+        visible={showQuickSend}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowQuickSend(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <KurdishText style={styles.modalTitle}>
+              ناردنی {selectedChannel === 'sms' ? 'SMS' : selectedChannel === 'email' ? 'ئیمەیڵ' : 'واتساپ'}
+            </KurdishText>
+            <TouchableOpacity onPress={() => setShowQuickSend(false)}>
+              <Text style={styles.cancelButton}>پاشگەزبوونەوە</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            <View style={styles.inputGroup}>
+              <KurdishText style={styles.inputLabel}>وەرگر</KurdishText>
+              <TextInput
+                style={styles.input}
+                placeholder={selectedChannel === 'email' ? 'ئیمەیڵ' : 'ژمارەی تەلەفۆن'}
+                value={recipient}
+                onChangeText={setRecipient}
+                keyboardType={selectedChannel === 'email' ? 'email-address' : 'phone-pad'}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <KurdishText style={styles.inputLabel}>پەیام</KurdishText>
+              <TextInput
+                style={[styles.input, styles.messageInput]}
+                placeholder="پەیامەکەت لێرە بنووسە..."
+                value={quickMessage}
+                onChangeText={setQuickMessage}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.sendButton, (!quickMessage.trim() || !recipient.trim()) && styles.sendButtonDisabled]}
+              onPress={handleQuickSend}
+              disabled={!quickMessage.trim() || !recipient.trim()}
+            >
+              <Send size={20} color="#fff" />
+              <KurdishText style={styles.sendButtonText}>ناردن</KurdishText>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Notification Manager Modal */}
+      <Modal
+        visible={showNotificationManager}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowNotificationManager(false)}
+      >
+        <NotificationManager onClose={() => setShowNotificationManager(false)} />
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5'
+  },
+  content: {
+    flex: 1,
+    padding: 16
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 16
+  },
+  statContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12
+  },
+  statText: {
+    flex: 1
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4
+  },
+  statLabel: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.9
+  },
+  section: {
+    marginBottom: 24
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  viewAllText: {
+    fontSize: 14,
+    color: '#007AFF'
+  },
+  quickActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12
+  },
+  quickActionCard: {
+    width: '48%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  quickActionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12
+  },
+  quickActionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+    textAlign: 'center'
+  },
+  quickActionDescription: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 16
+  },
+  channelStats: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  channelStat: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  channelIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12
+  },
+  channelInfo: {
+    flex: 1
+  },
+  channelName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 2
+  },
+  channelCount: {
+    fontSize: 14,
+    color: '#666'
+  },
+  notificationsList: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3
+  },
+  notificationItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0'
+  },
+  notificationContent: {
+    padding: 16
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  notificationRecipient: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333'
+  },
+  notificationTime: {
+    fontSize: 12,
+    color: '#666'
+  },
+  notificationMessage: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    lineHeight: 20
+  },
+  notificationFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center'
+  },
+  notificationChannel: {
+    fontSize: 12,
+    color: '#007AFF',
+    backgroundColor: '#f0f8ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12
+  },
+  notificationStatus: {
+    fontSize: 12,
+    fontWeight: '600'
+  },
+  advancedButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    padding: 16,
+    gap: 8,
+    marginBottom: 32
+  },
+  advancedButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff'
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f5f5f5'
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0'
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333'
+  },
+  cancelButton: {
+    fontSize: 16,
+    color: '#007AFF'
+  },
+  modalContent: {
+    flex: 1,
+    padding: 16
+  },
+  inputGroup: {
+    marginBottom: 20
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    fontSize: 16
+  },
+  messageInput: {
+    height: 100,
+    textAlignVertical: 'top'
+  },
+  sendButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 16,
+    gap: 8,
+    marginTop: 20
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#ccc'
+  },
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff'
+  }
+});
