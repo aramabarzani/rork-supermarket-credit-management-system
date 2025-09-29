@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,7 +90,6 @@ export default function FinancialDashboard() {
     if (Platform.OS === 'web') {
       console.log('Export report requested');
     } else {
-      const { Alert } = require('react-native');
       Alert.alert('تصدير التقرير', 'سيتم تصدير التقرير قريباً');
     }
   };
