@@ -256,8 +256,314 @@ export default function SystemSettingsScreen() {
               })}
             />
           </View>
+
+          <View style={styles.switchRow}>
+            <KurdishText variant="body" color="#1F2937">
+              نوێکردنەوەکانی سیستەم
+            </KurdishText>
+            <Switch
+              value={settings.notifications.types.systemUpdates}
+              onValueChange={(value) => updateSettings({
+                notifications: {
+                  ...settings.notifications,
+                  types: { ...settings.notifications.types, systemUpdates: value }
+                }
+              })}
+            />
+          </View>
         </>
       )}
+    </GradientCard>
+  );
+
+  const renderReceiptSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        ڕێکخستنی وەسڵەکان
+      </KurdishText>
+      
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ناوی کۆمپانیا
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.receipt.businessName}
+          onChangeText={(text) => updateSettings({
+            receipt: { ...settings.receipt, businessName: text }
+          })}
+          placeholder="ناوی کۆمپانیا"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ژمارەی تەلەفۆن
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.receipt.phone}
+          onChangeText={(text) => updateSettings({
+            receipt: { ...settings.receipt, phone: text }
+          })}
+          placeholder="07501234567"
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ناونیشان
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.receipt.address || ''}
+          onChangeText={(text) => updateSettings({
+            receipt: { ...settings.receipt, address: text }
+          })}
+          placeholder="ناونیشانی کۆمپانیا"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          پەیامی خوارەوە
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.receipt.footer || ''}
+          onChangeText={(text) => updateSettings({
+            receipt: { ...settings.receipt, footer: text }
+          })}
+          placeholder="سوپاس بۆ هاوکاریتان"
+        />
+      </View>
+    </GradientCard>
+  );
+
+  const renderDashboardSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        ڕێکخستنی داشبۆرد
+      </KurdishText>
+      
+      <View style={styles.switchRow}>
+        <KurdishText variant="body" color="#1F2937">
+          نیشاندانی گرافەکان
+        </KurdishText>
+        <Switch
+          value={settings.dashboard.showCharts}
+          onValueChange={(value) => updateSettings({
+            dashboard: { ...settings.dashboard, showCharts: value }
+          })}
+        />
+      </View>
+
+      <View style={styles.switchRow}>
+        <KurdishText variant="body" color="#1F2937">
+          نیشاندانی مامەڵە نوێیەکان
+        </KurdishText>
+        <Switch
+          value={settings.dashboard.showRecentTransactions}
+          onValueChange={(value) => updateSettings({
+            dashboard: { ...settings.dashboard, showRecentTransactions: value }
+          })}
+        />
+      </View>
+
+      <View style={styles.switchRow}>
+        <KurdishText variant="body" color="#1F2937">
+          نیشاندانی قەرزدارە گەورەکان
+        </KurdishText>
+        <Switch
+          value={settings.dashboard.showTopDebtors}
+          onValueChange={(value) => updateSettings({
+            dashboard: { ...settings.dashboard, showTopDebtors: value }
+          })}
+        />
+      </View>
+
+      <View style={styles.switchRow}>
+        <KurdishText variant="body" color="#1F2937">
+          نیشاندانی پارەدەرە باشەکان
+        </KurdishText>
+        <Switch
+          value={settings.dashboard.showTopPayers}
+          onValueChange={(value) => updateSettings({
+            dashboard: { ...settings.dashboard, showTopPayers: value }
+          })}
+        />
+      </View>
+    </GradientCard>
+  );
+
+  const renderBusinessSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        زانیاری کۆمپانیا
+      </KurdishText>
+      
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ناوی کۆمپانیا
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.businessInfo.name}
+          onChangeText={(text) => updateSettings({
+            businessInfo: { ...settings.businessInfo, name: text }
+          })}
+          placeholder="ناوی کۆمپانیا"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ناوی خاوەن
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.businessInfo.ownerName}
+          onChangeText={(text) => updateSettings({
+            businessInfo: { ...settings.businessInfo, ownerName: text }
+          })}
+          placeholder="ناوی خاوەن"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ژمارەی تەلەفۆن
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.businessInfo.phone}
+          onChangeText={(text) => updateSettings({
+            businessInfo: { ...settings.businessInfo, phone: text }
+          })}
+          placeholder="07501234567"
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          ناونیشان
+        </KurdishText>
+        <TextInput
+          style={styles.textInput}
+          value={settings.businessInfo.address || ''}
+          onChangeText={(text) => updateSettings({
+            businessInfo: { ...settings.businessInfo, address: text }
+          })}
+          placeholder="ناونیشانی کۆمپانیا"
+        />
+      </View>
+    </GradientCard>
+  );
+
+  const renderLocationsSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        ڕێکخستنی شوێنەکان
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={{ marginBottom: 12 }}>
+        پارێزگاکان: {settings.locations.provinces.join('، ')}
+      </KurdishText>
+      
+      <KurdishText variant="caption" color="#9CA3AF">
+        بۆ زیادکردن یان دەستکاری شوێنەکان، پەیوەندی بە بەڕێوەبەر بکە
+      </KurdishText>
+    </GradientCard>
+  );
+
+  const renderCategoriesSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        جۆرەکانی قەرز
+      </KurdishText>
+      
+      <View style={{ gap: 8 }}>
+        {settings.debtCategories.map((category, index) => (
+          <View key={index} style={styles.categoryItem}>
+            <KurdishText variant="body" color="#1F2937">
+              {category}
+            </KurdishText>
+          </View>
+        ))}
+      </View>
+    </GradientCard>
+  );
+
+  const renderThemeSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        ڕووکار و ڕەنگەکان
+      </KurdishText>
+      
+      <View style={styles.switchRow}>
+        <KurdishText variant="body" color="#1F2937">
+          دۆخی تاریک
+        </KurdishText>
+        <Switch
+          value={settings.theme.darkMode}
+          onValueChange={(value) => updateSettings({
+            theme: { ...settings.theme, darkMode: value }
+          })}
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <KurdishText variant="body" color="#374151" style={styles.inputLabel}>
+          قەبارەی فۆنت
+        </KurdishText>
+        {[
+          { key: 'small', label: 'بچووک' },
+          { key: 'medium', label: 'ناوەند' },
+          { key: 'large', label: 'گەورە' },
+        ].map((size) => (
+          <TouchableOpacity
+            key={size.key}
+            style={[
+              styles.optionRow,
+              settings.theme.fontSize === size.key && styles.selectedOption
+            ]}
+            onPress={() => updateSettings({ 
+              theme: { ...settings.theme, fontSize: size.key as any }
+            })}
+          >
+            <KurdishText variant="body" color="#1F2937">
+              {size.label}
+            </KurdishText>
+            <View style={[
+              styles.radio,
+              settings.theme.fontSize === size.key && styles.radioSelected
+            ]} />
+          </TouchableOpacity>
+        ))}
+      </View>
+    </GradientCard>
+  );
+
+  const renderRolesSettings = () => (
+    <GradientCard>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+        ڕۆڵەکان و دەسەڵاتەکان
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={{ marginBottom: 12 }}>
+        بۆ بەڕێوەبردنی دەسەڵاتەکانی کارمەندان، بڕۆ بۆ بەشی "دەسەڵاتەکان"
+      </KurdishText>
+      
+      <TouchableOpacity
+        style={styles.linkButton}
+        onPress={() => router.push('/permissions')}
+      >
+        <KurdishText variant="body" color="#3B82F6">
+          بەڕێوەبردنی دەسەڵاتەکان
+        </KurdishText>
+      </TouchableOpacity>
     </GradientCard>
   );
 
@@ -343,6 +649,13 @@ export default function SystemSettingsScreen() {
             {activeSection === 'language' && renderLanguageSettings()}
             {activeSection === 'currency' && renderCurrencySettings()}
             {activeSection === 'notifications' && renderNotificationSettings()}
+            {activeSection === 'receipt' && renderReceiptSettings()}
+            {activeSection === 'dashboard' && renderDashboardSettings()}
+            {activeSection === 'business' && renderBusinessSettings()}
+            {activeSection === 'locations' && renderLocationsSettings()}
+            {activeSection === 'categories' && renderCategoriesSettings()}
+            {activeSection === 'theme' && renderThemeSettings()}
+            {activeSection === 'roles' && renderRolesSettings()}
           </View>
         )}
       </ScrollView>
@@ -481,5 +794,18 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#EF4444',
+  },
+  categoryItem: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  linkButton: {
+    backgroundColor: '#EBF8FF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
   },
 });
