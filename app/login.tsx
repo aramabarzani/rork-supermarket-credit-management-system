@@ -6,12 +6,17 @@ import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
+  Platform,
+  Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Shield, AlertTriangle } from 'lucide-react-native';
+import { Shield, AlertTriangle, Smartphone, MessageSquare } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
 import { useSecurity } from '@/hooks/security-context';
+import { KurdishText } from '@/components/KurdishText';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -28,6 +33,13 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [lockoutTime, setLockoutTime] = useState<number | null>(null);
+  const [loginMethod, setLoginMethod] = useState<'password' | 'sms'>('password');
+  const [smsCode, setSmsCode] = useState('');
+  const [isSmsSent, setIsSmsSent] = useState(false);
+  const [smsCountdown, setSmsCountdown] = useState(0);
+  
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const isTablet = screenWidth > 768;
 
   // Check if user is locked on component mount
   useEffect(() => {
@@ -53,7 +65,66 @@ export default function LoginScreen() {
     return () => clearInterval(interval);
   }, [lockoutTime]);
 
-  const handleLogin = async () => {
+  // SMS countdown effect
+  useEffect(() => {
+    if (smsCountdown > 0) {
+      const timer = setTimeout(() => setSmsCountdown(smsCountdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [smsCountdown]);
+
+  const handleSendSms = async () => {
+    if (!phone) {
+      setError('تکایە ژمارەی مۆبایل داخڵ بکە');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Simulate SMS sending
+      console.log('Sending SMS to:', phone);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setIsSmsSent(true);
+      setSmsCountdown(60);
+      setError('');
+    } catch (err) {
+      setError('نەتوانرا SMS بنێررێت. دووبارە هەوڵ بدەرەوە');
+    }
+    
+    setIsLoading(false);
+  };
+
+  const handleSmsLogin = async () => {
+    if (!phone || !smsCode) {
+      setError('تکایە هەموو خانەکان پڕ بکەرەوە');
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Simulate SMS verification
+      if (smsCode === '1234') {
+        console.log('SMS login successful');
+        recordLoginAttempt(phone, true);
+        createUserSession('1');
+        router.replace('/(tabs)/dashboard');
+      } else {
+        setError('کۆدی SMS هەڵەیە');
+        recordLoginAttempt(phone, false, 'Invalid SMS code');
+      }
+    } catch (err) {
+      setError('هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە');
+    }
+
+    setIsLoading(false);
+  };
+
+  const handlePasswordLogin = async () => {
     console.log('LoginScreen: Login attempt started');
     setError('');
     
@@ -102,86 +173,212 @@ export default function LoginScreen() {
     setIsLoading(false);
   };
 
+  const handleLogin = loginMethod === 'sms' ? handleSmsLogin : handlePasswordLogin;
+
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.logoContainer}>
-            <Shield size={60} color="white" />
-          </View>
-          <Text style={styles.title}>
-            سیستەمی بەڕێوەبردنی قەرز
-          </Text>
-          <Text style={styles.subtitle}>
-            بۆ سوپەرمارکێت و بازرگانیەکان
-          </Text>
-        </View>
-
-        <View style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="ژمارەی مۆبایل"
-              placeholderTextColor="#9CA3AF"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              textAlign="right"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="وشەی نهێنی"
-              placeholderTextColor="#9CA3AF"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              textAlign="right"
-            />
-          </View>
-
-          {error ? (
-            <View style={[styles.errorContainer, lockoutTime && styles.lockoutContainer]}>
-              {lockoutTime && (
-                <AlertTriangle size={20} color="#EF4444" style={styles.errorIcon} />
-              )}
-              <Text style={[styles.errorText, lockoutTime && styles.lockoutText]}>
-                {error}
-              </Text>
-              {lockoutTime && (
-                <Text style={styles.countdownText}>
-                  کاتی ماوە: {Math.ceil((lockoutTime - Date.now()) / 1000 / 60)} خولەک
-                </Text>
-              )}
+      <KeyboardAvoidingView 
+        style={styles.keyboardAvoid}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.content, isTablet && styles.tabletContent]}>
+            <View style={styles.header}>
+              <View style={[styles.logoContainer, isTablet && styles.tabletLogo]}>
+                <Shield size={isTablet ? 80 : 60} color="white" />
+              </View>
+              <KurdishText style={[styles.title, isTablet && styles.tabletTitle]}>
+                سیستەمی بەڕێوەبردنی قەرز
+              </KurdishText>
+              <KurdishText style={[styles.subtitle, isTablet && styles.tabletSubtitle]}>
+                بۆ سوپەرمارکێت و بازرگانیەکان
+              </KurdishText>
             </View>
-          ) : null}
 
-          <TouchableOpacity
-            style={[styles.loginButton, (isLoading || lockoutTime) && styles.loginButtonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading || !!lockoutTime}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.loginButtonText}>
-                چوونەژوورەوە
-              </Text>
-            )}
-          </TouchableOpacity>
+            <View style={[styles.formContainer, isTablet && styles.tabletForm]}>
+              {/* Login Method Toggle */}
+              <View style={styles.methodToggle}>
+                <TouchableOpacity
+                  style={[
+                    styles.methodButton,
+                    loginMethod === 'password' && styles.methodButtonActive
+                  ]}
+                  onPress={() => {
+                    setLoginMethod('password');
+                    setIsSmsSent(false);
+                    setSmsCode('');
+                    setError('');
+                  }}
+                >
+                  <Shield size={20} color={loginMethod === 'password' ? '#fff' : '#6B7280'} />
+                  <KurdishText style={[
+                    styles.methodButtonText,
+                    loginMethod === 'password' && styles.methodButtonTextActive
+                  ]}>
+                    وشەی نهێنی
+                  </KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[
+                    styles.methodButton,
+                    loginMethod === 'sms' && styles.methodButtonActive
+                  ]}
+                  onPress={() => {
+                    setLoginMethod('sms');
+                    setPassword('');
+                    setError('');
+                  }}
+                >
+                  <MessageSquare size={20} color={loginMethod === 'sms' ? '#fff' : '#6B7280'} />
+                  <KurdishText style={[
+                    styles.methodButtonText,
+                    loginMethod === 'sms' && styles.methodButtonTextActive
+                  ]}>
+                    SMS کۆد
+                  </KurdishText>
+                </TouchableOpacity>
+              </View>
 
-          <View style={styles.demoInfo}>
-            <Text style={styles.demoText}>
-              بۆ تاقیکردنەوە:
-            </Text>
-            <Text style={styles.demoText}>
-              بەڕێوەبەر: 07501234567 / admin123
-            </Text>
+              {/* Phone Input */}
+              <View style={styles.inputContainer}>
+                <Smartphone size={20} color="#6B7280" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="ژمارەی مۆبایل (07501234567)"
+                  placeholderTextColor="#9CA3AF"
+                  value={phone}
+                  onChangeText={setPhone}
+                  keyboardType="phone-pad"
+                  textAlign="right"
+                  maxLength={11}
+                />
+              </View>
+
+              {/* Password or SMS Input */}
+              {loginMethod === 'password' ? (
+                <View style={styles.inputContainer}>
+                  <Shield size={20} color="#6B7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="وشەی نهێنی"
+                    placeholderTextColor="#9CA3AF"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    textAlign="right"
+                  />
+                </View>
+              ) : (
+                <>
+                  {!isSmsSent ? (
+                    <TouchableOpacity
+                      style={[styles.smsButton, isLoading && styles.smsButtonDisabled]}
+                      onPress={handleSendSms}
+                      disabled={isLoading || !phone}
+                    >
+                      {isLoading ? (
+                        <ActivityIndicator color="#1E3A8A" size="small" />
+                      ) : (
+                        <>
+                          <MessageSquare size={20} color="#1E3A8A" />
+                          <KurdishText style={styles.smsButtonText}>
+                            ناردنی کۆدی SMS
+                          </KurdishText>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  ) : (
+                    <>
+                      <View style={styles.inputContainer}>
+                        <MessageSquare size={20} color="#6B7280" style={styles.inputIcon} />
+                        <TextInput
+                          style={styles.input}
+                          placeholder="کۆدی SMS (1234)"
+                          placeholderTextColor="#9CA3AF"
+                          value={smsCode}
+                          onChangeText={setSmsCode}
+                          keyboardType="number-pad"
+                          textAlign="center"
+                          maxLength={4}
+                        />
+                      </View>
+                      
+                      <TouchableOpacity
+                        style={[
+                          styles.resendButton,
+                          smsCountdown > 0 && styles.resendButtonDisabled
+                        ]}
+                        onPress={handleSendSms}
+                        disabled={smsCountdown > 0}
+                      >
+                        <KurdishText style={[
+                          styles.resendButtonText,
+                          smsCountdown > 0 && styles.resendButtonTextDisabled
+                        ]}>
+                          {smsCountdown > 0 
+                            ? `دووبارە ناردن لە ${smsCountdown} چرکە`
+                            : 'دووبارە ناردنی کۆد'
+                          }
+                        </KurdishText>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </>
+              )}
+
+              {error ? (
+                <View style={[styles.errorContainer, lockoutTime && styles.lockoutContainer]}>
+                  {lockoutTime && (
+                    <AlertTriangle size={20} color="#EF4444" style={styles.errorIcon} />
+                  )}
+                  <KurdishText style={[styles.errorText, lockoutTime && styles.lockoutText]}>
+                    {error}
+                  </KurdishText>
+                  {lockoutTime && (
+                    <KurdishText style={styles.countdownText}>
+                      کاتی ماوە: {Math.ceil((lockoutTime - Date.now()) / 1000 / 60)} خولەک
+                    </KurdishText>
+                  )}
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[
+                  styles.loginButton,
+                  (isLoading || lockoutTime || (loginMethod === 'sms' && !isSmsSent)) && styles.loginButtonDisabled
+                ]}
+                onPress={handleLogin}
+                disabled={isLoading || !!lockoutTime || (loginMethod === 'sms' && !isSmsSent)}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <KurdishText style={styles.loginButtonText}>
+                    چوونەژوورەوە
+                  </KurdishText>
+                )}
+              </TouchableOpacity>
+
+              <View style={styles.demoInfo}>
+                <KurdishText style={styles.demoText}>
+                  بۆ تاقیکردنەوە:
+                </KurdishText>
+                <Text style={styles.demoText}>
+                  بەڕێوەبەر: 07501234567 / admin123
+                </Text>
+                <Text style={styles.demoText}>
+                  SMS کۆد: 1234
+                </Text>
+              </View>
+            </View>
           </View>
-        </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -191,10 +388,22 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1E3A8A',
   },
+  keyboardAvoid: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+    minHeight: Dimensions.get('window').height,
+  },
+  tabletContent: {
+    maxWidth: 500,
+    alignSelf: 'center',
+    width: '100%',
   },
   header: {
     alignItems: 'center',
@@ -209,6 +418,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  tabletLogo: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -216,11 +430,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
+  tabletTitle: {
+    fontSize: 32,
+  },
   subtitle: {
     fontSize: 16,
     color: 'white',
     opacity: 0.9,
     textAlign: 'center',
+  },
+  tabletSubtitle: {
+    fontSize: 18,
   },
   formContainer: {
     backgroundColor: 'white',
@@ -232,17 +452,89 @@ const styles = StyleSheet.create({
     shadowRadius: 20,
     elevation: 5,
   },
+  tabletForm: {
+    padding: 32,
+  },
+  methodToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 20,
+  },
+  methodButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    gap: 8,
+  },
+  methodButtonActive: {
+    backgroundColor: '#1E3A8A',
+  },
+  methodButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  methodButtonTextActive: {
+    color: 'white',
+  },
   inputContainer: {
     backgroundColor: '#F3F4F6',
     borderRadius: 12,
     marginBottom: 16,
     paddingHorizontal: 16,
     height: 56,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  inputIcon: {
+    marginRight: 12,
   },
   input: {
+    flex: 1,
     fontSize: 16,
     color: '#1F2937',
+  },
+  smsButton: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    gap: 8,
+    borderWidth: 2,
+    borderColor: '#1E3A8A',
+  },
+  smsButtonDisabled: {
+    opacity: 0.6,
+  },
+  smsButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E3A8A',
+  },
+  resendButton: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    marginBottom: 16,
+  },
+  resendButtonDisabled: {
+    opacity: 0.5,
+  },
+  resendButtonText: {
+    fontSize: 14,
+    color: '#1E3A8A',
+    fontWeight: '500',
+  },
+  resendButtonTextDisabled: {
+    color: '#9CA3AF',
   },
   loginButton: {
     backgroundColor: '#1E3A8A',

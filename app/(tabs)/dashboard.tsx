@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -9,6 +9,9 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Platform,
+  RefreshControl,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -38,8 +41,11 @@ import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useUsers } from '@/hooks/users-context';
 import { useNotifications } from '@/hooks/notification-context';
+import { KurdishText } from '@/components/KurdishText';
 
-const screenWidth = Dimensions.get('window').width;
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const isTablet = screenWidth > 768;
+const isLandscape = screenWidth > screenHeight;
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -58,12 +64,71 @@ export default function DashboardScreen() {
   const [customerFilter, setCustomerFilter] = useState('');
   const [employeeFilter, setEmployeeFilter] = useState('');
   const [chartType, setChartType] = useState<'line' | 'bar' | 'pie'>('line');
+  const [refreshing, setRefreshing] = useState(false);
+  const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [lastUpdateTime, setLastUpdateTime] = useState(new Date());
+  
+  // Update screen dimensions on orientation change
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenDimensions(window);
+    });
+    return () => subscription?.remove();
+  }, []);
+  
+  const currentScreenWidth = screenDimensions.width;
+  const currentIsTablet = currentScreenWidth > 768;
+  const currentIsLandscape = currentScreenWidth > screenDimensions.height;
 
   const handleLogout = async () => {
-    if (logout) {
-      await logout();
+    Alert.alert(
+      'دەرچوون',
+      'دڵنیایت لە دەرچوون؟',
+      [
+        { text: 'پاشگەزبوونەوە', style: 'cancel' },
+        {
+          text: 'دەرچوون',
+          style: 'destructive',
+          onPress: async () => {
+            if (logout) {
+              await logout();
+            }
+            router.replace('/login');
+          }
+        }
+      ]
+    );
+  };
+  
+  const onRefresh = async () => {
+    setRefreshing(true);
+    // Simulate data refresh
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    setLastUpdateTime(new Date());
+    setRefreshing(false);
+  };
+  
+  const handleQuickAction = (action: string) => {
+    console.log('Quick action:', action);
+    setShowQuickActions(false);
+    
+    switch (action) {
+      case 'add-debt':
+        router.push('/add-debt');
+        break;
+      case 'add-payment':
+        router.push('/add-payment');
+        break;
+      case 'view-customers':
+        router.push('/(tabs)/customers');
+        break;
+      case 'view-reports':
+        router.push('/(tabs)/reports');
+        break;
+      default:
+        break;
     }
-    router.replace('/login');
   };
 
   const formatCurrency = (amount: number) => {
@@ -113,9 +178,16 @@ export default function DashboardScreen() {
     };
   }, []);
 
-  // Chart data
+  // Chart data - responsive to screen size
+  const getChartLabels = () => {
+    if (currentScreenWidth < 400) {
+      return ['ک٢', 'ش', 'ئا', 'ن', 'ئ', 'ح']; // Short labels for small screens
+    }
+    return ['کانونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران'];
+  };
+  
   const chartData = {
-    labels: ['کانونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران'],
+    labels: getChartLabels(),
     datasets: [
       {
         data: [500000, 750000, 600000, 800000, 900000, 650000],
@@ -128,6 +200,15 @@ export default function DashboardScreen() {
         strokeWidth: 2,
       },
     ],
+  };
+  
+  const getChartWidth = () => {
+    const padding = currentIsTablet ? 60 : 40;
+    return Math.min(currentScreenWidth - padding, 800);
+  };
+  
+  const getChartHeight = () => {
+    return currentIsTablet ? 280 : 220;
   };
 
   const pieChartData = [
@@ -189,24 +270,46 @@ export default function DashboardScreen() {
         <View style={styles.container}>
           <ScrollView
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#1E3A8A']}
+                tintColor="#1E3A8A"
+              />
+            }
           >
             {/* Header */}
-            <View style={styles.header}>
+            <View style={[styles.header, currentIsTablet && styles.tabletHeader]}>
               <View style={styles.headerContent}>
-                <View>
-                  <Text style={styles.welcomeText}>
+                <View style={styles.userInfo}>
+                  <KurdishText style={[styles.welcomeText, currentIsTablet && styles.tabletWelcomeText]}>
                     بەخێربێیت
-                  </Text>
-                  <Text style={styles.nameText}>
+                  </KurdishText>
+                  <KurdishText style={[styles.nameText, currentIsTablet && styles.tabletNameText]}>
                     {user?.name || 'بەڕێوەبەر'}
+                  </KurdishText>
+                  <Text style={styles.lastUpdateText}>
+                    کۆتا نوێکردنەوە: {lastUpdateTime.toLocaleTimeString('ckb-IQ', { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
                 <View style={styles.headerActions}>
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity 
+                      style={styles.quickActionButton}
+                      onPress={() => setShowQuickActions(true)}
+                    >
+                      <Plus size={20} color="#10B981" />
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity 
                     onPress={() => router.push('/notifications')} 
                     style={styles.notificationButton}
                   >
                     <Bell size={20} color="#3B82F6" />
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.badgeText}>3</Text>
+                    </View>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
                     <LogOut size={20} color="#EF4444" />
@@ -215,9 +318,9 @@ export default function DashboardScreen() {
               </View>
               
               <View style={styles.licenseInfo}>
-                <Text style={styles.licenseText}>
-                  سوپەرمارکێتی نموونە
-                </Text>
+                <KurdishText style={[styles.licenseText, currentIsTablet && styles.tabletLicenseText]}>
+                  سوپەرمارکێتی نموونە • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                </KurdishText>
               </View>
             </View>
 
@@ -259,62 +362,90 @@ export default function DashboardScreen() {
             </View>
 
             {/* Stats Cards */}
-            <View style={styles.statsGrid}>
-              <View style={[styles.statCard, styles.greenCard]}>
+            <View style={[styles.statsGrid, currentIsTablet && styles.tabletStatsGrid, currentIsLandscape && styles.landscapeStatsGrid]}>
+              <TouchableOpacity 
+                style={[styles.statCard, styles.greenCard, currentIsTablet && styles.tabletStatCard]}
+                onPress={() => router.push('/(tabs)/reports')}
+              >
                 <View style={styles.statContent}>
-                  <DollarSign size={24} color="#10B981" />
-                  <Text style={styles.statLabel}>
+                  <DollarSign size={currentIsTablet ? 32 : 24} color="#10B981" />
+                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
                     کۆی قەرزەکان
-                  </Text>
-                  <Text style={styles.statValue}>
+                  </KurdishText>
+                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
                     {formatCurrency(dashboardStats.totalDebts)}
                   </Text>
+                  <View style={styles.trendIndicator}>
+                    <TrendingUp size={12} color="#10B981" />
+                    <Text style={styles.trendText}>+12%</Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
 
-              <View style={[styles.statCard, styles.orangeCard]}>
+              <TouchableOpacity 
+                style={[styles.statCard, styles.orangeCard, currentIsTablet && styles.tabletStatCard]}
+                onPress={() => router.push('/payment-reports')}
+              >
                 <View style={styles.statContent}>
-                  <TrendingUp size={24} color="#F59E0B" />
-                  <Text style={styles.statLabel}>
+                  <TrendingUp size={currentIsTablet ? 32 : 24} color="#F59E0B" />
+                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
                     وەرگیراو
-                  </Text>
-                  <Text style={styles.statValue}>
+                  </KurdishText>
+                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
                     {formatCurrency(dashboardStats.totalPayments)}
                   </Text>
+                  <View style={styles.trendIndicator}>
+                    <TrendingUp size={12} color="#F59E0B" />
+                    <Text style={styles.trendText}>+8%</Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
 
-              <View style={[styles.statCard, styles.redCard]}>
+              <TouchableOpacity 
+                style={[styles.statCard, styles.redCard, currentIsTablet && styles.tabletStatCard]}
+                onPress={() => router.push('/debt-management')}
+              >
                 <View style={styles.statContent}>
-                  <TrendingDown size={24} color="#EF4444" />
-                  <Text style={styles.statLabel}>
+                  <TrendingDown size={currentIsTablet ? 32 : 24} color="#EF4444" />
+                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
                     ماوە
-                  </Text>
-                  <Text style={styles.statValue}>
+                  </KurdishText>
+                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
                     {formatCurrency(dashboardStats.remainingDebt)}
                   </Text>
+                  <View style={styles.trendIndicator}>
+                    <TrendingDown size={12} color="#EF4444" />
+                    <Text style={styles.trendText}>-5%</Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
 
-              <View style={[styles.statCard, styles.blueCard]}>
+              <TouchableOpacity 
+                style={[styles.statCard, styles.blueCard, currentIsTablet && styles.tabletStatCard]}
+                onPress={() => router.push('/(tabs)/customers')}
+              >
                 <View style={styles.statContent}>
-                  <Users size={24} color="#3B82F6" />
-                  <Text style={styles.statLabel}>
+                  <Users size={currentIsTablet ? 32 : 24} color="#3B82F6" />
+                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
                     کڕیارەکان
-                  </Text>
-                  <Text style={styles.statValue}>
+                  </KurdishText>
+                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
                     {dashboardStats.totalCustomers}
                   </Text>
+                  <View style={styles.trendIndicator}>
+                    <TrendingUp size={12} color="#3B82F6" />
+                    <Text style={styles.trendText}>+2</Text>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             </View>
 
             {/* Charts Section */}
-            <View style={styles.section}>
+            <View style={[styles.section, currentIsTablet && styles.tabletSection]}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>
+                <KurdishText style={[styles.sectionTitle, currentIsTablet && styles.tabletSectionTitle]}>
                   گرافی قەرز و پارەدان
-                </Text>
+                </KurdishText>
                 <View style={styles.chartTypeButtons}>
                   <TouchableOpacity 
                     style={[styles.chartTypeButton, chartType === 'line' && styles.activeChartType]}
@@ -337,12 +468,12 @@ export default function DashboardScreen() {
                 </View>
               </View>
               
-              <View style={styles.chartContainer}>
+              <View style={[styles.chartContainer, currentIsTablet && styles.tabletChartContainer]}>
                 {chartType === 'line' && (
                   <LineChart
                     data={chartData}
-                    width={screenWidth - 40}
-                    height={220}
+                    width={getChartWidth()}
+                    height={getChartHeight()}
                     chartConfig={{
                       backgroundColor: '#ffffff',
                       backgroundGradientFrom: '#ffffff',
@@ -372,8 +503,8 @@ export default function DashboardScreen() {
                         data: [dashboardStats.totalDebts / 1000, dashboardStats.totalPayments / 1000, dashboardStats.remainingDebt / 1000]
                       }]
                     }}
-                    width={screenWidth - 40}
-                    height={220}
+                    width={getChartWidth()}
+                    height={getChartHeight()}
                     yAxisLabel=""
                     yAxisSuffix="k"
                     chartConfig={{
@@ -391,8 +522,8 @@ export default function DashboardScreen() {
                 {chartType === 'pie' && (
                   <RNPieChart
                     data={pieChartData}
-                    width={screenWidth - 40}
-                    height={220}
+                    width={getChartWidth()}
+                    height={getChartHeight()}
                     chartConfig={{
                       color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
                     }}
@@ -406,10 +537,10 @@ export default function DashboardScreen() {
             </View>
 
             {/* Top Debtors & Best Payers */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
+            <View style={[styles.section, currentIsTablet && styles.tabletSection]}>
+              <KurdishText style={[styles.sectionTitle, currentIsTablet && styles.tabletSectionTitle]}>
                 کڕیارانی زۆر قەرزدار
-              </Text>
+              </KurdishText>
               
               <View style={styles.customersList}>
                 {topDebtors.map((customer, index) => (
@@ -418,8 +549,8 @@ export default function DashboardScreen() {
                       <Text style={styles.rankNumber}>{index + 1}</Text>
                     </View>
                     <View style={styles.customerInfo}>
-                      <Text style={styles.customerName}>{customer.name}</Text>
-                      <Text style={styles.customerDebt}>
+                      <KurdishText style={[styles.customerName, currentIsTablet && styles.tabletCustomerName]}>{customer.name}</KurdishText>
+                      <Text style={[styles.customerDebt, currentIsTablet && styles.tabletCustomerDebt]}>
                         {formatCurrency(customer.totalDebt - customer.totalPaid)}
                       </Text>
                     </View>
@@ -429,10 +560,10 @@ export default function DashboardScreen() {
               </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
+            <View style={[styles.section, currentIsTablet && styles.tabletSection]}>
+              <KurdishText style={[styles.sectionTitle, currentIsTablet && styles.tabletSectionTitle]}>
                 کڕیارانی باشترین پارەدان
-              </Text>
+              </KurdishText>
               
               <View style={styles.customersList}>
                 {bestPayers.map((customer, index) => (
@@ -441,8 +572,8 @@ export default function DashboardScreen() {
                       <Text style={styles.rankNumber}>{index + 1}</Text>
                     </View>
                     <View style={styles.customerInfo}>
-                      <Text style={styles.customerName}>{customer.name}</Text>
-                      <Text style={[styles.customerDebt, styles.goodAmount]}>
+                      <KurdishText style={[styles.customerName, currentIsTablet && styles.tabletCustomerName]}>{customer.name}</KurdishText>
+                      <Text style={[styles.customerDebt, styles.goodAmount, currentIsTablet && styles.tabletCustomerDebt]}>
                         {formatCurrency(customer.totalPaid)}
                       </Text>
                     </View>
@@ -1122,5 +1253,94 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Mobile responsive styles
+  tabletHeader: {
+    padding: 30,
+    paddingBottom: 15,
+  },
+  userInfo: {
+    flex: 1,
+  },
+  tabletWelcomeText: {
+    fontSize: 16,
+  },
+  tabletNameText: {
+    fontSize: 24,
+  },
+  lastUpdateText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 4,
+  },
+  quickActionButton: {
+    padding: 10,
+    backgroundColor: '#F0FDF4',
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  tabletLicenseText: {
+    fontSize: 16,
+  },
+  tabletStatsGrid: {
+    padding: 20,
+    gap: 16,
+  },
+  landscapeStatsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  tabletStatCard: {
+    width: isTablet ? '48%' : '48%',
+    padding: 20,
+  },
+  tabletStatLabel: {
+    fontSize: 14,
+  },
+  tabletStatValue: {
+    fontSize: 20,
+  },
+  trendIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+  },
+  trendText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+  },
+  tabletSection: {
+    padding: 30,
+  },
+  tabletSectionTitle: {
+    fontSize: 22,
+  },
+  tabletChartContainer: {
+    padding: 24,
+  },
+  tabletCustomerName: {
+    fontSize: 18,
+  },
+  tabletCustomerDebt: {
+    fontSize: 16,
   },
 });
