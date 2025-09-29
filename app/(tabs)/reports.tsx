@@ -183,6 +183,9 @@ export default function ReportsScreen() {
       case 'balance':
         router.push('/balance-report');
         break;
+      case 'customer-analytics':
+        router.push('/customer-analytics');
+        break;
       default:
         break;
     }
@@ -698,6 +701,16 @@ export default function ReportsScreen() {
               <Users size={24} color="#8B5CF6" />
               <KurdishText variant="body" color="#8B5CF6">
                 ڕاپۆرتی تایبەتی کڕیاران
+              </KurdishText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.exportButton}
+              onPress={() => navigateToDetailedReport('customer-analytics')}
+            >
+              <BarChart3 size={24} color="#06B6D4" />
+              <KurdishText variant="body" color="#06B6D4">
+                شیکاری کڕیاران
               </KurdishText>
             </TouchableOpacity>
           </View>
