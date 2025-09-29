@@ -24,6 +24,39 @@ import {
   topPayersProcedure,
   exportReportProcedure
 } from "./routes/financial/reports/route";
+import {
+  sendSMSProcedure,
+  sendBulkSMSProcedure,
+  getSMSStatsProcedure
+} from "./routes/notifications/sms/route";
+import {
+  sendEmailProcedure,
+  sendBulkEmailProcedure,
+  sendReceiptEmailProcedure,
+  getEmailStatsProcedure
+} from "./routes/notifications/email/route";
+import {
+  sendWhatsAppProcedure,
+  sendViberProcedure,
+  sendReceiptWhatsAppProcedure,
+  sendBulkWhatsAppProcedure,
+  getMessagingStatsProcedure
+} from "./routes/notifications/messaging/route";
+import {
+  sendDirectMessageProcedure,
+  getMessageThreadsProcedure,
+  getThreadMessagesProcedure,
+  markMessageAsReadProcedure,
+  markThreadAsReadProcedure
+} from "./routes/notifications/messaging/direct-messages";
+import {
+  triggerDebtNotificationProcedure,
+  triggerPaymentNotificationProcedure,
+  triggerHighDebtWarningProcedure,
+  triggerManagerNotificationProcedure,
+  getAutomationSettingsProcedure,
+  updateAutomationSettingsProcedure
+} from "./routes/notifications/automation/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -55,6 +88,39 @@ export const appRouter = createTRPCRouter({
       topDebtors: topDebtorsProcedure,
       topPayers: topPayersProcedure,
       export: exportReportProcedure,
+    }),
+  }),
+  notifications: createTRPCRouter({
+    sms: createTRPCRouter({
+      send: sendSMSProcedure,
+      sendBulk: sendBulkSMSProcedure,
+      getStats: getSMSStatsProcedure,
+    }),
+    email: createTRPCRouter({
+      send: sendEmailProcedure,
+      sendBulk: sendBulkEmailProcedure,
+      sendReceipt: sendReceiptEmailProcedure,
+      getStats: getEmailStatsProcedure,
+    }),
+    messaging: createTRPCRouter({
+      sendWhatsApp: sendWhatsAppProcedure,
+      sendViber: sendViberProcedure,
+      sendReceiptWhatsApp: sendReceiptWhatsAppProcedure,
+      sendBulkWhatsApp: sendBulkWhatsAppProcedure,
+      getStats: getMessagingStatsProcedure,
+      sendDirectMessage: sendDirectMessageProcedure,
+      getThreads: getMessageThreadsProcedure,
+      getThreadMessages: getThreadMessagesProcedure,
+      markMessageAsRead: markMessageAsReadProcedure,
+      markThreadAsRead: markThreadAsReadProcedure,
+    }),
+    automation: createTRPCRouter({
+      triggerDebtNotification: triggerDebtNotificationProcedure,
+      triggerPaymentNotification: triggerPaymentNotificationProcedure,
+      triggerHighDebtWarning: triggerHighDebtWarningProcedure,
+      triggerManagerNotification: triggerManagerNotificationProcedure,
+      getSettings: getAutomationSettingsProcedure,
+      updateSettings: updateAutomationSettingsProcedure,
     }),
   }),
 });
