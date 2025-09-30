@@ -336,6 +336,19 @@ import {
   createHelpMessageProcedure,
   deleteHelpMessageProcedure
 } from "./routes/guidance/help-messages/route";
+import {
+  getSystemConfigProcedure,
+  updateSystemConfigProcedure,
+  getPasswordPolicyProcedure as getSystemPasswordPolicyProcedure,
+  updatePasswordPolicyProcedure as updateSystemPasswordPolicyProcedure,
+  getNotificationSettingsProcedure,
+  updateNotificationSettingsProcedure,
+  getBackupSettingsProcedure as getSystemBackupSettingsProcedure,
+  updateBackupSettingsProcedure as updateSystemBackupSettingsProcedure,
+  getLimitSettingsProcedure,
+  updateLimitSettingsProcedure,
+  resetSystemConfigProcedure
+} from "./routes/system/config/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -590,6 +603,27 @@ export const appRouter = createTRPCRouter({
       updateSettings: updateSettingsProcedure,
       download: downloadUpdateProcedure,
       install: installUpdateProcedure,
+    }),
+    config: createTRPCRouter({
+      get: getSystemConfigProcedure,
+      update: updateSystemConfigProcedure,
+      reset: resetSystemConfigProcedure,
+      passwordPolicy: createTRPCRouter({
+        get: getSystemPasswordPolicyProcedure,
+        update: updateSystemPasswordPolicyProcedure,
+      }),
+      notifications: createTRPCRouter({
+        get: getNotificationSettingsProcedure,
+        update: updateNotificationSettingsProcedure,
+      }),
+      backup: createTRPCRouter({
+        get: getSystemBackupSettingsProcedure,
+        update: updateSystemBackupSettingsProcedure,
+      }),
+      limits: createTRPCRouter({
+        get: getLimitSettingsProcedure,
+        update: updateLimitSettingsProcedure,
+      }),
     }),
   }),
   quickReports: createTRPCRouter({
