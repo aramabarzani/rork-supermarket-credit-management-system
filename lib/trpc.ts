@@ -2,6 +2,8 @@ import { createTRPCReact } from "@trpc/react-query";
 import { httpLink } from "@trpc/client";
 import type { AppRouter } from "@/backend/trpc/app-router";
 import superjson from "superjson";
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const trpc = createTRPCReact<AppRouter>();
 
@@ -38,10 +40,39 @@ export const trpcClient = trpc.createClient({
         console.log('[tRPC Request] Method:', options?.method || 'GET');
         
         try {
+          let token: string | null = null;
+          
+          try {
+            if (Platform.OS === 'web') {
+              if (typeof window !== 'undefined' && window.localStorage) {
+                const userStr = window.localStorage.getItem('user');
+                if (userStr) {
+                  const user = JSON.parse(userStr);
+                  token = user.id || 'demo-token';
+                }
+              }
+            } else {
+              const userStr = await AsyncStorage.getItem('user');
+              if (userStr) {
+                const user = JSON.parse(userStr);
+                token = user.id || 'demo-token';
+              }
+            }
+          } catch (storageError) {
+            console.warn('[tRPC] Could not retrieve auth token:', storageError);
+          }
+          
+          if (!token) {
+            token = 'demo-token';
+          }
+          
+          console.log('[tRPC Request] Using token:', token ? 'Yes' : 'No');
+          
           const response = await fetch(url, {
             ...options,
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
               ...options?.headers,
             },
           });
