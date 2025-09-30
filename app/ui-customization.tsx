@@ -138,7 +138,7 @@ export default function UICustomizationScreen() {
                 <KurdishText
                   variant="body"
                   color={fontSize === size ? '#3B82F6' : '#1F2937'}
-                  style={{ fontSize: FONT_SIZE_VALUES[size] }}
+                  style={[{ fontSize: FONT_SIZE_VALUES[size] as number }]}
                 >
                   {size === 'small' ? 'بچووک' : size === 'medium' ? 'ناوەند' : size === 'large' ? 'گەورە' : 'زۆر گەورە'}
                 </KurdishText>
