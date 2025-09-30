@@ -196,6 +196,25 @@ import {
   verifyBackupProcedure,
   deleteBackupProcedure as deleteBackupNewProcedure
 } from "./routes/backup/management/route";
+import {
+  debtEvaluationProcedure,
+  paymentEvaluationProcedure,
+  customerEvaluationProcedure,
+  employeeEvaluationProcedure,
+  systemStatisticsProcedure
+} from "./routes/analytics/evaluation/route";
+import {
+  debtTrendProcedure,
+  paymentTrendProcedure,
+  comparisonDataProcedure,
+  customerStatsByRatingProcedure,
+  employeeStatsByLevelProcedure,
+  locationStatsProcedure
+} from "./routes/analytics/trends/route";
+import {
+  systemUsageProcedure,
+  realtimeStatsProcedure
+} from "./routes/analytics/usage/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -408,6 +427,27 @@ export const appRouter = createTRPCRouter({
     generateReport: generateBackupReportProcedure,
     verify: verifyBackupProcedure,
     delete: deleteBackupNewProcedure,
+  }),
+  analytics: createTRPCRouter({
+    evaluation: createTRPCRouter({
+      debt: debtEvaluationProcedure,
+      payment: paymentEvaluationProcedure,
+      customer: customerEvaluationProcedure,
+      employee: employeeEvaluationProcedure,
+      systemStats: systemStatisticsProcedure,
+    }),
+    trends: createTRPCRouter({
+      debt: debtTrendProcedure,
+      payment: paymentTrendProcedure,
+      comparison: comparisonDataProcedure,
+      customersByRating: customerStatsByRatingProcedure,
+      employeesByLevel: employeeStatsByLevelProcedure,
+      byLocation: locationStatsProcedure,
+    }),
+    usage: createTRPCRouter({
+      system: systemUsageProcedure,
+      realtime: realtimeStatsProcedure,
+    }),
   }),
 });
 

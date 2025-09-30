@@ -723,6 +723,16 @@ export default function ReportsScreen() {
                 ڕاپۆرتە پێشکەوتووەکان
               </KurdishText>
             </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.exportButton}
+              onPress={() => router.push('/analytics-dashboard')}
+            >
+              <TrendingUp size={24} color="#6366f1" />
+              <KurdishText variant="body" color="#6366f1">
+                ئامار و ئەنالیست
+              </KurdishText>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
