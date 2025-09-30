@@ -1,4 +1,4 @@
-export type SystemRole = 'owner' | 'super_admin' | 'admin' | 'employee' | 'customer';
+export type SystemRole = 'owner' | 'admin' | 'employee' | 'customer';
 
 export interface Permission {
   id: string;

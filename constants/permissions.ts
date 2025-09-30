@@ -49,6 +49,15 @@ export const PERMISSIONS = {
   MANAGE_ROLES: 'manage_roles',
   VIEW_PERMISSIONS_REPORT: 'view_permissions_report',
   EXPORT_PERMISSIONS_REPORT: 'export_permissions_report',
+  
+  // Owner-only permissions
+  MANAGE_OWNER_SETTINGS: 'manage_owner_settings',
+  VIEW_ALL_LICENSES: 'view_all_licenses',
+  CREATE_LICENSE: 'create_license',
+  EDIT_LICENSE: 'edit_license',
+  DELETE_LICENSE: 'delete_license',
+  SUSPEND_LICENSE: 'suspend_license',
+  VIEW_LICENSE_REVENUE: 'view_license_revenue',
 } as const;
 
 export const PERMISSION_LABELS: Record<string, string> = {
@@ -94,6 +103,14 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.MANAGE_ROLES]: 'بەڕێوەبردنی ڕۆڵەکان',
   [PERMISSIONS.VIEW_PERMISSIONS_REPORT]: 'بینینی ڕاپۆرتی دەسەڵاتەکان',
   [PERMISSIONS.EXPORT_PERMISSIONS_REPORT]: 'دەرهێنانی ڕاپۆرتی دەسەڵاتەکان',
+  
+  [PERMISSIONS.MANAGE_OWNER_SETTINGS]: 'بەڕێوەبردنی ڕێکخستنەکانی خاوەندار',
+  [PERMISSIONS.VIEW_ALL_LICENSES]: 'بینینی هەموو مۆڵەتەکان',
+  [PERMISSIONS.CREATE_LICENSE]: 'دروستکردنی مۆڵەت',
+  [PERMISSIONS.EDIT_LICENSE]: 'دەستکاری مۆڵەت',
+  [PERMISSIONS.DELETE_LICENSE]: 'سڕینەوەی مۆڵەت',
+  [PERMISSIONS.SUSPEND_LICENSE]: 'ڕاگرتنی مۆڵەت',
+  [PERMISSIONS.VIEW_LICENSE_REVENUE]: 'بینینی داهاتی مۆڵەت',
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS = [
