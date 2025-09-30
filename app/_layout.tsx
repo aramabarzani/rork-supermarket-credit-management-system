@@ -17,6 +17,7 @@ import { MessagingProvider } from "@/hooks/messaging-context";
 import { IntegrationProvider } from "@/hooks/integration-context";
 import { AdvancedFiltersProvider } from "@/hooks/advanced-filters-context";
 import { CustomFormsContext } from "@/hooks/custom-forms-context";
+import { ErrorLoggingContext } from "@/hooks/error-logging-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -239,6 +240,12 @@ function RootLayoutNav() {
           title: "فۆرمە تایبەتییەکان",
         }} 
       />
+      <Stack.Screen 
+        name="error-monitoring" 
+        options={{ 
+          title: "چاودێری هەڵەکان",
+        }} 
+      />
 
     </Stack>
   );
@@ -309,11 +316,12 @@ export default function RootLayout() {
       <GestureHandlerRootView style={styles.container}>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
-            <SettingsProvider>
-              <IntegrationProvider>
-                <AdvancedFiltersProvider>
-                  <CustomFormsContext>
-                    <AuthProvider>
+            <ErrorLoggingContext>
+              <SettingsProvider>
+                <IntegrationProvider>
+                  <AdvancedFiltersProvider>
+                    <CustomFormsContext>
+                      <AuthProvider>
                   <SecurityProvider>
                     <CustomerSettingsProvider>
                       <MessagingProvider>
@@ -330,11 +338,12 @@ export default function RootLayout() {
                       </MessagingProvider>
                     </CustomerSettingsProvider>
                   </SecurityProvider>
-                    </AuthProvider>
-                  </CustomFormsContext>
-                </AdvancedFiltersProvider>
-              </IntegrationProvider>
-            </SettingsProvider>
+                      </AuthProvider>
+                    </CustomFormsContext>
+                  </AdvancedFiltersProvider>
+                </IntegrationProvider>
+              </SettingsProvider>
+            </ErrorLoggingContext>
           </QueryClientProvider>
         </trpc.Provider>
       </GestureHandlerRootView>

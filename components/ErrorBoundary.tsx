@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KurdishText } from './KurdishText';
+import { useErrorLogging } from '@/hooks/error-logging-context';
 
 interface Props {
   children: React.ReactNode;
@@ -12,8 +13,8 @@ interface State {
   error?: Error;
 }
 
-export class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
+class ErrorBoundaryClass extends React.Component<Props & { logError?: (severity: 'critical', category: 'system', message: string, details?: string, stackTrace?: string) => void }, State> {
+  constructor(props: Props & { logError?: (severity: 'critical', category: 'system', message: string, details?: string, stackTrace?: string) => void }) {
     super(props);
     this.state = { hasError: false };
   }
@@ -24,6 +25,16 @@ export class ErrorBoundary extends React.Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    
+    if (this.props.logError) {
+      this.props.logError(
+        'critical',
+        'system',
+        error.message || 'Unknown error',
+        errorInfo.componentStack || undefined,
+        error.stack
+      );
+    }
   }
 
   render() {
@@ -109,3 +120,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
+
+export function ErrorBoundary({ children }: Props) {
+  const { logError } = useErrorLogging();
+  
+  return (
+    <ErrorBoundaryClass logError={logError}>
+      {children}
+    </ErrorBoundaryClass>
+  );
+}

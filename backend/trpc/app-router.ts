@@ -142,6 +142,15 @@ import {
   getFormAnalyticsProcedure,
   exportFormDataProcedure
 } from "./routes/forms/management/route";
+import {
+  getErrorLogsProcedure,
+  getErrorStatsProcedure,
+  reportErrorProcedure,
+  resolveErrorProcedure,
+  deleteErrorProcedure,
+  generateErrorReportProcedure,
+  sendErrorReportProcedure
+} from "./routes/errors/management/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -298,6 +307,15 @@ export const appRouter = createTRPCRouter({
     getSubmissions: getSubmissionsProcedure,
     getAnalytics: getFormAnalyticsProcedure,
     export: exportFormDataProcedure,
+  }),
+  errors: createTRPCRouter({
+    getLogs: getErrorLogsProcedure,
+    getStats: getErrorStatsProcedure,
+    report: reportErrorProcedure,
+    resolve: resolveErrorProcedure,
+    delete: deleteErrorProcedure,
+    generateReport: generateErrorReportProcedure,
+    sendReport: sendErrorReportProcedure,
   }),
 });
 
