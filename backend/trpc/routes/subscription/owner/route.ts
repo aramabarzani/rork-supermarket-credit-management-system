@@ -3,6 +3,7 @@ import { publicProcedure } from '../../../create-context';
 import type { 
   TenantSubscription
 } from '@/types/subscription';
+import { safeStorage } from '@/utils/storage';
 
 const mockTenants: TenantSubscription[] = [
   {

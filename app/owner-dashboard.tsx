@@ -222,8 +222,16 @@ export default function OwnerDashboardScreen() {
             <Text style={styles.descriptionText}>
               لێرەوە دەتوانیت هەژماری بەڕێوەبەران دروست بکەیت، ئابوونەکانیان بەڕێوەببەیت، و چاودێری کارکردنیان بکەیت.
             </Text>
+            <View style={styles.ownerFeatures}>
+              <Text style={styles.featureTitle}>تایبەتمەندیەکانی خاوەندار:</Text>
+              <Text style={styles.featureItem}>✓ دروستکردنی هەژماری بەڕێوەبەران</Text>
+              <Text style={styles.featureItem}>✓ بەڕێوەبردنی ئابوونە و مۆڵەتەکان</Text>
+              <Text style={styles.featureItem}>✓ چاودێری کارکردن و ئامار</Text>
+              <Text style={styles.featureItem}>✓ ڕاگرتن و چالاککردنەوەی هەژمارەکان</Text>
+              <Text style={styles.featureItem}>✓ بینینی کۆی داهات</Text>
+            </View>
             <Text style={styles.descriptionNote}>
-              تێبینی: وەک خاوەندار، تەنها دەسەڵاتی بەڕێوەبردنی بەڕێوەبەران و ئابوونەکانیانت هەیە.
+              تێبینی: وەک خاوەندار، تەنها دەسەڵاتی بەڕێوەبردنی بەڕێوەبەران و ئابوونەکانیانت هەیە. ناتوانیت دەستکاری قەرز، کارمەندان، یان کڕیاران بکەیت.
             </Text>
           </View>
         </View>
@@ -463,6 +471,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4b5563',
     lineHeight: 20,
+  },
+  ownerFeatures: {
+    backgroundColor: '#f0fdf4',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#10b981',
+    gap: 6,
+  },
+  featureTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#065f46',
+    marginBottom: 4,
+  },
+  featureItem: {
+    fontSize: 13,
+    color: '#047857',
+    lineHeight: 18,
   },
   descriptionNote: {
     fontSize: 13,
