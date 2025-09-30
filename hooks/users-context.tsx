@@ -166,15 +166,33 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const [employeeStats, setEmployeeStats] = useState<Record<string, EmployeeStats>>({});
   const [employeeSchedules, setEmployeeSchedules] = useState<Record<string, EmployeeWorkSchedule>>({});
 
-  // Load data from storage (disabled for demo with sample data)
   useEffect(() => {
-    // For demo purposes, we'll use sample data instead of loading from storage
-    // loadUsers();
-    // loadActivityLogs();
-    // loadUserSessions();
-    // loadEmployeeStats();
-    // loadEmployeeSchedules();
-    setIsLoading(false);
+    const initializeUsers = async () => {
+      setIsLoading(true);
+      try {
+        const stored = await AsyncStorage.getItem('users');
+        if (stored) {
+          const parsedUsers = JSON.parse(stored);
+          setUsers(parsedUsers);
+          console.log('UsersContext: Loaded users from storage:', parsedUsers.length);
+        } else {
+          console.log('UsersContext: No stored users, initializing with sample data');
+          await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+          setUsers(sampleUsers);
+        }
+      } catch (error) {
+        console.error('UsersContext: Error loading users:', error);
+        setUsers(sampleUsers);
+      }
+      
+      await loadActivityLogs();
+      await loadUserSessions();
+      await loadEmployeeStats();
+      await loadEmployeeSchedules();
+      setIsLoading(false);
+    };
+    
+    initializeUsers();
   }, []);
 
   const loadUsers = async () => {
