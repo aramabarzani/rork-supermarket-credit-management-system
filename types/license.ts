@@ -6,16 +6,27 @@ export interface License {
   key: string;
   clientId: string;
   clientName: string;
+  businessName: string;
+  businessType: 'supermarket' | 'grocery' | 'retail' | 'wholesale' | 'other';
   type: LicenseType;
   status: LicenseStatus;
   maxUsers: number;
   maxCustomers: number;
+  maxBranches: number;
   features: string[];
   issuedAt: string;
   expiresAt: string | null;
   lastValidated: string;
   deviceId?: string;
   ipAddress?: string;
+  contactPerson: string;
+  contactPhone: string;
+  contactEmail: string;
+  address?: string;
+  city?: string;
+  activationCount: number;
+  lastActivationAt?: string;
+  hardwareId?: string;
 }
 
 export interface LicenseValidation {
@@ -27,11 +38,19 @@ export interface LicenseValidation {
 
 export interface CreateLicenseInput {
   clientName: string;
+  businessName: string;
+  businessType: 'supermarket' | 'grocery' | 'retail' | 'wholesale' | 'other';
   type: LicenseType;
   maxUsers: number;
   maxCustomers: number;
+  maxBranches: number;
   features: string[];
   durationMonths?: number;
+  contactPerson: string;
+  contactPhone: string;
+  contactEmail: string;
+  address?: string;
+  city?: string;
 }
 
 export interface ValidateLicenseInput {

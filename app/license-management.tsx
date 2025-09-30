@@ -13,41 +13,79 @@ import {
 import { Stack } from 'expo-router';
 import { trpc } from '@/lib/trpc';
 import { KurdishText } from '@/components/KurdishText';
-import { CheckCircle, XCircle, Clock, AlertTriangle, Plus, Search, RefreshCw } from 'lucide-react-native';
+import { 
+  CheckCircle, 
+  XCircle, 
+  Clock, 
+  AlertTriangle, 
+  Plus, 
+  Search, 
+  RefreshCw,
+  Building2,
+  Users,
+  ShoppingCart,
+  Store,
+  Package
+} from 'lucide-react-native';
 import type { License, LicenseType } from '@/types/license';
+
+type BusinessType = 'supermarket' | 'grocery' | 'retail' | 'wholesale' | 'other';
 
 export default function LicenseManagementScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-
   const licensesQuery = trpc.license.getAll.useQuery();
+  const licenseStatsQuery = trpc.license.getStats.useQuery();
   const createLicenseMutation = trpc.license.create.useMutation();
   const updateStatusMutation = trpc.license.updateStatus.useMutation();
   const renewLicenseMutation = trpc.license.renew.useMutation();
+  const deactivateMutation = trpc.license.deactivate.useMutation();
 
   const [newLicense, setNewLicense] = useState({
     clientName: '',
+    businessName: '',
+    businessType: 'supermarket' as BusinessType,
     type: 'monthly' as LicenseType,
     maxUsers: 5,
     maxCustomers: 100,
+    maxBranches: 1,
     features: ['customer_management', 'debt_tracking', 'payment_tracking'],
     durationMonths: 1,
+    contactPerson: '',
+    contactPhone: '',
+    contactEmail: '',
+    address: '',
+    city: '',
   });
 
   const handleCreateLicense = async () => {
+    if (!newLicense.clientName || !newLicense.businessName || !newLicense.contactPerson || !newLicense.contactPhone) {
+      Alert.alert('هەڵە', 'تکایە هەموو خانە پێویستەکان پڕبکەرەوە');
+      return;
+    }
+
     try {
       await createLicenseMutation.mutateAsync(newLicense);
       setShowCreateModal(false);
       setNewLicense({
         clientName: '',
+        businessName: '',
+        businessType: 'supermarket',
         type: 'monthly',
         maxUsers: 5,
         maxCustomers: 100,
+        maxBranches: 1,
         features: ['customer_management', 'debt_tracking', 'payment_tracking'],
         durationMonths: 1,
+        contactPerson: '',
+        contactPhone: '',
+        contactEmail: '',
+        address: '',
+        city: '',
       });
       licensesQuery.refetch();
+      licenseStatsQuery.refetch();
       Alert.alert('سەرکەوتوو', 'لایسەنس دروستکرا');
     } catch {
       Alert.alert('هەڵە', 'کێشە لە دروستکردنی لایسەنس');
@@ -58,6 +96,7 @@ export default function LicenseManagementScreen() {
     try {
       await updateStatusMutation.mutateAsync({ licenseId, status });
       licensesQuery.refetch();
+      licenseStatsQuery.refetch();
       Alert.alert('سەرکەوتوو', 'دۆخی لایسەنس نوێکرایەوە');
     } catch {
       Alert.alert('هەڵە', 'کێشە لە نوێکردنەوەی دۆخ');
@@ -68,10 +107,34 @@ export default function LicenseManagementScreen() {
     try {
       await renewLicenseMutation.mutateAsync({ licenseId, durationMonths });
       licensesQuery.refetch();
+      licenseStatsQuery.refetch();
       Alert.alert('سەرکەوتوو', 'لایسەنس نوێکرایەوە');
     } catch {
       Alert.alert('هەڵە', 'کێشە لە نوێکردنەوەی لایسەنس');
     }
+  };
+
+  const handleDeactivate = async (licenseId: string) => {
+    Alert.alert(
+      'دڵنیایی',
+      'دڵنیایت لە ناچالاککردنی ئەم لایسەنسە؟',
+      [
+        { text: 'پاشگەزبوونەوە', style: 'cancel' },
+        {
+          text: 'ناچالاککردن',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deactivateMutation.mutateAsync({ licenseId });
+              licensesQuery.refetch();
+              Alert.alert('سەرکەوتوو', 'لایسەنس ناچالاککرا');
+            } catch {
+              Alert.alert('هەڵە', 'کێشە لە ناچالاککردنی لایسەنس');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const getStatusIcon = (status: string) => {
@@ -119,18 +182,54 @@ export default function LicenseManagementScreen() {
     }
   };
 
+  const getBusinessTypeText = (type: string) => {
+    switch (type) {
+      case 'supermarket':
+        return 'سوپەرمارکێت';
+      case 'grocery':
+        return 'بەقاڵی';
+      case 'retail':
+        return 'فرۆشگای خورد';
+      case 'wholesale':
+        return 'فرۆشگای کۆ';
+      case 'other':
+        return 'هیتر';
+      default:
+        return type;
+    }
+  };
+
+  const getBusinessTypeIcon = (type: string) => {
+    switch (type) {
+      case 'supermarket':
+        return <ShoppingCart size={16} color="#6b7280" />;
+      case 'grocery':
+        return <Store size={16} color="#6b7280" />;
+      case 'retail':
+        return <Building2 size={16} color="#6b7280" />;
+      case 'wholesale':
+        return <Package size={16} color="#6b7280" />;
+      default:
+        return <Building2 size={16} color="#6b7280" />;
+    }
+  };
+
   const filteredLicenses = licensesQuery.data?.filter(license =>
     license.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    license.key.toLowerCase().includes(searchQuery.toLowerCase())
+    license.businessName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    license.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    license.city?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
-  if (licensesQuery.isLoading) {
+  if (licensesQuery.isLoading || licenseStatsQuery.isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
   }
+
+  const stats = licenseStatsQuery.data;
 
   return (
     <View style={styles.container}>
@@ -147,7 +246,7 @@ export default function LicenseManagementScreen() {
           <Search size={20} color="#6b7280" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="گەڕان بە ناو یان کلیلی لایسەنس..."
+            placeholder="گەڕان بە ناو، بازرگانی، کلیل یان شار..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -156,7 +255,10 @@ export default function LicenseManagementScreen() {
         <View style={styles.headerButtons}>
           <TouchableOpacity
             style={styles.refreshButton}
-            onPress={() => licensesQuery.refetch()}
+            onPress={() => {
+              licensesQuery.refetch();
+              licenseStatsQuery.refetch();
+            }}
           >
             <RefreshCw size={20} color="#fff" />
           </TouchableOpacity>
@@ -172,40 +274,68 @@ export default function LicenseManagementScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <KurdishText style={styles.statValue}>
-              {licensesQuery.data?.length || 0}
-            </KurdishText>
-            <KurdishText style={styles.statLabel}>کۆی گشتی</KurdishText>
-          </View>
+        {stats && (
+          <>
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <KurdishText style={styles.statValue}>{stats.total}</KurdishText>
+                <KurdishText style={styles.statLabel}>کۆی گشتی</KurdishText>
+              </View>
 
-          <View style={styles.statCard}>
-            <KurdishText style={styles.statValue}>
-              {licensesQuery.data?.filter(l => l.status === 'active').length || 0}
-            </KurdishText>
-            <KurdishText style={styles.statLabel}>چالاک</KurdishText>
-          </View>
+              <View style={styles.statCard}>
+                <KurdishText style={styles.statValue}>{stats.active}</KurdishText>
+                <KurdishText style={styles.statLabel}>چالاک</KurdishText>
+              </View>
 
-          <View style={styles.statCard}>
-            <KurdishText style={styles.statValue}>
-              {licensesQuery.data?.filter(l => l.status === 'trial').length || 0}
-            </KurdishText>
-            <KurdishText style={styles.statLabel}>تاقیکردنەوە</KurdishText>
-          </View>
+              <View style={styles.statCard}>
+                <KurdishText style={styles.statValue}>{stats.trial}</KurdishText>
+                <KurdishText style={styles.statLabel}>تاقیکردنەوە</KurdishText>
+              </View>
 
-          <View style={styles.statCard}>
-            <KurdishText style={styles.statValue}>
-              {licensesQuery.data?.filter(l => l.status === 'expired').length || 0}
-            </KurdishText>
-            <KurdishText style={styles.statLabel}>بەسەرچووە</KurdishText>
-          </View>
-        </View>
+              <View style={styles.statCard}>
+                <KurdishText style={styles.statValue}>{stats.expiringSoon}</KurdishText>
+                <KurdishText style={styles.statLabel}>نزیکە بەسەربچێت</KurdishText>
+              </View>
+            </View>
+
+            <View style={styles.businessTypeStats}>
+              <KurdishText style={styles.sectionTitle}>جۆری بازرگانی</KurdishText>
+              <View style={styles.businessTypeGrid}>
+                <View style={styles.businessTypeStat}>
+                  <ShoppingCart size={20} color="#3b82f6" />
+                  <KurdishText style={styles.businessTypeLabel}>سوپەرمارکێت</KurdishText>
+                  <Text style={styles.businessTypeValue}>{stats.byBusinessType.supermarket}</Text>
+                </View>
+                <View style={styles.businessTypeStat}>
+                  <Store size={20} color="#10b981" />
+                  <KurdishText style={styles.businessTypeLabel}>ب��قاڵی</KurdishText>
+                  <Text style={styles.businessTypeValue}>{stats.byBusinessType.grocery}</Text>
+                </View>
+                <View style={styles.businessTypeStat}>
+                  <Building2 size={20} color="#f59e0b" />
+                  <KurdishText style={styles.businessTypeLabel}>خورد</KurdishText>
+                  <Text style={styles.businessTypeValue}>{stats.byBusinessType.retail}</Text>
+                </View>
+                <View style={styles.businessTypeStat}>
+                  <Package size={20} color="#8b5cf6" />
+                  <KurdishText style={styles.businessTypeLabel}>کۆ</KurdishText>
+                  <Text style={styles.businessTypeValue}>{stats.byBusinessType.wholesale}</Text>
+                </View>
+              </View>
+            </View>
+          </>
+        )}
+
+        <KurdishText style={styles.sectionTitle}>لیستی لایسەنسەکان</KurdishText>
 
         {filteredLicenses.map((license) => (
           <View key={license.id} style={styles.licenseCard}>
             <View style={styles.licenseHeader}>
               <View style={styles.licenseInfo}>
+                <View style={styles.businessNameRow}>
+                  {getBusinessTypeIcon(license.businessType)}
+                  <KurdishText style={styles.businessName}>{license.businessName}</KurdishText>
+                </View>
                 <KurdishText style={styles.clientName}>{license.clientName}</KurdishText>
                 <Text style={styles.licenseKey}>{license.key}</Text>
               </View>
@@ -219,7 +349,14 @@ export default function LicenseManagementScreen() {
 
             <View style={styles.licenseDetails}>
               <View style={styles.detailRow}>
-                <KurdishText style={styles.detailLabel}>جۆر:</KurdishText>
+                <KurdishText style={styles.detailLabel}>جۆری بازرگانی:</KurdishText>
+                <KurdishText style={styles.detailValue}>
+                  {getBusinessTypeText(license.businessType)}
+                </KurdishText>
+              </View>
+
+              <View style={styles.detailRow}>
+                <KurdishText style={styles.detailLabel}>جۆری لایسەنس:</KurdishText>
                 <KurdishText style={styles.detailValue}>
                   {getTypeText(license.type)}
                 </KurdishText>
@@ -235,6 +372,28 @@ export default function LicenseManagementScreen() {
                 <Text style={styles.detailValue}>{license.maxCustomers}</Text>
               </View>
 
+              <View style={styles.detailRow}>
+                <KurdishText style={styles.detailLabel}>لقەکان:</KurdishText>
+                <Text style={styles.detailValue}>{license.maxBranches}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <KurdishText style={styles.detailLabel}>کەسی پەیوەندی:</KurdishText>
+                <Text style={styles.detailValue}>{license.contactPerson}</Text>
+              </View>
+
+              <View style={styles.detailRow}>
+                <KurdishText style={styles.detailLabel}>ژمارەی مۆبایل:</KurdishText>
+                <Text style={styles.detailValue}>{license.contactPhone}</Text>
+              </View>
+
+              {license.city && (
+                <View style={styles.detailRow}>
+                  <KurdishText style={styles.detailLabel}>شار:</KurdishText>
+                  <Text style={styles.detailValue}>{license.city}</Text>
+                </View>
+              )}
+
               {license.expiresAt && (
                 <View style={styles.detailRow}>
                   <KurdishText style={styles.detailLabel}>بەسەردەچێت:</KurdishText>
@@ -243,16 +402,29 @@ export default function LicenseManagementScreen() {
                   </Text>
                 </View>
               )}
+
+              <View style={styles.detailRow}>
+                <KurdishText style={styles.detailLabel}>ژمارەی چالاککردن:</KurdishText>
+                <Text style={styles.detailValue}>{license.activationCount}</Text>
+              </View>
             </View>
 
             <View style={styles.licenseActions}>
               {license.status === 'active' && (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.suspendButton]}
-                  onPress={() => handleUpdateStatus(license.id, 'suspended')}
-                >
-                  <KurdishText style={styles.actionButtonText}>ڕاگرتن</KurdishText>
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.suspendButton]}
+                    onPress={() => handleUpdateStatus(license.id, 'suspended')}
+                  >
+                    <KurdishText style={styles.actionButtonText}>ڕاگرتن</KurdishText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.deactivateButton]}
+                    onPress={() => handleDeactivate(license.id)}
+                  >
+                    <KurdishText style={styles.actionButtonText}>ناچالاککردن</KurdishText>
+                  </TouchableOpacity>
+                </>
               )}
 
               {license.status === 'suspended' && (
@@ -264,10 +436,10 @@ export default function LicenseManagementScreen() {
                 </TouchableOpacity>
               )}
 
-              {(license.status === 'active' || license.status === 'trial') && (
+              {(license.status === 'active' || license.status === 'trial' || license.status === 'expired') && (
                 <TouchableOpacity
                   style={[styles.actionButton, styles.renewButton]}
-                  onPress={() => handleRenewLicense(license.id, 1)}
+                  onPress={() => handleRenewLicense(license.id, license.type === 'yearly' ? 12 : 1)}
                 >
                   <KurdishText style={styles.actionButtonText}>نوێکردنەوە</KurdishText>
                 </TouchableOpacity>
@@ -284,89 +456,190 @@ export default function LicenseManagementScreen() {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <KurdishText style={styles.modalTitle}>دروستکردنی لایسەنسی نوێ</KurdishText>
+          <ScrollView style={styles.modalScrollView} contentContainerStyle={styles.modalScrollContent}>
+            <View style={styles.modalContent}>
+              <KurdishText style={styles.modalTitle}>دروستکردنی لایسەنسی نوێ</KurdishText>
 
-            <View style={styles.inputGroup}>
-              <KurdishText style={styles.inputLabel}>ناوی کڕیار</KurdishText>
-              <TextInput
-                style={styles.input}
-                value={newLicense.clientName}
-                onChangeText={(text) => setNewLicense({ ...newLicense, clientName: text })}
-                placeholder="ناوی کڕیار بنووسە..."
-              />
-            </View>
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ناوی کڕیار *</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.clientName}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, clientName: text })}
+                  placeholder="ناوی کڕیار بنووسە..."
+                />
+              </View>
 
-            <View style={styles.inputGroup}>
-              <KurdishText style={styles.inputLabel}>جۆری لایسەنس</KurdishText>
-              <View style={styles.typeButtons}>
-                {(['trial', 'monthly', 'yearly', 'lifetime'] as LicenseType[]).map((type) => (
-                  <TouchableOpacity
-                    key={type}
-                    style={[
-                      styles.typeButton,
-                      newLicense.type === type && styles.typeButtonActive,
-                    ]}
-                    onPress={() => setNewLicense({ ...newLicense, type })}
-                  >
-                    <KurdishText
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ناوی بازرگانی *</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.businessName}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, businessName: text })}
+                  placeholder="ناوی بازرگانی بنووسە..."
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>جۆری بازرگانی</KurdishText>
+                <View style={styles.typeButtons}>
+                  {(['supermarket', 'grocery', 'retail', 'wholesale', 'other'] as BusinessType[]).map((type) => (
+                    <TouchableOpacity
+                      key={type}
                       style={[
-                        styles.typeButtonText,
-                        newLicense.type === type && styles.typeButtonTextActive,
+                        styles.typeButton,
+                        newLicense.businessType === type && styles.typeButtonActive,
                       ]}
+                      onPress={() => setNewLicense({ ...newLicense, businessType: type })}
                     >
-                      {getTypeText(type)}
-                    </KurdishText>
-                  </TouchableOpacity>
-                ))}
+                      <KurdishText
+                        style={[
+                          styles.typeButtonText,
+                          newLicense.businessType === type && styles.typeButtonTextActive,
+                        ]}
+                      >
+                        {getBusinessTypeText(type)}
+                      </KurdishText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>جۆری لایسەنس</KurdishText>
+                <View style={styles.typeButtons}>
+                  {(['trial', 'monthly', 'yearly', 'lifetime'] as LicenseType[]).map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={[
+                        styles.typeButton,
+                        newLicense.type === type && styles.typeButtonActive,
+                      ]}
+                      onPress={() => setNewLicense({ ...newLicense, type })}
+                    >
+                      <KurdishText
+                        style={[
+                          styles.typeButtonText,
+                          newLicense.type === type && styles.typeButtonTextActive,
+                        ]}
+                      >
+                        {getTypeText(type)}
+                      </KurdishText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ژمارەی بەکارهێنەران</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={String(newLicense.maxUsers)}
+                  onChangeText={(text) =>
+                    setNewLicense({ ...newLicense, maxUsers: parseInt(text) || 0 })
+                  }
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ژمارەی کڕیاران</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={String(newLicense.maxCustomers)}
+                  onChangeText={(text) =>
+                    setNewLicense({ ...newLicense, maxCustomers: parseInt(text) || 0 })
+                  }
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ژمارەی لقەکان</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={String(newLicense.maxBranches)}
+                  onChangeText={(text) =>
+                    setNewLicense({ ...newLicense, maxBranches: parseInt(text) || 1 })
+                  }
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>کەسی پەیوەندی *</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.contactPerson}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, contactPerson: text })}
+                  placeholder="ناوی کەسی پەیوەندی..."
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ژمارەی مۆبایل *</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.contactPhone}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, contactPhone: text })}
+                  placeholder="07XX XXX XXXX"
+                  keyboardType="phone-pad"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ئیمەیڵ</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.contactEmail}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, contactEmail: text })}
+                  placeholder="example@email.com"
+                  keyboardType="email-address"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>ناونیشان</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.address}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, address: text })}
+                  placeholder="ناونیشانی بازرگانی..."
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <KurdishText style={styles.inputLabel}>شار</KurdishText>
+                <TextInput
+                  style={styles.input}
+                  value={newLicense.city}
+                  onChangeText={(text) => setNewLicense({ ...newLicense, city: text })}
+                  placeholder="ناوی شار..."
+                />
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.cancelButton]}
+                  onPress={() => setShowCreateModal(false)}
+                >
+                  <KurdishText style={styles.cancelButtonText}>پاشگەزبوونەوە</KurdishText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalButton, styles.createButton]}
+                  onPress={handleCreateLicense}
+                  disabled={createLicenseMutation.isPending}
+                >
+                  {createLicenseMutation.isPending ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <KurdishText style={styles.createButtonText}>دروستکردن</KurdishText>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
-
-            <View style={styles.inputGroup}>
-              <KurdishText style={styles.inputLabel}>ژمارەی بەکارهێنەران</KurdishText>
-              <TextInput
-                style={styles.input}
-                value={String(newLicense.maxUsers)}
-                onChangeText={(text) =>
-                  setNewLicense({ ...newLicense, maxUsers: parseInt(text) || 0 })
-                }
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <KurdishText style={styles.inputLabel}>ژمارەی کڕیاران</KurdishText>
-              <TextInput
-                style={styles.input}
-                value={String(newLicense.maxCustomers)}
-                onChangeText={(text) =>
-                  setNewLicense({ ...newLicense, maxCustomers: parseInt(text) || 0 })
-                }
-                keyboardType="numeric"
-              />
-            </View>
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowCreateModal(false)}
-              >
-                <KurdishText style={styles.cancelButtonText}>پاشگەزبوونەوە</KurdishText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton]}
-                onPress={handleCreateLicense}
-                disabled={createLicenseMutation.isPending}
-              >
-                {createLicenseMutation.isPending ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <KurdishText style={styles.createButtonText}>دروستکردن</KurdishText>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -462,6 +735,50 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: 12,
     color: '#6b7280',
+    textAlign: 'center',
+  },
+  businessTypeStats: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  businessTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 12,
+  },
+  businessTypeStat: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#f9fafb',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    gap: 4,
+  },
+  businessTypeLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  businessTypeValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginHorizontal: 16,
+    marginBottom: 12,
   },
   licenseCard: {
     backgroundColor: '#fff',
@@ -484,15 +801,25 @@ const styles = StyleSheet.create({
   licenseInfo: {
     flex: 1,
   },
-  clientName: {
+  businessNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  businessName: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#1f2937',
+  },
+  clientName: {
+    fontSize: 14,
+    color: '#6b7280',
     marginBottom: 4,
   },
   licenseKey: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#9ca3af',
     fontFamily: 'monospace',
   },
   statusBadge: {
@@ -547,6 +874,9 @@ const styles = StyleSheet.create({
   renewButton: {
     backgroundColor: '#3b82f6',
   },
+  deactivateButton: {
+    backgroundColor: '#ef4444',
+  },
   actionButtonText: {
     color: '#fff',
     fontSize: 14,
@@ -555,9 +885,13 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  modalScrollView: {
+    flex: 1,
+  },
+  modalScrollContent: {
     padding: 16,
+    justifyContent: 'center',
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -565,6 +899,7 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '100%',
     maxWidth: 500,
+    alignSelf: 'center',
   },
   modalTitle: {
     fontSize: 20,
@@ -592,10 +927,12 @@ const styles = StyleSheet.create({
   },
   typeButtons: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
   },
   typeButton: {
     flex: 1,
+    minWidth: '30%',
     paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 1,

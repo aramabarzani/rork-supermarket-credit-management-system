@@ -386,7 +386,11 @@ import {
   validateLicenseProcedure,
   getAllLicensesProcedure,
   updateLicenseStatusProcedure,
-  renewLicenseProcedure
+  renewLicenseProcedure,
+  activateLicenseProcedure,
+  deactivateLicenseProcedure,
+  transferLicenseProcedure,
+  getLicenseStatsProcedure
 } from "./routes/license/management/route";
 import {
   getSubscriptionPlansProcedure,
@@ -907,6 +911,10 @@ export const appRouter = createTRPCRouter({
     getAll: getAllLicensesProcedure,
     updateStatus: updateLicenseStatusProcedure,
     renew: renewLicenseProcedure,
+    activate: activateLicenseProcedure,
+    deactivate: deactivateLicenseProcedure,
+    transfer: transferLicenseProcedure,
+    getStats: getLicenseStatsProcedure,
   }),
   subscription: createTRPCRouter({
     getPlans: getSubscriptionPlansProcedure,
