@@ -215,6 +215,22 @@ import {
   systemUsageProcedure,
   realtimeStatsProcedure
 } from "./routes/analytics/usage/route";
+import {
+  checkUpdatesProcedure,
+  getUpdatesProcedure,
+  getUpdateSettingsProcedure,
+  updateSettingsProcedure,
+  downloadUpdateProcedure,
+  installUpdateProcedure
+} from "./routes/system/updates/route";
+import {
+  getQuickReportsProcedure,
+  generateQuickReportProcedure,
+  getReportTemplatesProcedure,
+  createReportTemplateProcedure,
+  exportReportProcedure as exportQuickReportProcedure,
+  emailReportProcedure
+} from "./routes/reports/quick/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -448,6 +464,24 @@ export const appRouter = createTRPCRouter({
       system: systemUsageProcedure,
       realtime: realtimeStatsProcedure,
     }),
+  }),
+  system: createTRPCRouter({
+    updates: createTRPCRouter({
+      check: checkUpdatesProcedure,
+      getAll: getUpdatesProcedure,
+      getSettings: getUpdateSettingsProcedure,
+      updateSettings: updateSettingsProcedure,
+      download: downloadUpdateProcedure,
+      install: installUpdateProcedure,
+    }),
+  }),
+  quickReports: createTRPCRouter({
+    getAll: getQuickReportsProcedure,
+    generate: generateQuickReportProcedure,
+    getTemplates: getReportTemplatesProcedure,
+    createTemplate: createReportTemplateProcedure,
+    export: exportQuickReportProcedure,
+    email: emailReportProcedure,
   }),
 });
 
