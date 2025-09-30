@@ -289,13 +289,18 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       createdAt: new Date().toISOString(),
       isActive: true,
       permissions: userData.role === 'employee' ? DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })) : [],
-      password: userData.password,
+      password: userData.password || userData.phone || 'default123',
       failedLoginAttempts: 0,
       twoFactorEnabled: false,
-      allowedDevices: 3,
+      allowedDevices: userData.role === 'customer' ? 2 : 3,
       currentSessions: [],
       address: userData.address,
       nationalId: userData.nationalId,
+      email: userData.email,
+      customerGroup: userData.customerGroup,
+      customerRating: userData.role === 'customer' ? 'new' : undefined,
+      onTimePayments: userData.role === 'customer' ? 0 : undefined,
+      latePayments: userData.role === 'customer' ? 0 : undefined,
     };
 
     const updatedUsers = [...users, newUser];

@@ -52,7 +52,7 @@ export default function AddUserScreen() {
     await addUser({
       name,
       phone,
-      password: role === 'employee' ? password : undefined,
+      password: role === 'employee' ? password : (password || phone),
       role,
       isActive: true,
       address: role === 'customer' ? address : undefined,
