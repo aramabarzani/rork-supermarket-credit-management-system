@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
-import { User, LoginCredentials } from '@/types/auth';
+import { User, LoginCredentials, LoginResult } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
 
@@ -123,7 +123,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return () => clearTimeout(timer);
   }, [isHydrated]);
 
-  const login = useCallback(async (credentials: LoginCredentials): Promise<{ success: boolean; error?: string }> => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
       console.log('AuthProvider: Login attempt for:', credentials.phone);
       
@@ -187,7 +187,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         );
         await safeStorage.setItem('users', updatedUsers);
         
-        return { success: true };
+        return { success: true, user: updatedUser };
       }
       
       console.log('AuthProvider: Invalid credentials');

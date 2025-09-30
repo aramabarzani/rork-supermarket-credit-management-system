@@ -24,13 +24,19 @@ export default function IndexScreen() {
       return;
     }
     
-    console.log('IndexScreen: Auth loaded, user:', !!user);
+    console.log('IndexScreen: Auth loaded, user:', !!user, 'role:', user?.role);
     
     // Small delay to ensure everything is ready, then navigate
     const timer = setTimeout(() => {
       if (user) {
-        console.log('IndexScreen: User found, redirecting to dashboard');
-        router.replace('/(tabs)/dashboard');
+        console.log('IndexScreen: User found, role:', user.role);
+        if (user.role === 'owner') {
+          console.log('IndexScreen: Owner detected, redirecting to owner dashboard');
+          router.replace('/owner-dashboard');
+        } else {
+          console.log('IndexScreen: Non-owner user, redirecting to dashboard');
+          router.replace('/(tabs)/dashboard');
+        }
       } else {
         console.log('IndexScreen: No user, redirecting to login');
         router.replace('/login');

@@ -34,8 +34,13 @@ export default function LoginScreen() {
     try {
       const result = await login({ phone, password });
       
-      if (result.success) {
-        router.replace('/(tabs)/dashboard');
+      if (result.success && result.user) {
+        console.log('Login successful, user role:', result.user.role);
+        if (result.user.role === 'owner') {
+          router.replace('/owner-dashboard');
+        } else {
+          router.replace('/(tabs)/dashboard');
+        }
       } else {
         Alert.alert('هەڵە', result.error || 'چوونەژوورەوە سەرکەوتوو نەبوو');
       }

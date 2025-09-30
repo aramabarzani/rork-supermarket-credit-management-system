@@ -60,6 +60,12 @@ export interface LoginCredentials {
   deviceId?: string;
 }
 
+export interface LoginResult {
+  success: boolean;
+  error?: string;
+  user?: User;
+}
+
 export interface UserSession {
   id: string;
   userId: string;

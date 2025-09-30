@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { trpc } from '@/lib/trpc';
-import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle } from 'lucide-react-native';
+import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle, LogOut } from 'lucide-react-native';
 import type { TenantSubscription, SubscriptionPlan } from '@/types/subscription';
 import { SUBSCRIPTION_PLANS } from '@/types/subscription';
+import { useAuth } from '@/hooks/auth-context';
 
 export default function OwnerDashboardScreen() {
+  const { user, logout } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newAdmin, setNewAdmin] = useState({
     name: '',
@@ -30,6 +32,24 @@ export default function OwnerDashboardScreen() {
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();
   const activateMutation = trpc.subscription.owner.activate.useMutation();
   const deleteMutation = trpc.subscription.owner.delete.useMutation();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'دەرچوون',
+      'دڵنیایت لە دەرچوون؟',
+      [
+        { text: 'پاشگەزبوونەوە', style: 'cancel' },
+        {
+          text: 'دەرچوون',
+          style: 'destructive',
+          onPress: async () => {
+            await logout();
+            router.replace('/login');
+          },
+        },
+      ]
+    );
+  };
 
   const handleCreateAdmin = async () => {
     if (!newAdmin.name || !newAdmin.phone || !newAdmin.password) {
@@ -71,7 +91,7 @@ export default function OwnerDashboardScreen() {
               });
               Alert.alert('سەرکەوتوو', 'بەڕێوەبەر ڕاگیرا');
               refetch();
-            } catch (error) {
+            } catch {
               Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
             }
           },
@@ -105,7 +125,7 @@ export default function OwnerDashboardScreen() {
               await deleteMutation.mutateAsync({ tenantId });
               Alert.alert('سەرکەوتوو', 'بەڕێوەبەر سڕایەوە');
               refetch();
-            } catch (error) {
+            } catch {
               Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
             }
           },
@@ -176,6 +196,11 @@ export default function OwnerDashboardScreen() {
       <Stack.Screen
         options={{
           title: 'داشبۆردی خاوەندار',
+          headerLeft: () => (
+            <TouchableOpacity onPress={handleLogout} style={styles.headerButton}>
+              <LogOut size={24} color="#fff" />
+            </TouchableOpacity>
+          ),
           headerRight: () => (
             <TouchableOpacity onPress={() => setShowCreateModal(true)} style={styles.headerButton}>
               <Plus size={24} color="#fff" />
@@ -185,6 +210,24 @@ export default function OwnerDashboardScreen() {
       />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.welcomeCard}>
+          <View style={styles.welcomeHeader}>
+            <Users size={48} color="#1E3A8A" />
+            <View style={styles.welcomeTextContainer}>
+              <Text style={styles.welcomeTitle}>بەخێربێیت، {user?.name}</Text>
+              <Text style={styles.welcomeSubtitle}>پانێڵی بەڕێوەبردنی سیستەمی Multi-Tenant</Text>
+            </View>
+          </View>
+          <View style={styles.welcomeDescription}>
+            <Text style={styles.descriptionText}>
+              لێرەوە دەتوانیت هەژماری بەڕێوەبەران دروست بکەیت، ئابوونەکانیان بەڕێوەببەیت، و چاودێری کارکردنیان بکەیت.
+            </Text>
+            <Text style={styles.descriptionNote}>
+              تێبینی: وەک خاوەندار، تەنها دەسەڵاتی بەڕێوەبردنی بەڕێوەبەران و ئابوونەکانیانت هەیە.
+            </Text>
+          </View>
+        </View>
+
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Users size={32} color="#3b82f6" />
@@ -381,7 +424,55 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   headerButton: {
-    marginRight: 16,
+    marginHorizontal: 16,
+  },
+  welcomeCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  welcomeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 16,
+  },
+  welcomeTextContainer: {
+    flex: 1,
+  },
+  welcomeTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  welcomeSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  welcomeDescription: {
+    gap: 12,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+  },
+  descriptionNote: {
+    fontSize: 13,
+    color: '#3b82f6',
+    fontWeight: '600',
+    backgroundColor: '#eff6ff',
+    padding: 12,
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#3b82f6',
   },
   scrollView: {
     flex: 1,
