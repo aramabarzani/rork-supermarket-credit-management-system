@@ -178,12 +178,12 @@ import {
   getInactivityReportProcedure
 } from "./routes/monitoring/inactivity/route";
 import {
-  getCustomReportsProcedure,
+  getCustomReportsProcedure as getMonitoringReportsProcedure,
   getCustomReportByIdProcedure,
   generateAdminReportProcedure,
   generateEmployeeReportProcedure,
   generateCustomerReportProcedure,
-  deleteCustomReportProcedure
+  deleteCustomReportProcedure as deleteMonitoringReportProcedure
 } from "./routes/monitoring/reports/route";
 import {
   getBackupConfigProcedure,
@@ -411,6 +411,47 @@ import {
   getAllPermissionsProcedure,
   getPermissionsByCategoryProcedure
 } from "./routes/rbac/management/route";
+import {
+  createCustomReportProcedure,
+  getCustomReportsProcedure,
+  generateCustomReportProcedure,
+  deleteCustomReportProcedure
+} from "./routes/reports/custom/route";
+import {
+  printReportProcedure,
+  printReceiptProcedure,
+  printCustomerCardProcedure,
+  printEmployeeCardProcedure,
+  printManagerCardProcedure,
+  getPrintTemplatesProcedure,
+  createPrintTemplateProcedure,
+  getPrintJobsProcedure
+} from "./routes/printing/management/route";
+import {
+  getIntegrationsProcedure,
+  createIntegrationProcedure,
+  updateIntegrationProcedure,
+  testIntegrationProcedure,
+  deleteIntegrationProcedure,
+  syncIntegrationProcedure
+} from "./routes/integrations/external/route";
+import {
+  generateYearEndReportProcedure,
+  getYearEndReportsProcedure,
+  exportYearEndReportProcedure
+} from "./routes/reports/year-end/route";
+import {
+  getSessionControlProcedure,
+  updateSessionControlProcedure,
+  getLoginAttemptsProcedure,
+  unlockAccountProcedure,
+  getAccountLockAlertsProcedure
+} from "./routes/session/control/route";
+import {
+  generateComprehensiveReportProcedure,
+  getComprehensiveReportsProcedure,
+  exportComprehensiveReportProcedure
+} from "./routes/system/comprehensive/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -607,12 +648,12 @@ export const appRouter = createTRPCRouter({
       getReport: getInactivityReportProcedure,
     }),
     reports: createTRPCRouter({
-      getAll: getCustomReportsProcedure,
+      getAll: getMonitoringReportsProcedure,
       getById: getCustomReportByIdProcedure,
       generateAdmin: generateAdminReportProcedure,
       generateEmployee: generateEmployeeReportProcedure,
       generateCustomer: generateCustomerReportProcedure,
-      delete: deleteCustomReportProcedure,
+      delete: deleteMonitoringReportProcedure,
     }),
     impact: createTRPCRouter({
       getEmployeeImpact: getEmployeeImpactProcedure,
@@ -882,6 +923,47 @@ export const appRouter = createTRPCRouter({
       getByUser: getUserPermissionsProcedure,
       check: checkPermissionProcedure,
     }),
+  }),
+  customReports: createTRPCRouter({
+    create: createCustomReportProcedure,
+    getAll: getCustomReportsProcedure,
+    generate: generateCustomReportProcedure,
+    delete: deleteCustomReportProcedure,
+  }),
+  printing: createTRPCRouter({
+    printReport: printReportProcedure,
+    printReceipt: printReceiptProcedure,
+    printCustomerCard: printCustomerCardProcedure,
+    printEmployeeCard: printEmployeeCardProcedure,
+    printManagerCard: printManagerCardProcedure,
+    getTemplates: getPrintTemplatesProcedure,
+    createTemplate: createPrintTemplateProcedure,
+    getJobs: getPrintJobsProcedure,
+  }),
+  integrations: createTRPCRouter({
+    getAll: getIntegrationsProcedure,
+    create: createIntegrationProcedure,
+    update: updateIntegrationProcedure,
+    test: testIntegrationProcedure,
+    delete: deleteIntegrationProcedure,
+    sync: syncIntegrationProcedure,
+  }),
+  yearEndReports: createTRPCRouter({
+    generate: generateYearEndReportProcedure,
+    getAll: getYearEndReportsProcedure,
+    export: exportYearEndReportProcedure,
+  }),
+  sessionControl: createTRPCRouter({
+    getSettings: getSessionControlProcedure,
+    updateSettings: updateSessionControlProcedure,
+    getLoginAttempts: getLoginAttemptsProcedure,
+    unlockAccount: unlockAccountProcedure,
+    getAlerts: getAccountLockAlertsProcedure,
+  }),
+  comprehensiveReports: createTRPCRouter({
+    generate: generateComprehensiveReportProcedure,
+    getAll: getComprehensiveReportsProcedure,
+    export: exportComprehensiveReportProcedure,
   }),
 });
 

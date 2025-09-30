@@ -1,129 +1,143 @@
-import { z } from 'zod';
-import { protectedProcedure } from '../../../create-context';
-import type { PrintTemplate, PrintJob } from '@/types/professional-features';
+import { z } from "zod";
+import { protectedProcedure } from "../../create-context";
 
-const printTemplateSchema = z.object({
-  name: z.string(),
-  type: z.enum(['receipt', 'customer_card', 'employee_card', 'manager_card', 'report']),
-  template: z.string(),
-  settings: z.object({
-    paperSize: z.enum(['A4', 'A5', 'letter', 'thermal']),
-    orientation: z.enum(['portrait', 'landscape']),
-    margins: z.object({
-      top: z.number(),
-      right: z.number(),
-      bottom: z.number(),
-      left: z.number(),
-    }),
-    header: z.string().optional(),
-    footer: z.string().optional(),
-  }),
-});
+export const printReportProcedure = protectedProcedure
+  .input(
+    z.object({
+      reportId: z.string(),
+      templateId: z.string().optional(),
+    })
+  )
+  .mutation(async ({ input }) => {
+    console.log("[Printing] Printing report:", input.reportId);
+
+    return {
+      success: true,
+      jobId: `print_${Date.now()}`,
+      message: "ڕاپۆرت بۆ چاپکردن نێردرا",
+    };
+  });
+
+export const printReceiptProcedure = protectedProcedure
+  .input(
+    z.object({
+      receiptId: z.string(),
+      templateId: z.string().optional(),
+    })
+  )
+  .mutation(async ({ input }) => {
+    console.log("[Printing] Printing receipt:", input.receiptId);
+
+    return {
+      success: true,
+      jobId: `print_${Date.now()}`,
+      message: "وەسڵ بۆ چاپکردن نێردرا",
+    };
+  });
+
+export const printCustomerCardProcedure = protectedProcedure
+  .input(z.object({ customerId: z.string() }))
+  .mutation(async ({ input }) => {
+    console.log("[Printing] Printing customer card:", input.customerId);
+
+    return {
+      success: true,
+      jobId: `print_${Date.now()}`,
+      message: "کارتی کڕیار بۆ چاپکردن نێردرا",
+    };
+  });
+
+export const printEmployeeCardProcedure = protectedProcedure
+  .input(z.object({ employeeId: z.string() }))
+  .mutation(async ({ input }) => {
+    console.log("[Printing] Printing employee card:", input.employeeId);
+
+    return {
+      success: true,
+      jobId: `print_${Date.now()}`,
+      message: "کارتی کارمەند بۆ چاپکردن نێردرا",
+    };
+  });
+
+export const printManagerCardProcedure = protectedProcedure
+  .input(z.object({ managerId: z.string() }))
+  .mutation(async ({ input }) => {
+    console.log("[Printing] Printing manager card:", input.managerId);
+
+    return {
+      success: true,
+      jobId: `print_${Date.now()}`,
+      message: "کارتی بەڕێوەبەر بۆ چاپکردن نێردرا",
+    };
+  });
 
 export const getPrintTemplatesProcedure = protectedProcedure.query(async () => {
-  const templates: PrintTemplate[] = [
+  console.log("[Printing] Fetching print templates");
+
+  const templates = [
     {
-      id: '1',
-      name: 'وەسڵی پارەدان',
-      type: 'receipt',
-      template: '<div>{{customerName}} - {{amount}}</div>',
+      id: "template_1",
+      name: "تێمپلەیتی وەسڵی ستاندارد",
+      type: "receipt" as const,
+      template: "<html>...</html>",
       settings: {
-        paperSize: 'thermal',
-        orientation: 'portrait',
-        margins: { top: 5, right: 5, bottom: 5, left: 5 },
+        paperSize: "thermal" as const,
+        orientation: "portrait" as const,
+        margins: { top: 10, right: 10, bottom: 10, left: 10 },
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     },
   ];
 
-  return { templates };
+  return {
+    success: true,
+    templates,
+  };
 });
 
 export const createPrintTemplateProcedure = protectedProcedure
-  .input(printTemplateSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof printTemplateSchema> }) => {
-    const template: PrintTemplate = {
-      id: Date.now().toString(),
+  .input(
+    z.object({
+      name: z.string(),
+      type: z.enum(["receipt", "customer_card", "employee_card", "manager_card", "report"]),
+      template: z.string(),
+      settings: z.object({
+        paperSize: z.enum(["A4", "A5", "letter", "thermal"]),
+        orientation: z.enum(["portrait", "landscape"]),
+        margins: z.object({
+          top: z.number(),
+          right: z.number(),
+          bottom: z.number(),
+          left: z.number(),
+        }),
+        header: z.string().optional(),
+        footer: z.string().optional(),
+      }),
+    })
+  )
+  .mutation(async ({ input }) => {
+    console.log("[Printing] Creating print template:", input.name);
+
+    const template = {
+      id: `template_${Date.now()}`,
       ...input,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('Creating print template:', template);
-
-    return { template, success: true };
-  });
-
-const updateTemplateInputSchema = z.object({
-  id: z.string(),
-  data: printTemplateSchema.partial(),
-});
-
-export const updatePrintTemplateProcedure = protectedProcedure
-  .input(updateTemplateInputSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof updateTemplateInputSchema> }) => {
-    console.log('Updating print template:', input.id);
-
-    return { success: true };
-  });
-
-const deleteTemplateInputSchema = z.object({ id: z.string() });
-
-export const deletePrintTemplateProcedure = protectedProcedure
-  .input(deleteTemplateInputSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof deleteTemplateInputSchema> }) => {
-    console.log('Deleting print template:', input.id);
-
-    return { success: true };
-  });
-
-const printInputSchema = z.object({
-  templateId: z.string(),
-  data: z.record(z.string(), z.any()),
-});
-
-export const printDocumentProcedure = protectedProcedure
-  .input(printInputSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof printInputSchema> }) => {
-    const job: PrintJob = {
-      id: Date.now().toString(),
-      templateId: input.templateId,
-      data: input.data,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
+    return {
+      success: true,
+      template,
+      message: "تێمپلەیتی چاپکردن دروستکرا",
     };
-
-    console.log('Creating print job:', job);
-
-    setTimeout(() => {
-      console.log('Print job completed:', job.id);
-    }, 2000);
-
-    return { job, success: true };
   });
 
 export const getPrintJobsProcedure = protectedProcedure.query(async () => {
-  const jobs: PrintJob[] = [];
+  console.log("[Printing] Fetching print jobs");
 
-  return { jobs };
+  return {
+    success: true,
+    jobs: [],
+  };
 });
-
-const printJobStatusInputSchema = z.object({ id: z.string() });
-
-export const getPrintJobStatusProcedure = protectedProcedure
-  .input(printJobStatusInputSchema)
-  .query(async ({ input }: { input: z.infer<typeof printJobStatusInputSchema> }) => {
-    console.log('Getting print job status:', input.id);
-
-    const job: PrintJob = {
-      id: input.id,
-      templateId: '1',
-      data: {},
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-      completedAt: new Date().toISOString(),
-    };
-
-    return { job };
-  });

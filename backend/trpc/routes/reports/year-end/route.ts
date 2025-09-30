@@ -1,98 +1,66 @@
-import { z } from 'zod';
-import { protectedProcedure } from '../../../create-context';
-import type { YearEndReport, SystemReport } from '@/types/professional-features';
-
-const yearEndReportInputSchema = z.object({
-  year: z.number(),
-});
+import { z } from "zod";
+import { protectedProcedure } from "../../create-context";
 
 export const generateYearEndReportProcedure = protectedProcedure
-  .input(yearEndReportInputSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof yearEndReportInputSchema> }) => {
-    const report: YearEndReport = {
-      id: Date.now().toString(),
+  .input(z.object({ year: z.number() }))
+  .mutation(async ({ input, ctx }) => {
+    console.log("[Year End Report] Generating report for year:", input.year);
+
+    const report = {
+      id: `year_end_${input.year}`,
       year: input.year,
-      totalRevenue: 50000000,
-      totalDebts: 15000000,
-      totalPayments: 35000000,
+      totalRevenue: 1500000,
+      totalDebts: 500000,
+      totalPayments: 1000000,
       totalCustomers: 250,
-      totalEmployees: 12,
+      totalEmployees: 15,
       topCustomers: [
         {
-          id: '1',
-          name: 'ئەحمەد محەمەد',
-          totalDebt: 2500000,
-          totalPayments: 2000000,
-        },
-        {
-          id: '2',
-          name: 'سارا عەلی',
-          totalDebt: 1800000,
-          totalPayments: 1500000,
+          id: "cust_1",
+          name: "ئەحمەد محەمەد",
+          totalDebt: 50000,
+          totalPayments: 45000,
         },
       ],
       monthlyBreakdown: Array.from({ length: 12 }, (_, i) => ({
         month: i + 1,
-        revenue: Math.floor(Math.random() * 5000000) + 2000000,
-        debts: Math.floor(Math.random() * 2000000) + 500000,
-        payments: Math.floor(Math.random() * 3000000) + 1500000,
+        revenue: Math.floor(Math.random() * 150000),
+        debts: Math.floor(Math.random() * 50000),
+        payments: Math.floor(Math.random() * 100000),
       })),
       generatedAt: new Date().toISOString(),
-      generatedBy: 'admin',
+      generatedBy: ctx.user?.id || "system",
     };
 
-    console.log('Generating year-end report for year:', input.year);
-
-    return { report, success: true };
+    return {
+      success: true,
+      report,
+      message: "ڕاپۆرتی کۆتایی ساڵ دروستکرا",
+    };
   });
 
 export const getYearEndReportsProcedure = protectedProcedure.query(async () => {
-  const reports: YearEndReport[] = [];
+  console.log("[Year End Report] Fetching year end reports");
 
-  return { reports };
+  return {
+    success: true,
+    reports: [],
+  };
 });
 
-const systemReportInputSchema = z.object({
-  sections: z.array(z.string()),
-  format: z.enum(['pdf', 'excel', 'csv', 'json']),
-});
+export const exportYearEndReportProcedure = protectedProcedure
+  .input(
+    z.object({
+      reportId: z.string(),
+      format: z.enum(["pdf", "excel"]),
+    })
+  )
+  .mutation(async ({ input }) => {
+    console.log("[Year End Report] Exporting report:", input.reportId);
 
-export const generateSystemReportProcedure = protectedProcedure
-  .input(systemReportInputSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof systemReportInputSchema> }) => {
-    const report: SystemReport = {
-      id: Date.now().toString(),
-      type: 'comprehensive',
-      title: 'ڕاپۆرتی گشتی سیستەم',
-      sections: input.sections.map((section) => ({
-        name: section,
-        data: {
-          total: Math.floor(Math.random() * 1000),
-          active: Math.floor(Math.random() * 500),
-          inactive: Math.floor(Math.random() * 500),
-        },
-      })),
-      generatedAt: new Date().toISOString(),
-      generatedBy: 'admin',
-      format: input.format,
+    return {
+      success: true,
+      url: `https://example.com/reports/${input.reportId}.${input.format}`,
+      message: "ڕاپۆرت هەناردە کرا",
     };
-
-    console.log('Generating system report with sections:', input.sections);
-
-    return { report, success: true };
-  });
-
-const downloadReportInputSchema = z.object({
-  reportId: z.string(),
-  format: z.enum(['pdf', 'excel', 'csv', 'json']),
-});
-
-export const downloadReportProcedure = protectedProcedure
-  .input(downloadReportInputSchema)
-  .mutation(async ({ input }: { input: z.infer<typeof downloadReportInputSchema> }) => {
-    console.log('Downloading report:', input.reportId, 'as', input.format);
-
-    const url = `https://example.com/reports/${input.reportId}.${input.format}`;
-
-    return { url, success: true };
   });
