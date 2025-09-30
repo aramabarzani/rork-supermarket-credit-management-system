@@ -42,6 +42,7 @@ import { useDebts } from '@/hooks/debt-context';
 import { useUsers } from '@/hooks/users-context';
 import { useNotifications } from '@/hooks/notification-context';
 import { KurdishText } from '@/components/KurdishText';
+import { GlobalSearchBar } from '@/components/GlobalSearchBar';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = screenWidth > 768;
@@ -323,6 +324,9 @@ export default function DashboardScreen() {
                 </KurdishText>
               </View>
             </View>
+
+            {/* Global Search Bar */}
+            <GlobalSearchBar />
 
             {/* Filter Controls */}
             <View style={styles.filterSection}>

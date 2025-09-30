@@ -349,6 +349,10 @@ import {
   updateLimitSettingsProcedure,
   resetSystemConfigProcedure
 } from "./routes/system/config/route";
+import {
+  globalSearchProcedure,
+  quickSearchSuggestionsProcedure
+} from "./routes/search/global/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -491,6 +495,8 @@ export const appRouter = createTRPCRouter({
     advanced: advancedSearchProcedure,
     quick: quickSearchProcedure,
     autoEmail: autoEmailSearchProcedure,
+    global: globalSearchProcedure,
+    suggestions: quickSearchSuggestionsProcedure,
   }),
   forms: createTRPCRouter({
     getAll: getFormsProcedure,
