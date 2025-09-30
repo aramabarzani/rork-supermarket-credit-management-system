@@ -318,6 +318,24 @@ import {
   getAutoShareSettingsProcedure,
   updateAutoShareSettingsProcedure
 } from "./routes/sharing/management/route";
+import {
+  tutorialsProcedure,
+  tutorialByIdProcedure,
+  createTutorialProcedure,
+  updateTutorialProcedure,
+  deleteTutorialProcedure
+} from "./routes/guidance/tutorials/route";
+import {
+  newslettersProcedure,
+  createNewsletterProcedure,
+  sendNewsletterProcedure,
+  deleteNewsletterProcedure
+} from "./routes/guidance/newsletters/route";
+import {
+  helpMessagesProcedure,
+  createHelpMessageProcedure,
+  deleteHelpMessageProcedure
+} from "./routes/guidance/help-messages/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -677,6 +695,26 @@ export const appRouter = createTRPCRouter({
     autoSettings: createTRPCRouter({
       get: getAutoShareSettingsProcedure,
       update: updateAutoShareSettingsProcedure,
+    }),
+  }),
+  guidance: createTRPCRouter({
+    tutorials: createTRPCRouter({
+      getAll: tutorialsProcedure,
+      getById: tutorialByIdProcedure,
+      create: createTutorialProcedure,
+      update: updateTutorialProcedure,
+      delete: deleteTutorialProcedure,
+    }),
+    newsletters: createTRPCRouter({
+      getAll: newslettersProcedure,
+      create: createNewsletterProcedure,
+      send: sendNewsletterProcedure,
+      delete: deleteNewsletterProcedure,
+    }),
+    helpMessages: createTRPCRouter({
+      getAll: helpMessagesProcedure,
+      create: createHelpMessageProcedure,
+      delete: deleteHelpMessageProcedure,
     }),
   }),
 });
