@@ -127,32 +127,39 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('AuthProvider: Login attempt for:', credentials.phone);
       
-      let allUsers: User[] = [];
+      let allUsers: User[] = [...DEMO_USERS];
       try {
         const storedUsers = await safeStorage.getItem<User[]>('users', null);
         if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
           console.log('AuthProvider: Loaded users from storage:', storedUsers.length);
-          allUsers = storedUsers;
+          const mergedUsers = [...DEMO_USERS];
+          storedUsers.forEach(storedUser => {
+            const existingIndex = mergedUsers.findIndex(u => u.id === storedUser.id);
+            if (existingIndex >= 0) {
+              mergedUsers[existingIndex] = storedUser;
+            } else {
+              mergedUsers.push(storedUser);
+            }
+          });
+          allUsers = mergedUsers;
         } else {
-          console.log('AuthProvider: No stored users, initializing with demo users');
-          allUsers = [...DEMO_USERS];
+          console.log('AuthProvider: No stored users, using demo users');
           await safeStorage.setItem('users', allUsers);
         }
       } catch (error) {
         console.error('AuthProvider: Error loading users:', error);
         console.log('AuthProvider: Using demo users');
-        allUsers = [...DEMO_USERS];
         await safeStorage.setItem('users', allUsers);
       }
       
       console.log('AuthProvider: Searching for user with phone:', credentials.phone);
-      console.log('AuthProvider: Available users:', allUsers.map(u => ({ phone: u.phone, role: u.role })));
+      console.log('AuthProvider: Available users:', allUsers.map(u => ({ phone: u.phone, role: u.role, name: u.name })));
       
       const foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
       );
       
-      console.log('AuthProvider: Found user:', foundUser ? foundUser.name : 'Not found');
+      console.log('AuthProvider: Found user:', foundUser ? `${foundUser.name} (${foundUser.role})` : 'Not found');
       
       if (foundUser) {
         if (!foundUser.isActive) {
@@ -165,7 +172,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
         }
         
-        console.log('AuthProvider: Login successful for:', foundUser.name);
+        console.log('AuthProvider: Login successful for:', foundUser.name, 'Role:', foundUser.role);
         const updatedUser = {
           ...foundUser,
           lastLoginAt: new Date().toISOString(),
@@ -173,14 +180,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         };
         setUser(updatedUser);
         
-
-        
-        safeStorage.setItem('user', updatedUser);
+        await safeStorage.setItem('user', updatedUser);
         
         const updatedUsers = allUsers.map(u => 
           u.id === foundUser.id ? updatedUser : u
         );
-        safeStorage.setItem('users', updatedUsers);
+        await safeStorage.setItem('users', updatedUsers);
         
         return { success: true };
       }
