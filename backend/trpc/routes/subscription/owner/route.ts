@@ -5,57 +5,81 @@ import type {
 } from '@/types/subscription';
 import { safeStorage } from '@/utils/storage';
 
-const mockTenants: TenantSubscription[] = [
-  {
-    id: 'tenant-1',
-    adminId: 'admin-1',
-    adminName: 'مارکێتی یەکەم',
-    adminPhone: '07501111111',
-    plan: 'pro',
-    status: 'active',
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    expiryDate: new Date(Date.now() + 335 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    createdBy: 'owner',
-    staffCount: 5,
-    customerCount: 120,
-    notificationsSent: 0,
-  },
-  {
-    id: 'tenant-2',
-    adminId: 'admin-2',
-    adminName: 'مارکێتی دووەم',
-    adminPhone: '07502222222',
-    plan: 'basic',
-    status: 'active',
-    startDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    expiryDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    createdBy: 'owner',
-    staffCount: 3,
-    customerCount: 45,
-    notificationsSent: 1,
-    lastNotificationAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 'tenant-3',
-    adminId: 'admin-3',
-    adminName: 'مارکێتی سێیەم',
-    adminPhone: '07503333333',
-    plan: 'basic',
-    status: 'expired',
-    startDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-    expiryDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-    createdBy: 'owner',
-    staffCount: 2,
-    customerCount: 30,
-    notificationsSent: 3,
-    lastNotificationAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+let mockTenants: TenantSubscription[] = [];
+
+const loadTenants = async () => {
+  try {
+    const stored = await safeStorage.getItem<TenantSubscription[]>('tenants', null);
+    if (stored && Array.isArray(stored) && stored.length > 0) {
+      mockTenants = stored;
+    } else {
+      mockTenants = [
+        {
+          id: 'tenant-1',
+          adminId: 'admin-1',
+          adminName: 'مارکێتی یەکەم',
+          adminPhone: '07501111111',
+          plan: 'pro',
+          status: 'active',
+          startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          expiryDate: new Date(Date.now() + 335 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          createdBy: 'owner',
+          staffCount: 5,
+          customerCount: 120,
+          notificationsSent: 0,
+        },
+        {
+          id: 'tenant-2',
+          adminId: 'admin-2',
+          adminName: 'مارکێتی دووەم',
+          adminPhone: '07502222222',
+          plan: 'basic',
+          status: 'active',
+          startDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+          expiryDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+          createdBy: 'owner',
+          staffCount: 3,
+          customerCount: 45,
+          notificationsSent: 1,
+          lastNotificationAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+        {
+          id: 'tenant-3',
+          adminId: 'admin-3',
+          adminName: 'مارکێتی سێیەم',
+          adminPhone: '07503333333',
+          plan: 'basic',
+          status: 'expired',
+          startDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+          expiryDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+          createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+          createdBy: 'owner',
+          staffCount: 2,
+          customerCount: 30,
+          notificationsSent: 3,
+          lastNotificationAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+      ];
+      await saveTenants();
+    }
+  } catch (error) {
+    console.error('Error loading tenants:', error);
+    mockTenants = [];
+  }
+};
+
+const saveTenants = async () => {
+  try {
+    await safeStorage.setItem('tenants', mockTenants);
+  } catch (error) {
+    console.error('Error saving tenants:', error);
+  }
+};
 
 export const ownerProcedure = publicProcedure.query(async () => {
+  await loadTenants();
   return {
     getAllTenants: mockTenants,
     getActiveTenants: mockTenants.filter(t => t.status === 'active'),
@@ -82,6 +106,8 @@ export const createAdminProcedure = publicProcedure
     duration: z.number(),
   }))
   .mutation(async ({ input }) => {
+    await loadTenants();
+    
     const newTenant: TenantSubscription = {
       id: `tenant-${Date.now()}`,
       adminId: `admin-${Date.now()}`,
@@ -99,6 +125,7 @@ export const createAdminProcedure = publicProcedure
     };
 
     mockTenants.push(newTenant);
+    await saveTenants();
 
     return {
       success: true,
@@ -115,6 +142,7 @@ export const updateSubscriptionProcedure = publicProcedure
     status: z.enum(['active', 'expired', 'suspended', 'trial']).optional(),
   }))
   .mutation(async ({ input }) => {
+    await loadTenants();
     const tenantIndex = mockTenants.findIndex(t => t.id === input.tenantId);
     
     if (tenantIndex === -1) {
@@ -131,6 +159,7 @@ export const updateSubscriptionProcedure = publicProcedure
       ...mockTenants[tenantIndex],
       ...updates,
     };
+    await saveTenants();
 
     return {
       success: true,
@@ -146,6 +175,7 @@ export const renewSubscriptionProcedure = publicProcedure
     duration: z.number(),
   }))
   .mutation(async ({ input }) => {
+    await loadTenants();
     const tenantIndex = mockTenants.findIndex(t => t.id === input.tenantId);
     
     if (tenantIndex === -1) {
@@ -164,6 +194,7 @@ export const renewSubscriptionProcedure = publicProcedure
       expiryDate: newExpiryDate.toISOString(),
       lastRenewedAt: new Date().toISOString(),
     };
+    await saveTenants();
 
     return {
       success: true,
@@ -178,6 +209,7 @@ export const suspendTenantProcedure = publicProcedure
     reason: z.string(),
   }))
   .mutation(async ({ input }) => {
+    await loadTenants();
     const tenantIndex = mockTenants.findIndex(t => t.id === input.tenantId);
     
     if (tenantIndex === -1) {
@@ -191,6 +223,7 @@ export const suspendTenantProcedure = publicProcedure
       suspendedBy: 'owner',
       suspensionReason: input.reason,
     };
+    await saveTenants();
 
     return {
       success: true,
@@ -204,6 +237,7 @@ export const activateTenantProcedure = publicProcedure
     tenantId: z.string(),
   }))
   .mutation(async ({ input }) => {
+    await loadTenants();
     const tenantIndex = mockTenants.findIndex(t => t.id === input.tenantId);
     
     if (tenantIndex === -1) {
@@ -225,6 +259,7 @@ export const activateTenantProcedure = publicProcedure
       suspendedBy: undefined,
       suspensionReason: undefined,
     };
+    await saveTenants();
 
     return {
       success: true,
@@ -238,6 +273,7 @@ export const deleteTenantProcedure = publicProcedure
     tenantId: z.string(),
   }))
   .mutation(async ({ input }) => {
+    await loadTenants();
     const tenantIndex = mockTenants.findIndex(t => t.id === input.tenantId);
     
     if (tenantIndex === -1) {
@@ -246,6 +282,7 @@ export const deleteTenantProcedure = publicProcedure
 
     const deletedTenant = mockTenants[tenantIndex];
     mockTenants.splice(tenantIndex, 1);
+    await saveTenants();
 
     return {
       success: true,
@@ -259,6 +296,7 @@ export const getTenantDetailsProcedure = publicProcedure
     tenantId: z.string(),
   }))
   .query(async ({ input }) => {
+    await loadTenants();
     const tenant = mockTenants.find(t => t.id === input.tenantId);
     
     if (!tenant) {
