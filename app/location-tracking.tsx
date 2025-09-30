@@ -43,6 +43,8 @@ export default function LocationTrackingScreen() {
     resolved: false,
   });
 
+  const settingsQuery = trpc.location.tracking.getSettings.useQuery();
+
   const activities = activitiesQuery.data || [];
   const alerts = alertsQuery.data || [];
 
@@ -51,6 +53,7 @@ export default function LocationTrackingScreen() {
     await Promise.all([
       activitiesQuery.refetch(),
       alertsQuery.refetch(),
+      settingsQuery.refetch(),
     ]);
     setRefreshing(false);
   };
@@ -204,102 +207,119 @@ export default function LocationTrackingScreen() {
     </View>
   );
 
-  const renderSettingsTab = () => (
-    <View style={styles.settingsContainer}>
-      <View style={styles.settingCard}>
-        <View style={styles.settingHeader}>
-          <KurdishText style={styles.settingTitle}>
-            چالاککردنی چاودێری شوێن
-          </KurdishText>
-          <Switch
-            value={locationTracking?.settings.enableLocationTracking}
-            onValueChange={(value) => {
-              locationTracking?.updateSettings({ enableLocationTracking: value });
-            }}
-            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
-        <Text style={styles.settingDescription}>
-          چاودێری شوێنی جوگرافی بۆ هەموو بەکارهێنەران
-        </Text>
-      </View>
+  const renderSettingsTab = () => {
+    const currentSettings = settingsQuery.data || locationTracking?.settings;
 
-      <View style={styles.settingCard}>
-        <View style={styles.settingHeader}>
-          <KurdishText style={styles.settingTitle}>
-            چاودێری کارمەندان
-          </KurdishText>
-          <Switch
-            value={locationTracking?.settings.trackEmployeeLocation}
-            onValueChange={(value) => {
-              locationTracking?.updateSettings({ trackEmployeeLocation: value });
-            }}
-            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-            thumbColor="#FFFFFF"
-          />
+    if (settingsQuery.isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
         </View>
-        <Text style={styles.settingDescription}>
-          تۆمارکردنی شوێنی کارمەندان لە کاتی چوونەژوورەوە
-        </Text>
-      </View>
+      );
+    }
 
-      <View style={styles.settingCard}>
-        <View style={styles.settingHeader}>
-          <KurdishText style={styles.settingTitle}>
-            چاودێری کڕیاران
-          </KurdishText>
-          <Switch
-            value={locationTracking?.settings.trackCustomerLocation}
-            onValueChange={(value) => {
-              locationTracking?.updateSettings({ trackCustomerLocation: value });
-            }}
-            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
-        <Text style={styles.settingDescription}>
-          تۆمارکردنی شوێنی کڕیاران لە کاتی چوونەژوورەوە
-        </Text>
-      </View>
-
-      <View style={styles.settingCard}>
-        <View style={styles.settingHeader}>
-          <KurdishText style={styles.settingTitle}>
-            پێویستی بە شوێن بۆ چوونەژوورەوە
-          </KurdishText>
-          <Switch
-            value={locationTracking?.settings.requireLocationForLogin}
-            onValueChange={(value) => {
-              locationTracking?.updateSettings({ requireLocationForLogin: value });
-            }}
-            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
-            thumbColor="#FFFFFF"
-          />
-        </View>
-        <Text style={styles.settingDescription}>
-          پێویستکردنی دەستەبەری شوێن بۆ چوونەژوورەوە
-        </Text>
-      </View>
-
-      {locationTracking?.currentLocation && (
-        <View style={styles.currentLocationCard}>
-          <View style={styles.currentLocationHeader}>
-            <MapPin size={20} color="#3B82F6" />
-            <KurdishText style={styles.currentLocationTitle}>
-              شوێنی ئێستا
+    return (
+      <View style={styles.settingsContainer}>
+        <View style={styles.settingCard}>
+          <View style={styles.settingHeader}>
+            <KurdishText style={styles.settingTitle}>
+              چالاککردنی چاودێری شوێن
             </KurdishText>
+            <Switch
+              value={currentSettings?.enableLocationTracking}
+              onValueChange={(value) => {
+                locationTracking?.updateSettings({ enableLocationTracking: value });
+                settingsQuery.refetch();
+              }}
+              trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+              thumbColor="#FFFFFF"
+            />
           </View>
-          <Text style={styles.currentLocationText}>
-            {locationTracking.currentLocation.latitude.toFixed(6)}, {locationTracking.currentLocation.longitude.toFixed(6)}
-          </Text>
-          <Text style={styles.currentLocationAccuracy}>
-            وردی: {locationTracking.currentLocation.accuracy.toFixed(0)} مەتر
+          <Text style={styles.settingDescription}>
+            چاودێری شوێنی جوگرافی بۆ هەموو بەکارهێنەران
           </Text>
         </View>
-      )}
-    </View>
-  );
+
+        <View style={styles.settingCard}>
+          <View style={styles.settingHeader}>
+            <KurdishText style={styles.settingTitle}>
+              چاودێری کارمەندان
+            </KurdishText>
+            <Switch
+              value={currentSettings?.trackEmployeeLocation}
+              onValueChange={(value) => {
+                locationTracking?.updateSettings({ trackEmployeeLocation: value });
+                settingsQuery.refetch();
+              }}
+              trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+          <Text style={styles.settingDescription}>
+            تۆمارکردنی شوێنی کارمەندان لە کاتی چوونەژوورەوە
+          </Text>
+        </View>
+
+        <View style={styles.settingCard}>
+          <View style={styles.settingHeader}>
+            <KurdishText style={styles.settingTitle}>
+              چاودێری کڕیاران
+            </KurdishText>
+            <Switch
+              value={currentSettings?.trackCustomerLocation}
+              onValueChange={(value) => {
+                locationTracking?.updateSettings({ trackCustomerLocation: value });
+                settingsQuery.refetch();
+              }}
+              trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+          <Text style={styles.settingDescription}>
+            تۆمارکردنی شوێنی کڕیاران لە کاتی چوونەژوورەوە
+          </Text>
+        </View>
+
+        <View style={styles.settingCard}>
+          <View style={styles.settingHeader}>
+            <KurdishText style={styles.settingTitle}>
+              پێویستی بە شوێن بۆ چوونەژوورەوە
+            </KurdishText>
+            <Switch
+              value={currentSettings?.requireLocationForLogin}
+              onValueChange={(value) => {
+                locationTracking?.updateSettings({ requireLocationForLogin: value });
+                settingsQuery.refetch();
+              }}
+              trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+          <Text style={styles.settingDescription}>
+            پێویستکردنی دەستەبەری شوێن بۆ چوونەژوورەوە
+          </Text>
+        </View>
+
+        {locationTracking?.currentLocation && (
+          <View style={styles.currentLocationCard}>
+            <View style={styles.currentLocationHeader}>
+              <MapPin size={20} color="#3B82F6" />
+              <KurdishText style={styles.currentLocationTitle}>
+                شوێنی ئێستا
+              </KurdishText>
+            </View>
+            <Text style={styles.currentLocationText}>
+              {locationTracking.currentLocation.latitude.toFixed(6)}, {locationTracking.currentLocation.longitude.toFixed(6)}
+            </Text>
+            <Text style={styles.currentLocationAccuracy}>
+              وردی: {locationTracking.currentLocation.accuracy.toFixed(0)} مەتر
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  };
 
   if (!user || user.role !== 'admin') {
     return (

@@ -62,28 +62,16 @@ export const [LocationTrackingProvider, useLocationTracking] = createContextHook
     }
   }, [updateCurrentLocation]);
 
-  const loadSettings = useCallback(async () => {
-    try {
-      const result = await trpcClient.location.tracking.getSettings.query();
-      if (result) {
-        setSettings(result);
-      }
-    } catch (error) {
-      console.error('Error loading location settings:', error);
-    }
-  }, []);
-
   useEffect(() => {
     const init = async () => {
       try {
         await requestLocationPermission();
-        await loadSettings();
       } catch (error) {
         console.error('Error initializing location tracking:', error);
       }
     };
     init();
-  }, [requestLocationPermission, loadSettings]);
+  }, [requestLocationPermission]);
 
   const getCurrentLocation = useCallback(async (): Promise<LocationData | null> => {
     try {
