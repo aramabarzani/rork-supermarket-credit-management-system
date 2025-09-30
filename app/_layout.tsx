@@ -22,9 +22,9 @@ import { UICustomizationProvider } from "@/hooks/ui-customization-context";
 import { NotesProvider } from "@/hooks/notes-context";
 import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
 import { IPTrackingProvider } from "@/hooks/ip-tracking-context";
-import { GuidanceContext } from "@/hooks/guidance-context";
-import { BackupContext } from "@/hooks/backup-context";
-import { SystemConfigContext } from "@/hooks/system-config-context";
+import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
+import { BackupContext as BackupProvider } from "@/hooks/backup-context";
+import { SystemConfigContext as SystemConfigProvider } from "@/hooks/system-config-context";
 import { UsabilityProvider } from "@/hooks/usability-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
@@ -387,9 +387,9 @@ export default function RootLayout() {
                         <NotesProvider>
                           <ProfileTrackingProvider>
                             <IPTrackingProvider>
-                              <GuidanceContext>
-                                <BackupContext>
-                                  <SystemConfigContext>
+                              <GuidanceProvider>
+                                <BackupProvider>
+                                  <SystemConfigProvider>
                                     <UsabilityProvider>
                                       <AuthProvider>
                                 <SecurityProvider>
@@ -410,9 +410,9 @@ export default function RootLayout() {
                                 </SecurityProvider>
                                       </AuthProvider>
                                     </UsabilityProvider>
-                                  </SystemConfigContext>
-                                </BackupContext>
-                              </GuidanceContext>
+                                  </SystemConfigProvider>
+                                </BackupProvider>
+                              </GuidanceProvider>
                             </IPTrackingProvider>
                           </ProfileTrackingProvider>
                         </NotesProvider>
