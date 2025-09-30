@@ -10,11 +10,16 @@ import { PERMISSIONS } from '@/constants/permissions';
 let mockTenants: TenantSubscription[] = [];
 
 const loadTenants = async () => {
+  console.log('loadTenants: Starting...');
   try {
     const stored = await safeStorage.getItem<TenantSubscription[]>('tenants', null);
+    console.log('loadTenants: Got stored data:', stored ? 'yes' : 'no');
+    
     if (stored && Array.isArray(stored) && stored.length > 0) {
+      console.log('loadTenants: Using stored tenants:', stored.length);
       mockTenants = stored;
     } else {
+      console.log('loadTenants: Creating default tenants');
       mockTenants = [
         {
           id: 'tenant-1',
@@ -64,10 +69,12 @@ const loadTenants = async () => {
           lastNotificationAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
         },
       ];
+      console.log('loadTenants: Saving default tenants');
       await saveTenants();
     }
+    console.log('loadTenants: Finished successfully');
   } catch (error) {
-    console.error('Error loading tenants:', error);
+    console.error('loadTenants: Error:', error);
     mockTenants = [];
   }
 };
@@ -81,22 +88,39 @@ const saveTenants = async () => {
 };
 
 export const ownerProcedure = publicProcedure.query(async () => {
-  await loadTenants();
-  return {
-    getAllTenants: mockTenants,
-    getActiveTenants: mockTenants.filter(t => t.status === 'active'),
-    getExpiredTenants: mockTenants.filter(t => t.status === 'expired'),
-    getSuspendedTenants: mockTenants.filter(t => t.status === 'suspended'),
-    getTotalRevenue: mockTenants.reduce((sum, t) => {
-      const plan = t.plan;
-      const planDetails = {
-        basic: { price: 50000 },
-        pro: { price: 500000 },
-        enterprise: { price: 1000000 }
-      }[plan];
-      return sum + planDetails.price;
-    }, 0),
-  };
+  console.log('ownerProcedure: Starting...');
+  try {
+    await loadTenants();
+    console.log('ownerProcedure: Loaded tenants:', mockTenants.length);
+    
+    const result = {
+      getAllTenants: mockTenants,
+      getActiveTenants: mockTenants.filter(t => t.status === 'active'),
+      getExpiredTenants: mockTenants.filter(t => t.status === 'expired'),
+      getSuspendedTenants: mockTenants.filter(t => t.status === 'suspended'),
+      getTotalRevenue: mockTenants.reduce((sum, t) => {
+        const plan = t.plan;
+        const planDetails = {
+          basic: { price: 50000 },
+          pro: { price: 500000 },
+          enterprise: { price: 1000000 }
+        }[plan];
+        return sum + planDetails.price;
+      }, 0),
+    };
+    
+    console.log('ownerProcedure: Returning result');
+    return result;
+  } catch (error) {
+    console.error('ownerProcedure: Error:', error);
+    return {
+      getAllTenants: [],
+      getActiveTenants: [],
+      getExpiredTenants: [],
+      getSuspendedTenants: [],
+      getTotalRevenue: 0,
+    };
+  }
 });
 
 export const createAdminProcedure = publicProcedure

@@ -27,7 +27,14 @@ export default function OwnerDashboardScreen() {
     duration: 30,
   });
 
-  const { data, isLoading, refetch } = trpc.subscription.owner.getAll.useQuery();
+  const { data, isLoading, error, refetch } = trpc.subscription.owner.getAll.useQuery(undefined, {
+    retry: 3,
+    retryDelay: 1000,
+  });
+
+  console.log('OwnerDashboard: isLoading:', isLoading);
+  console.log('OwnerDashboard: data:', data);
+  console.log('OwnerDashboard: error:', error);
   const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();
   const activateMutation = trpc.subscription.owner.activate.useMutation();
@@ -186,6 +193,22 @@ export default function OwnerDashboardScreen() {
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
+          <Text style={styles.loadingSubtext}>داتاکان بارکراوە...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
+        <View style={styles.loadingContainer}>
+          <Text style={styles.errorText}>هەڵەیەک ڕوویدا</Text>
+          <Text style={styles.errorSubtext}>{error.message}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+            <Text style={styles.retryButtonText}>هەوڵدانەوە</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -428,8 +451,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  loadingSubtext: {
+    fontSize: 14,
     color: '#6b7280',
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ef4444',
+    marginBottom: 8,
+  },
+  errorSubtext: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   headerButton: {
     marginHorizontal: 16,
