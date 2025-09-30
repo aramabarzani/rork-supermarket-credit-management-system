@@ -365,22 +365,32 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <View style={styles.demoInfo}>
-                <KurdishText style={styles.demoText}>
+                <KurdishText style={[styles.demoText, styles.demoTitle]}>
                   بۆ تاقیکردنەوە:
                 </KurdishText>
-                <Text style={styles.demoText}>
-                  خاوەندار: 07500000000 / owner123
-                </Text>
-                <Text style={styles.demoText}>
-                  بەڕێوەبەر: 07501234567 / admin123
-                </Text>
-                <Text style={styles.demoText}>
-                  کارمەند: 07509876543 / employee123
-                </Text>
-                <Text style={styles.demoText}>
-                  کڕیار: 07701234567 / customer123
-                </Text>
-                <Text style={styles.demoText}>
+                <View style={styles.demoSection}>
+                  <View style={[styles.demoCard, { borderColor: '#7C3AED' }]}>
+                    <KurdishText style={[styles.demoRole, { color: '#7C3AED' }]}>خاوەندار</KurdishText>
+                    <Text style={styles.demoCredential}>📱 07500000000</Text>
+                    <Text style={styles.demoCredential}>🔑 owner123</Text>
+                  </View>
+                  <View style={[styles.demoCard, { borderColor: '#1E3A8A' }]}>
+                    <KurdishText style={[styles.demoRole, { color: '#1E3A8A' }]}>بەڕێوەبەر</KurdishText>
+                    <Text style={styles.demoCredential}>📱 07501234567</Text>
+                    <Text style={styles.demoCredential}>🔑 admin123</Text>
+                  </View>
+                  <View style={[styles.demoCard, { borderColor: '#059669' }]}>
+                    <KurdishText style={[styles.demoRole, { color: '#059669' }]}>کارمەند</KurdishText>
+                    <Text style={styles.demoCredential}>📱 07509876543</Text>
+                    <Text style={styles.demoCredential}>🔑 employee123</Text>
+                  </View>
+                  <View style={[styles.demoCard, { borderColor: '#DC2626' }]}>
+                    <KurdishText style={[styles.demoRole, { color: '#DC2626' }]}>کڕیار</KurdishText>
+                    <Text style={styles.demoCredential}>📱 07701234567</Text>
+                    <Text style={styles.demoCredential}>🔑 customer123</Text>
+                  </View>
+                </View>
+                <Text style={[styles.demoText, { marginTop: 12, fontWeight: '600' }]}>
                   SMS کۆد: 1234
                 </Text>
               </View>
@@ -566,7 +576,34 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    alignItems: 'center',
+  },
+  demoTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#1F2937',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  demoSection: {
+    gap: 8,
+  },
+  demoCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderLeftWidth: 4,
+  },
+  demoRole: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    marginBottom: 6,
+  },
+  demoCredential: {
+    fontSize: 13,
+    color: '#4B5563',
+    marginBottom: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   demoText: {
     fontSize: 14,
