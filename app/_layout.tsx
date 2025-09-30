@@ -12,6 +12,8 @@ import { NotificationProvider } from "@/hooks/notification-context";
 import { SettingsProvider } from "@/hooks/settings-context";
 import { SecurityProvider } from "@/hooks/security-context";
 import { ReceiptProvider } from "@/hooks/receipt-context";
+import { CustomerSettingsProvider } from "@/hooks/customer-settings-context";
+import { MessagingProvider } from "@/hooks/messaging-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -186,6 +188,30 @@ function RootLayoutNav() {
           title: "ناردنی ئاگاداری",
         }} 
       />
+      <Stack.Screen 
+        name="customer-settings" 
+        options={{ 
+          title: "ڕێکخستنەکانی کڕیار",
+        }} 
+      />
+      <Stack.Screen 
+        name="support-issues" 
+        options={{ 
+          title: "کێشەکان و پشتگیری",
+        }} 
+      />
+      <Stack.Screen 
+        name="support-issue-detail" 
+        options={{ 
+          title: "وردەکاریەکانی کێشە",
+        }} 
+      />
+      <Stack.Screen 
+        name="system-validation" 
+        options={{ 
+          title: "پشکنینی سیستەم",
+        }} 
+      />
 
     </Stack>
   );
@@ -259,16 +285,20 @@ export default function RootLayout() {
             <SettingsProvider>
               <AuthProvider>
                 <SecurityProvider>
-                  <DebtProvider>
-                    <ReceiptProvider>
-                      <UsersProvider>
-                        <NotificationProvider>
-                          <RootLayoutNav />
-                          <SessionTimeoutWarning />
-                        </NotificationProvider>
-                      </UsersProvider>
-                    </ReceiptProvider>
-                  </DebtProvider>
+                  <CustomerSettingsProvider>
+                    <MessagingProvider>
+                      <DebtProvider>
+                        <ReceiptProvider>
+                          <UsersProvider>
+                            <NotificationProvider>
+                              <RootLayoutNav />
+                              <SessionTimeoutWarning />
+                            </NotificationProvider>
+                          </UsersProvider>
+                        </ReceiptProvider>
+                      </DebtProvider>
+                    </MessagingProvider>
+                  </CustomerSettingsProvider>
                 </SecurityProvider>
               </AuthProvider>
             </SettingsProvider>

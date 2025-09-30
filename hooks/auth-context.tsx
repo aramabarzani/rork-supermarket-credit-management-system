@@ -112,7 +112,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('AuthProvider: Login attempt for:', credentials.phone);
       
-      let allUsers: User[] = [...DEMO_USERS];
+      let allUsers: User[] = [];
       try {
         const storedUsers = await AsyncStorage.getItem('users');
         if (storedUsers) {
@@ -121,12 +121,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           allUsers = parsedUsers;
         } else {
           console.log('AuthProvider: No stored users, initializing with demo users');
-          await AsyncStorage.setItem('users', JSON.stringify(DEMO_USERS));
+          allUsers = [...DEMO_USERS];
+          await AsyncStorage.setItem('users', JSON.stringify(allUsers));
         }
       } catch (error) {
         console.error('AuthProvider: Error loading users:', error);
         console.log('AuthProvider: Using demo users');
-        await AsyncStorage.setItem('users', JSON.stringify(DEMO_USERS));
+        allUsers = [...DEMO_USERS];
+        await AsyncStorage.setItem('users', JSON.stringify(allUsers));
       }
       
       const foundUser = allUsers.find(
