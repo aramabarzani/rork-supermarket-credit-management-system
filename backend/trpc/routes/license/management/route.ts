@@ -1,8 +1,27 @@
 import { z } from 'zod';
 import { publicProcedure, protectedProcedure } from '../../../create-context';
 import type { License, LicenseValidation } from '@/types/license';
+import { safeStorage } from '@/utils/storage';
 
-const mockLicenses: License[] = [];
+const STORAGE_KEY = 'licenses';
+
+async function getLicenses(): Promise<License[]> {
+  try {
+    const licenses = await safeStorage.getItem<License[]>(STORAGE_KEY, []);
+    return licenses || [];
+  } catch (error) {
+    console.error('Error loading licenses:', error);
+    return [];
+  }
+}
+
+async function saveLicenses(licenses: License[]): Promise<void> {
+  try {
+    await safeStorage.setItem(STORAGE_KEY, licenses);
+  } catch (error) {
+    console.error('Error saving licenses:', error);
+  }
+}
 
 function generateLicenseKey(): string {
   const segments = [];
@@ -47,6 +66,8 @@ export const createLicenseProcedure = protectedProcedure
       expiresAt = new Date(now.getTime() + input.durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
     }
 
+    const licenses = await getLicenses();
+    
     const license: License = {
       id: `lic_${Date.now()}`,
       key: generateLicenseKey(),
@@ -71,7 +92,8 @@ export const createLicenseProcedure = protectedProcedure
       activationCount: 0,
     };
 
-    mockLicenses.push(license);
+    licenses.push(license);
+    await saveLicenses(licenses);
     return license;
   });
 
@@ -82,7 +104,8 @@ export const validateLicenseProcedure = publicProcedure
     ipAddress: z.string().optional(),
   }))
   .query(async ({ input }): Promise<LicenseValidation> => {
-    const license = mockLicenses.find(l => l.key === input.key);
+    const licenses = await getLicenses();
+    const license = licenses.find(l => l.key === input.key);
 
     if (!license) {
       return {
@@ -117,6 +140,8 @@ export const validateLicenseProcedure = publicProcedure
       license.lastValidated = now.toISOString();
       if (input.deviceId) license.deviceId = input.deviceId;
       if (input.ipAddress) license.ipAddress = input.ipAddress;
+      
+      await saveLicenses(licenses);
 
       return {
         isValid: true,
@@ -129,6 +154,8 @@ export const validateLicenseProcedure = publicProcedure
     license.lastValidated = new Date().toISOString();
     if (input.deviceId) license.deviceId = input.deviceId;
     if (input.ipAddress) license.ipAddress = input.ipAddress;
+    
+    await saveLicenses(licenses);
 
     return {
       isValid: true,
@@ -139,7 +166,7 @@ export const validateLicenseProcedure = publicProcedure
 
 export const getAllLicensesProcedure = protectedProcedure
   .query(async (): Promise<License[]> => {
-    return mockLicenses;
+    return await getLicenses();
   });
 
 export const updateLicenseStatusProcedure = protectedProcedure
@@ -151,12 +178,14 @@ export const updateLicenseStatusProcedure = protectedProcedure
     if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
       throw new Error('تەنیا خاوەندار دەتوانێت دۆخی لایسەنس بگۆڕێت');
     }
-    const license = mockLicenses.find(l => l.id === input.licenseId);
+    const licenses = await getLicenses();
+    const license = licenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
     }
 
     license.status = input.status;
+    await saveLicenses(licenses);
     return license;
   });
 
@@ -169,7 +198,8 @@ export const renewLicenseProcedure = protectedProcedure
     if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
       throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس نوێ بکاتەوە');
     }
-    const license = mockLicenses.find(l => l.id === input.licenseId);
+    const licenses = await getLicenses();
+    const license = licenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
     }
@@ -180,6 +210,8 @@ export const renewLicenseProcedure = protectedProcedure
 
     license.expiresAt = newExpiry.toISOString();
     license.status = 'active';
+    
+    await saveLicenses(licenses);
 
     return license;
   });
@@ -195,7 +227,8 @@ export const activateLicenseProcedure = protectedProcedure
     if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
       throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس چالاک بکات');
     }
-    const license = mockLicenses.find(l => l.key === input.key);
+    const licenses = await getLicenses();
+    const license = licenses.find(l => l.key === input.key);
     if (!license) {
       throw new Error('لایسەنسی نادروست');
     }
@@ -223,6 +256,8 @@ export const activateLicenseProcedure = protectedProcedure
     license.activationCount += 1;
     license.lastActivationAt = new Date().toISOString();
     license.lastValidated = new Date().toISOString();
+    
+    await saveLicenses(licenses);
 
     return license;
   });
@@ -235,7 +270,8 @@ export const deactivateLicenseProcedure = protectedProcedure
     if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
       throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس ناچالاک بکات');
     }
-    const license = mockLicenses.find(l => l.id === input.licenseId);
+    const licenses = await getLicenses();
+    const license = licenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
     }
@@ -243,6 +279,8 @@ export const deactivateLicenseProcedure = protectedProcedure
     license.hardwareId = undefined;
     license.deviceId = undefined;
     license.ipAddress = undefined;
+    
+    await saveLicenses(licenses);
 
     return license;
   });
@@ -256,46 +294,50 @@ export const transferLicenseProcedure = protectedProcedure
     if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
       throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس بگوازێتەوە');
     }
-    const license = mockLicenses.find(l => l.id === input.licenseId);
+    const licenses = await getLicenses();
+    const license = licenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
     }
 
     license.hardwareId = input.newHardwareId;
     license.lastActivationAt = new Date().toISOString();
+    
+    await saveLicenses(licenses);
 
     return license;
   });
 
 export const getLicenseStatsProcedure = protectedProcedure
   .query(async () => {
-    const total = mockLicenses.length;
-    const active = mockLicenses.filter(l => l.status === 'active').length;
-    const trial = mockLicenses.filter(l => l.status === 'trial').length;
-    const expired = mockLicenses.filter(l => l.status === 'expired').length;
-    const suspended = mockLicenses.filter(l => l.status === 'suspended').length;
+    const licenses = await getLicenses();
+    const total = licenses.length;
+    const active = licenses.filter(l => l.status === 'active').length;
+    const trial = licenses.filter(l => l.status === 'trial').length;
+    const expired = licenses.filter(l => l.status === 'expired').length;
+    const suspended = licenses.filter(l => l.status === 'suspended').length;
 
     const now = new Date();
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const expiringSoon = mockLicenses.filter(l => {
+    const expiringSoon = licenses.filter(l => {
       if (!l.expiresAt) return false;
       const expiryDate = new Date(l.expiresAt);
       return expiryDate <= thirtyDaysFromNow && expiryDate > now;
     }).length;
 
     const byBusinessType = {
-      supermarket: mockLicenses.filter(l => l.businessType === 'supermarket').length,
-      grocery: mockLicenses.filter(l => l.businessType === 'grocery').length,
-      retail: mockLicenses.filter(l => l.businessType === 'retail').length,
-      wholesale: mockLicenses.filter(l => l.businessType === 'wholesale').length,
-      other: mockLicenses.filter(l => l.businessType === 'other').length,
+      supermarket: licenses.filter(l => l.businessType === 'supermarket').length,
+      grocery: licenses.filter(l => l.businessType === 'grocery').length,
+      retail: licenses.filter(l => l.businessType === 'retail').length,
+      wholesale: licenses.filter(l => l.businessType === 'wholesale').length,
+      other: licenses.filter(l => l.businessType === 'other').length,
     };
 
     const byType = {
-      trial: mockLicenses.filter(l => l.type === 'trial').length,
-      monthly: mockLicenses.filter(l => l.type === 'monthly').length,
-      yearly: mockLicenses.filter(l => l.type === 'yearly').length,
-      lifetime: mockLicenses.filter(l => l.type === 'lifetime').length,
+      trial: licenses.filter(l => l.type === 'trial').length,
+      monthly: licenses.filter(l => l.type === 'monthly').length,
+      yearly: licenses.filter(l => l.type === 'yearly').length,
+      lifetime: licenses.filter(l => l.type === 'lifetime').length,
     };
 
     return {

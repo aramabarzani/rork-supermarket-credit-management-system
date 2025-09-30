@@ -1,8 +1,27 @@
 import { z } from 'zod';
 import { protectedProcedure } from '../../../create-context';
 import type { Tenant, TenantDashboardStats, CreateTenantInput } from '@/types/tenant';
+import { safeStorage } from '@/utils/storage';
 
-const mockTenants: Tenant[] = [];
+const STORAGE_KEY = 'tenants';
+
+async function getTenants(): Promise<Tenant[]> {
+  try {
+    const tenants = await safeStorage.getItem<Tenant[]>(STORAGE_KEY, []);
+    return tenants || [];
+  } catch (error) {
+    console.error('Error loading tenants:', error);
+    return [];
+  }
+}
+
+async function saveTenants(tenants: Tenant[]): Promise<void> {
+  try {
+    await safeStorage.setItem(STORAGE_KEY, tenants);
+  } catch (error) {
+    console.error('Error saving tenants:', error);
+  }
+}
 
 function generateTenantId(): string {
   return `tenant_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
@@ -77,25 +96,29 @@ export const createTenantProcedure = protectedProcedure
       },
     };
 
-    mockTenants.push(tenant);
+    const tenants = await getTenants();
+    tenants.push(tenant);
+    await saveTenants(tenants);
     return tenant;
   });
 
 export const getAllTenantsProcedure = protectedProcedure
   .query(async (): Promise<Tenant[]> => {
-    return mockTenants;
+    return await getTenants();
   });
 
 export const getTenantByIdProcedure = protectedProcedure
   .input(z.object({ tenantId: z.string() }))
   .query(async ({ input }): Promise<Tenant | null> => {
-    return mockTenants.find(t => t.id === input.tenantId) || null;
+    const tenants = await getTenants();
+    return tenants.find(t => t.id === input.tenantId) || null;
   });
 
 export const getTenantByLicenseProcedure = protectedProcedure
   .input(z.object({ licenseKey: z.string() }))
   .query(async ({ input }): Promise<Tenant | null> => {
-    return mockTenants.find(t => t.licenseKey === input.licenseKey) || null;
+    const tenants = await getTenants();
+    return tenants.find(t => t.licenseKey === input.licenseKey) || null;
   });
 
 export const updateTenantStatusProcedure = protectedProcedure
@@ -104,12 +127,14 @@ export const updateTenantStatusProcedure = protectedProcedure
     status: z.enum(['active', 'suspended', 'trial', 'expired']),
   }))
   .mutation(async ({ input }): Promise<Tenant> => {
-    const tenant = mockTenants.find(t => t.id === input.tenantId);
+    const tenants = await getTenants();
+    const tenant = tenants.find(t => t.id === input.tenantId);
     if (!tenant) {
       throw new Error('کڕیار نەدۆزرایەوە');
     }
 
     tenant.status = input.status;
+    await saveTenants(tenants);
     return tenant;
   });
 
@@ -123,7 +148,8 @@ export const updateTenantSettingsProcedure = protectedProcedure
     customDomain: z.string().optional(),
   }))
   .mutation(async ({ input }): Promise<Tenant> => {
-    const tenant = mockTenants.find(t => t.id === input.tenantId);
+    const tenants = await getTenants();
+    const tenant = tenants.find(t => t.id === input.tenantId);
     if (!tenant) {
       throw new Error('کڕیار نەدۆزرایەوە');
     }
@@ -134,6 +160,7 @@ export const updateTenantSettingsProcedure = protectedProcedure
     if (input.enabledModules) tenant.settings.enabledModules = input.enabledModules;
     if (input.customDomain !== undefined) tenant.settings.customDomain = input.customDomain;
 
+    await saveTenants(tenants);
     return tenant;
   });
 
@@ -147,7 +174,8 @@ export const updateTenantStatsProcedure = protectedProcedure
     storageUsed: z.number().optional(),
   }))
   .mutation(async ({ input }): Promise<Tenant> => {
-    const tenant = mockTenants.find(t => t.id === input.tenantId);
+    const tenants = await getTenants();
+    const tenant = tenants.find(t => t.id === input.tenantId);
     if (!tenant) {
       throw new Error('کڕیار نەدۆزرایەوە');
     }
@@ -158,37 +186,41 @@ export const updateTenantStatsProcedure = protectedProcedure
     if (input.totalPayments !== undefined) tenant.stats.totalPayments = input.totalPayments;
     if (input.storageUsed !== undefined) tenant.stats.storageUsed = input.storageUsed;
 
+    await saveTenants(tenants);
     return tenant;
   });
 
 export const deleteTenantProcedure = protectedProcedure
   .input(z.object({ tenantId: z.string() }))
   .mutation(async ({ input }): Promise<{ success: boolean }> => {
-    const index = mockTenants.findIndex(t => t.id === input.tenantId);
+    const tenants = await getTenants();
+    const index = tenants.findIndex(t => t.id === input.tenantId);
     if (index === -1) {
       throw new Error('کڕیار نەدۆزرایەوە');
     }
 
-    mockTenants.splice(index, 1);
+    tenants.splice(index, 1);
+    await saveTenants(tenants);
     return { success: true };
   });
 
 export const getTenantDashboardStatsProcedure = protectedProcedure
   .query(async (): Promise<TenantDashboardStats> => {
-    const totalTenants = mockTenants.length;
-    const activeTenants = mockTenants.filter(t => t.status === 'active').length;
-    const trialTenants = mockTenants.filter(t => t.status === 'trial').length;
-    const expiredTenants = mockTenants.filter(t => t.status === 'expired').length;
+    const tenants = await getTenants();
+    const totalTenants = tenants.length;
+    const activeTenants = tenants.filter(t => t.status === 'active').length;
+    const trialTenants = tenants.filter(t => t.status === 'trial').length;
+    const expiredTenants = tenants.filter(t => t.status === 'expired').length;
 
     const now = new Date();
     const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const expiringLicenses = mockTenants.filter(t => {
+    const expiringLicenses = tenants.filter(t => {
       if (!t.expiresAt) return false;
       const expiryDate = new Date(t.expiresAt);
       return expiryDate <= thirtyDaysFromNow && expiryDate > now;
     });
 
-    const recentTenants = [...mockTenants]
+    const recentTenants = [...tenants]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .slice(0, 5);
 
@@ -210,7 +242,8 @@ export const extendTenantLicenseProcedure = protectedProcedure
     durationMonths: z.number(),
   }))
   .mutation(async ({ input }): Promise<Tenant> => {
-    const tenant = mockTenants.find(t => t.id === input.tenantId);
+    const tenants = await getTenants();
+    const tenant = tenants.find(t => t.id === input.tenantId);
     if (!tenant) {
       throw new Error('کڕیار نەدۆزرایەوە');
     }
@@ -222,17 +255,20 @@ export const extendTenantLicenseProcedure = protectedProcedure
     tenant.expiresAt = newExpiry.toISOString();
     tenant.status = 'active';
 
+    await saveTenants(tenants);
     return tenant;
   });
 
 export const recordTenantAccessProcedure = protectedProcedure
   .input(z.object({ tenantId: z.string() }))
   .mutation(async ({ input }): Promise<{ success: boolean }> => {
-    const tenant = mockTenants.find(t => t.id === input.tenantId);
+    const tenants = await getTenants();
+    const tenant = tenants.find(t => t.id === input.tenantId);
     if (!tenant) {
       throw new Error('کڕیار نەدۆزرایەوە');
     }
 
     tenant.lastAccessAt = new Date().toISOString();
+    await saveTenants(tenants);
     return { success: true };
   });

@@ -1,9 +1,46 @@
 import { z } from 'zod';
 import { protectedProcedure } from '../../../create-context';
 import type { Subscription, SubscriptionPlanDetails, SubscriptionPayment } from '@/types/subscription';
+import { safeStorage } from '@/utils/storage';
 
-const mockSubscriptions: Subscription[] = [];
-const mockPayments: SubscriptionPayment[] = [];
+const SUBSCRIPTIONS_KEY = 'subscriptions';
+const PAYMENTS_KEY = 'subscription_payments';
+
+async function getSubscriptions(): Promise<Subscription[]> {
+  try {
+    const subscriptions = await safeStorage.getItem<Subscription[]>(SUBSCRIPTIONS_KEY, []);
+    return subscriptions || [];
+  } catch (error) {
+    console.error('Error loading subscriptions:', error);
+    return [];
+  }
+}
+
+async function saveSubscriptions(subscriptions: Subscription[]): Promise<void> {
+  try {
+    await safeStorage.setItem(SUBSCRIPTIONS_KEY, subscriptions);
+  } catch (error) {
+    console.error('Error saving subscriptions:', error);
+  }
+}
+
+async function getPayments(): Promise<SubscriptionPayment[]> {
+  try {
+    const payments = await safeStorage.getItem<SubscriptionPayment[]>(PAYMENTS_KEY, []);
+    return payments || [];
+  } catch (error) {
+    console.error('Error loading payments:', error);
+    return [];
+  }
+}
+
+async function savePayments(payments: SubscriptionPayment[]): Promise<void> {
+  try {
+    await safeStorage.setItem(PAYMENTS_KEY, payments);
+  } catch (error) {
+    console.error('Error saving payments:', error);
+  }
+}
 
 const subscriptionPlans: SubscriptionPlanDetails[] = [
   {
@@ -81,7 +118,9 @@ export const createSubscriptionProcedure = protectedProcedure
       nextPaymentDate: endDate.toISOString(),
     };
 
-    mockSubscriptions.push(subscription);
+    const subscriptions = await getSubscriptions();
+    subscriptions.push(subscription);
+    await saveSubscriptions(subscriptions);
 
     const payment: SubscriptionPayment = {
       id: `pay_${Date.now()}`,
@@ -93,7 +132,9 @@ export const createSubscriptionProcedure = protectedProcedure
       status: 'completed',
     };
 
-    mockPayments.push(payment);
+    const payments = await getPayments();
+    payments.push(payment);
+    await savePayments(payments);
 
     return subscription;
   });
@@ -103,12 +144,13 @@ export const getClientSubscriptionProcedure = protectedProcedure
     clientId: z.string(),
   }))
   .query(async ({ input }): Promise<Subscription | null> => {
-    return mockSubscriptions.find(s => s.clientId === input.clientId) || null;
+    const subscriptions = await getSubscriptions();
+    return subscriptions.find(s => s.clientId === input.clientId) || null;
   });
 
 export const getAllSubscriptionsProcedure = protectedProcedure
   .query(async (): Promise<Subscription[]> => {
-    return mockSubscriptions;
+    return await getSubscriptions();
   });
 
 export const cancelSubscriptionProcedure = protectedProcedure
@@ -116,7 +158,8 @@ export const cancelSubscriptionProcedure = protectedProcedure
     subscriptionId: z.string(),
   }))
   .mutation(async ({ input }): Promise<Subscription> => {
-    const subscription = mockSubscriptions.find(s => s.id === input.subscriptionId);
+    const subscriptions = await getSubscriptions();
+    const subscription = subscriptions.find(s => s.id === input.subscriptionId);
     if (!subscription) {
       throw new Error('بەشداری نەدۆزرایەوە');
     }
@@ -124,6 +167,7 @@ export const cancelSubscriptionProcedure = protectedProcedure
     subscription.status = 'cancelled';
     subscription.autoRenew = false;
 
+    await saveSubscriptions(subscriptions);
     return subscription;
   });
 
@@ -133,7 +177,8 @@ export const renewSubscriptionProcedure = protectedProcedure
     paymentMethod: z.enum(['cash', 'bank_transfer', 'online']),
   }))
   .mutation(async ({ input }): Promise<Subscription> => {
-    const subscription = mockSubscriptions.find(s => s.id === input.subscriptionId);
+    const subscriptions = await getSubscriptions();
+    const subscription = subscriptions.find(s => s.id === input.subscriptionId);
     if (!subscription) {
       throw new Error('بەشداری نەدۆزرایەوە');
     }
@@ -152,6 +197,8 @@ export const renewSubscriptionProcedure = protectedProcedure
     subscription.lastPaymentDate = now.toISOString();
     subscription.nextPaymentDate = newEnd.toISOString();
 
+    await saveSubscriptions(subscriptions);
+
     const payment: SubscriptionPayment = {
       id: `pay_${Date.now()}`,
       subscriptionId: subscription.id,
@@ -162,7 +209,9 @@ export const renewSubscriptionProcedure = protectedProcedure
       status: 'completed',
     };
 
-    mockPayments.push(payment);
+    const payments = await getPayments();
+    payments.push(payment);
+    await savePayments(payments);
 
     return subscription;
   });
@@ -172,5 +221,6 @@ export const getSubscriptionPaymentsProcedure = protectedProcedure
     subscriptionId: z.string(),
   }))
   .query(async ({ input }): Promise<SubscriptionPayment[]> => {
-    return mockPayments.filter(p => p.subscriptionId === input.subscriptionId);
+    const payments = await getPayments();
+    return payments.filter(p => p.subscriptionId === input.subscriptionId);
   });
