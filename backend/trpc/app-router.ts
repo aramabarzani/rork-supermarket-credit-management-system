@@ -231,6 +231,35 @@ import {
   exportReportProcedure as exportQuickReportProcedure,
   emailReportProcedure
 } from "./routes/reports/quick/route";
+import {
+  getNotesProcedure,
+  createNoteProcedure,
+  updateNoteProcedure,
+  deleteNoteProcedure,
+  getNoteStatsProcedure,
+  exportNotesProcedure,
+  shareNotesProcedure
+} from "./routes/notes/management/route";
+import {
+  getProfileChangesProcedure,
+  logProfileChangeProcedure,
+  uploadProfileImageProcedure,
+  getProfileImagesProcedure,
+  getProfileStatsProcedure,
+  exportProfileChangesProcedure
+} from "./routes/profile/tracking/route";
+import {
+  getIPRecordsProcedure,
+  trackIPProcedure,
+  trustIPProcedure,
+  blockIPProcedure,
+  getIPAlertsProcedure,
+  resolveIPAlertProcedure,
+  getIPStatsProcedure,
+  getIPSecurityReportProcedure,
+  exportIPReportProcedure,
+  getIPChartDataProcedure
+} from "./routes/security/ip-tracking/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -482,6 +511,37 @@ export const appRouter = createTRPCRouter({
     createTemplate: createReportTemplateProcedure,
     export: exportQuickReportProcedure,
     email: emailReportProcedure,
+  }),
+  notes: createTRPCRouter({
+    getAll: getNotesProcedure,
+    create: createNoteProcedure,
+    update: updateNoteProcedure,
+    delete: deleteNoteProcedure,
+    getStats: getNoteStatsProcedure,
+    export: exportNotesProcedure,
+    share: shareNotesProcedure,
+  }),
+  profile: createTRPCRouter({
+    getChanges: getProfileChangesProcedure,
+    logChange: logProfileChangeProcedure,
+    uploadImage: uploadProfileImageProcedure,
+    getImages: getProfileImagesProcedure,
+    getStats: getProfileStatsProcedure,
+    exportChanges: exportProfileChangesProcedure,
+  }),
+  security: createTRPCRouter({
+    ip: createTRPCRouter({
+      getRecords: getIPRecordsProcedure,
+      track: trackIPProcedure,
+      trust: trustIPProcedure,
+      block: blockIPProcedure,
+      getAlerts: getIPAlertsProcedure,
+      resolveAlert: resolveIPAlertProcedure,
+      getStats: getIPStatsProcedure,
+      getSecurityReport: getIPSecurityReportProcedure,
+      exportReport: exportIPReportProcedure,
+      getChartData: getIPChartDataProcedure,
+    }),
   }),
 });
 

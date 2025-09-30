@@ -19,6 +19,9 @@ import { AdvancedFiltersProvider } from "@/hooks/advanced-filters-context";
 import { CustomFormsProvider } from "@/hooks/custom-forms-context";
 import { ErrorLoggingProvider } from "@/hooks/error-logging-context";
 import { UICustomizationProvider } from "@/hooks/ui-customization-context";
+import { NotesProvider } from "@/hooks/notes-context";
+import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
+import { IPTrackingProvider } from "@/hooks/ip-tracking-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -265,6 +268,24 @@ function RootLayoutNav() {
           title: "بەڕێوەبردنی باکاپ",
         }} 
       />
+      <Stack.Screen 
+        name="notes-management" 
+        options={{ 
+          title: "بەڕێوەبردنی یاداشتەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="profile-tracking" 
+        options={{ 
+          title: "چاودێری گۆڕانکاریەکانی پرۆفایل",
+        }} 
+      />
+      <Stack.Screen 
+        name="ip-security" 
+        options={{ 
+          title: "پاراستنی IP",
+        }} 
+      />
 
     </Stack>
   );
@@ -341,24 +362,30 @@ export default function RootLayout() {
                     <IntegrationProvider>
                     <AdvancedFiltersProvider>
                       <CustomFormsProvider>
-                        <AuthProvider>
-                          <SecurityProvider>
-                            <CustomerSettingsProvider>
-                              <MessagingProvider>
-                                <DebtProvider>
-                                  <ReceiptProvider>
-                                    <UsersProvider>
-                                      <NotificationProvider>
-                                        <RootLayoutNav />
-                                        <SessionTimeoutWarning />
-                                      </NotificationProvider>
-                                    </UsersProvider>
-                                  </ReceiptProvider>
-                                </DebtProvider>
-                              </MessagingProvider>
-                            </CustomerSettingsProvider>
-                          </SecurityProvider>
-                        </AuthProvider>
+                        <NotesProvider>
+                          <ProfileTrackingProvider>
+                            <IPTrackingProvider>
+                              <AuthProvider>
+                                <SecurityProvider>
+                                  <CustomerSettingsProvider>
+                                    <MessagingProvider>
+                                      <DebtProvider>
+                                        <ReceiptProvider>
+                                          <UsersProvider>
+                                            <NotificationProvider>
+                                              <RootLayoutNav />
+                                              <SessionTimeoutWarning />
+                                            </NotificationProvider>
+                                          </UsersProvider>
+                                        </ReceiptProvider>
+                                      </DebtProvider>
+                                    </MessagingProvider>
+                                  </CustomerSettingsProvider>
+                                </SecurityProvider>
+                              </AuthProvider>
+                            </IPTrackingProvider>
+                          </ProfileTrackingProvider>
+                        </NotesProvider>
                       </CustomFormsProvider>
                     </AdvancedFiltersProvider>
                     </IntegrationProvider>
