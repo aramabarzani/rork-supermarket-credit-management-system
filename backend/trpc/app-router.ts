@@ -452,6 +452,19 @@ import {
   getComprehensiveReportsProcedure,
   exportComprehensiveReportProcedure
 } from "./routes/system/comprehensive/route";
+import {
+  createTenantProcedure,
+  getAllTenantsProcedure,
+  getTenantByIdProcedure,
+  getTenantByLicenseProcedure,
+  updateTenantStatusProcedure,
+  updateTenantSettingsProcedure,
+  updateTenantStatsProcedure,
+  deleteTenantProcedure,
+  getTenantDashboardStatsProcedure,
+  extendTenantLicenseProcedure,
+  recordTenantAccessProcedure
+} from "./routes/tenant/management/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -964,6 +977,19 @@ export const appRouter = createTRPCRouter({
     generate: generateComprehensiveReportProcedure,
     getAll: getComprehensiveReportsProcedure,
     export: exportComprehensiveReportProcedure,
+  }),
+  tenant: createTRPCRouter({
+    create: createTenantProcedure,
+    getAll: getAllTenantsProcedure,
+    getById: getTenantByIdProcedure,
+    getByLicense: getTenantByLicenseProcedure,
+    updateStatus: updateTenantStatusProcedure,
+    updateSettings: updateTenantSettingsProcedure,
+    updateStats: updateTenantStatsProcedure,
+    delete: deleteTenantProcedure,
+    getDashboardStats: getTenantDashboardStatsProcedure,
+    extendLicense: extendTenantLicenseProcedure,
+    recordAccess: recordTenantAccessProcedure,
   }),
 });
 
