@@ -35,7 +35,7 @@ export function QuickSearchBar({
 
   const results = searchQuery.data
     ? [
-        ...searchQuery.data.customers.map((c: any) => ({
+        ...(searchQuery.data.customers || []).map((c: any) => ({
           id: c.id,
           type: 'customer',
           title: c.name,
@@ -43,7 +43,7 @@ export function QuickSearchBar({
           data: c,
           relevance: 1,
         })),
-        ...searchQuery.data.employees.map((e: any) => ({
+        ...(searchQuery.data.employees || []).map((e: any) => ({
           id: e.id,
           type: 'employee',
           title: e.name,
@@ -51,7 +51,7 @@ export function QuickSearchBar({
           data: e,
           relevance: 1,
         })),
-        ...searchQuery.data.debts.map((d: any) => ({
+        ...(searchQuery.data.debts || []).map((d: any) => ({
           id: d.id,
           type: 'debt',
           title: `قەرز: ${d.amount}`,
@@ -59,7 +59,7 @@ export function QuickSearchBar({
           data: d,
           relevance: 1,
         })),
-        ...searchQuery.data.payments.map((p: any) => ({
+        ...(searchQuery.data.payments || []).map((p: any) => ({
           id: p.id,
           type: 'payment',
           title: `پارەدان: ${p.amount}`,
