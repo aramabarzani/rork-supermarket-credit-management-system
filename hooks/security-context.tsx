@@ -5,20 +5,30 @@ import {
   LoginAttempt, 
   ActivityLog, 
   UserSession, 
-  SecuritySettings 
+  SecuritySettings,
+  TwoFactorAuth,
+  SecurityAlert,
+  DigitalSignature,
+  PasswordPolicy,
+  IpWhitelist
 } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
 import { useAuth } from './auth-context';
 
 const DEFAULT_SECURITY_SETTINGS: SecuritySettings = {
   maxFailedAttempts: 5,
-  lockoutDuration: 30, // 30 minutes
-  sessionTimeout: 600, // 10 minutes
+  lockoutDuration: 30,
+  sessionTimeout: 600,
   twoFactorRequired: false,
   maxDevicesPerUser: 3,
-  passwordMinLength: 6,
-  requirePasswordChange: false,
-  passwordChangeInterval: 90, // 90 days
+  passwordMinLength: 8,
+  requirePasswordChange: true,
+  passwordChangeInterval: 90,
+  autoLockOnInactivity: true,
+  inactivityLockTimeout: 10,
+  requireStrongPassword: true,
+  allowUnknownIpLogin: false,
+  enableDigitalSignature: true,
 };
 
 export const [SecurityProvider, useSecurity] = createContextHook(() => {
@@ -31,6 +41,19 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
   const [lastActivity, setLastActivity] = useState<Date>(new Date());
   const [sessionWarningShown, setSessionWarningShown] = useState(false);
   const [isHydrated, setIsHydrated] = useState(Platform.OS !== 'web');
+  const [twoFactorAuth, setTwoFactorAuth] = useState<TwoFactorAuth | null>(null);
+  const [securityAlerts, setSecurityAlerts] = useState<SecurityAlert[]>([]);
+  const [digitalSignatures, setDigitalSignatures] = useState<DigitalSignature[]>([]);
+  const [passwordPolicy, setPasswordPolicy] = useState<PasswordPolicy>({
+    minLength: 8,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumbers: true,
+    requireSpecialChars: true,
+    expiryDays: 90,
+    preventReuse: 5,
+  });
+  const [ipWhitelist, setIpWhitelist] = useState<IpWhitelist[]>([]);
 
   // Handle web hydration
   useEffect(() => {
@@ -305,6 +328,73 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     }
   }, [lastActivity, sessionWarningShown]);
 
+  const enable2FA = useCallback((userId: string, method: 'sms' | 'email') => {
+    const newAuth: TwoFactorAuth = {
+      userId,
+      enabled: true,
+      method,
+      secret: Math.random().toString(36).substring(2, 15),
+      backupCodes: Array.from({ length: 10 }, () => 
+        Math.random().toString(36).substring(2, 10).toUpperCase()
+      ),
+      verifiedAt: new Date().toISOString(),
+    };
+    setTwoFactorAuth(newAuth);
+    logActivity('2FA_ENABLED', `تایبەتمەندی دوو هەنگاو چالاک کرا بە ${method}`);
+    return newAuth;
+  }, [logActivity]);
+
+  const disable2FA = useCallback((userId: string) => {
+    setTwoFactorAuth(null);
+    logActivity('2FA_DISABLED', 'تایبەتمەندی دوو هەنگاو ناچالاک کرا');
+  }, [logActivity]);
+
+  const addSecurityAlert = useCallback((alert: Omit<SecurityAlert, 'id'>) => {
+    const newAlert: SecurityAlert = {
+      ...alert,
+      id: `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    };
+    setSecurityAlerts(prev => [newAlert, ...prev]);
+    return newAlert;
+  }, []);
+
+  const resolveSecurityAlert = useCallback((alertId: string, resolvedBy: string) => {
+    setSecurityAlerts(prev => prev.map(alert => 
+      alert.id === alertId 
+        ? { ...alert, resolved: true, resolvedAt: new Date().toISOString(), resolvedBy }
+        : alert
+    ));
+  }, []);
+
+  const addDigitalSignature = useCallback((signature: Omit<DigitalSignature, 'id'>) => {
+    const newSignature: DigitalSignature = {
+      ...signature,
+      id: `sig_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    };
+    setDigitalSignatures(prev => [newSignature, ...prev]);
+    return newSignature;
+  }, []);
+
+  const updatePasswordPolicy = useCallback((policy: Partial<PasswordPolicy>) => {
+    setPasswordPolicy(prev => ({ ...prev, ...policy }));
+    logActivity('PASSWORD_POLICY_UPDATED', 'سیاسەتی وشەی تێپەڕ نوێ کرایەوە');
+  }, [logActivity]);
+
+  const addIpToWhitelist = useCallback((ip: Omit<IpWhitelist, 'id'>) => {
+    const newEntry: IpWhitelist = {
+      ...ip,
+      id: `ip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    };
+    setIpWhitelist(prev => [newEntry, ...prev]);
+    logActivity('IP_WHITELISTED', `IP زیادکرا بۆ لیستی سپی: ${ip.ipAddress}`);
+    return newEntry;
+  }, [logActivity]);
+
+  const removeIpFromWhitelist = useCallback((ipId: string) => {
+    setIpWhitelist(prev => prev.filter(ip => ip.id !== ipId));
+    logActivity('IP_REMOVED', 'IP لابرا لە لیستی سپی');
+  }, [logActivity]);
+
   return useMemo(() => ({
     securitySettings,
     loginAttempts,
@@ -312,6 +402,11 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     userSessions,
     lastActivity,
     sessionWarningShown,
+    twoFactorAuth,
+    securityAlerts,
+    digitalSignatures,
+    passwordPolicy,
+    ipWhitelist,
     recordLoginAttempt,
     isUserLocked,
     getFailedAttemptsCount,
@@ -322,6 +417,14 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     updateSecuritySettings,
     getUserSessions,
     getActivityLogs,
+    enable2FA,
+    disable2FA,
+    addSecurityAlert,
+    resolveSecurityAlert,
+    addDigitalSignature,
+    updatePasswordPolicy,
+    addIpToWhitelist,
+    removeIpFromWhitelist,
   }), [
     securitySettings,
     loginAttempts,
@@ -329,6 +432,11 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     userSessions,
     lastActivity,
     sessionWarningShown,
+    twoFactorAuth,
+    securityAlerts,
+    digitalSignatures,
+    passwordPolicy,
+    ipWhitelist,
     recordLoginAttempt,
     isUserLocked,
     getFailedAttemptsCount,
@@ -339,5 +447,13 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     updateSecuritySettings,
     getUserSessions,
     getActivityLogs,
+    enable2FA,
+    disable2FA,
+    addSecurityAlert,
+    resolveSecurityAlert,
+    addDigitalSignature,
+    updatePasswordPolicy,
+    addIpToWhitelist,
+    removeIpFromWhitelist,
   ]);
 });

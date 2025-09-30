@@ -94,13 +94,86 @@ export interface ActivityLog {
 
 export interface SecuritySettings {
   maxFailedAttempts: number;
-  lockoutDuration: number; // minutes
-  sessionTimeout: number; // minutes
+  lockoutDuration: number;
+  sessionTimeout: number;
   twoFactorRequired: boolean;
   maxDevicesPerUser: number;
   passwordMinLength: number;
   requirePasswordChange: boolean;
-  passwordChangeInterval: number; // days
+  passwordChangeInterval: number;
+  autoLockOnInactivity: boolean;
+  inactivityLockTimeout: number;
+  requireStrongPassword: boolean;
+  allowUnknownIpLogin: boolean;
+  enableDigitalSignature: boolean;
+}
+
+export interface TwoFactorAuth {
+  userId: string;
+  enabled: boolean;
+  method: 'sms' | 'email';
+  secret?: string;
+  backupCodes?: string[];
+  verifiedAt?: string;
+}
+
+export interface SecurityAlert {
+  id: string;
+  type: 'suspicious_login' | 'unknown_ip' | 'multiple_failed_attempts' | 'password_change' | 'security_breach';
+  userId: string;
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  ipAddress: string;
+  deviceInfo: string;
+  timestamp: string;
+  resolved: boolean;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
+export interface DigitalSignature {
+  id: string;
+  userId: string;
+  documentType: string;
+  documentId: string;
+  signature: string;
+  timestamp: string;
+  ipAddress: string;
+  verified: boolean;
+}
+
+export interface SecurityReport {
+  id: string;
+  type: 'monthly' | 'annual' | 'custom';
+  startDate: string;
+  endDate: string;
+  totalLogins: number;
+  failedLogins: number;
+  suspiciousActivities: number;
+  securityAlerts: number;
+  activeUsers: number;
+  generatedAt: string;
+  generatedBy: string;
+}
+
+export interface PasswordPolicy {
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireNumbers: boolean;
+  requireSpecialChars: boolean;
+  expiryDays: number;
+  preventReuse: number;
+}
+
+export interface IpWhitelist {
+  id: string;
+  ipAddress: string;
+  description: string;
+  addedBy: string;
+  addedAt: string;
+  isActive: boolean;
 }
 
 export interface License {

@@ -261,6 +261,22 @@ import {
   getIPChartDataProcedure
 } from "./routes/security/ip-tracking/route";
 import {
+  enable2FAProcedure,
+  disable2FAProcedure,
+  verify2FACodeProcedure,
+  getSecurityAlertsProcedure,
+  resolveSecurityAlertProcedure,
+  getDigitalSignaturesProcedure,
+  verifyDigitalSignatureProcedure,
+  generateSecurityReportProcedure,
+  getPasswordPolicyProcedure,
+  updatePasswordPolicyProcedure,
+  getIpWhitelistProcedure,
+  addIpToWhitelistProcedure,
+  removeIpFromWhitelistProcedure,
+  checkPasswordStrengthProcedure
+} from "./routes/security/enhanced/route";
+import {
   getEmployeeImpactProcedure,
   getAdminImpactProcedure,
   getCustomerImpactProcedure,
@@ -565,6 +581,32 @@ export const appRouter = createTRPCRouter({
       getSecurityReport: getIPSecurityReportProcedure,
       exportReport: exportIPReportProcedure,
       getChartData: getIPChartDataProcedure,
+    }),
+    twoFactor: createTRPCRouter({
+      enable: enable2FAProcedure,
+      disable: disable2FAProcedure,
+      verifyCode: verify2FACodeProcedure,
+    }),
+    alerts: createTRPCRouter({
+      getAll: getSecurityAlertsProcedure,
+      resolve: resolveSecurityAlertProcedure,
+    }),
+    signatures: createTRPCRouter({
+      getAll: getDigitalSignaturesProcedure,
+      verify: verifyDigitalSignatureProcedure,
+    }),
+    reports: createTRPCRouter({
+      generate: generateSecurityReportProcedure,
+    }),
+    password: createTRPCRouter({
+      getPolicy: getPasswordPolicyProcedure,
+      updatePolicy: updatePasswordPolicyProcedure,
+      checkStrength: checkPasswordStrengthProcedure,
+    }),
+    ipWhitelist: createTRPCRouter({
+      getAll: getIpWhitelistProcedure,
+      add: addIpToWhitelistProcedure,
+      remove: removeIpFromWhitelistProcedure,
     }),
   }),
 });
