@@ -260,6 +260,18 @@ import {
   exportIPReportProcedure,
   getIPChartDataProcedure
 } from "./routes/security/ip-tracking/route";
+import {
+  getEmployeeImpactProcedure,
+  getAdminImpactProcedure,
+  getCustomerImpactProcedure,
+  getImpactStatisticsProcedure,
+  getImpactChartProcedure,
+  getImpactFilteredProcedure,
+  generateImpactReportProcedure,
+  exportImpactReportProcedure,
+  shareImpactReportProcedure,
+  checkPoorPerformanceProcedure
+} from "./routes/monitoring/impact/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -460,6 +472,18 @@ export const appRouter = createTRPCRouter({
       generateEmployee: generateEmployeeReportProcedure,
       generateCustomer: generateCustomerReportProcedure,
       delete: deleteCustomReportProcedure,
+    }),
+    impact: createTRPCRouter({
+      getEmployeeImpact: getEmployeeImpactProcedure,
+      getAdminImpact: getAdminImpactProcedure,
+      getCustomerImpact: getCustomerImpactProcedure,
+      getStatistics: getImpactStatisticsProcedure,
+      getChart: getImpactChartProcedure,
+      getFiltered: getImpactFilteredProcedure,
+      generateReport: generateImpactReportProcedure,
+      exportReport: exportImpactReportProcedure,
+      shareReport: shareImpactReportProcedure,
+      checkPoorPerformance: checkPoorPerformanceProcedure,
     }),
   }),
   backup: createTRPCRouter({

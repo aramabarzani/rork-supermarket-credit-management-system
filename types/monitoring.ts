@@ -112,3 +112,70 @@ export interface RealtimeStats {
   lastBackup?: string;
   pendingAlerts: number;
 }
+
+export interface ImpactAnalysis {
+  userId: string;
+  userName: string;
+  userRole: 'admin' | 'employee' | 'customer';
+  totalActions: number;
+  debtActions: number;
+  paymentActions: number;
+  customerActions: number;
+  employeeActions: number;
+  otherActions: number;
+  totalAmount?: number;
+  averageAmount?: number;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  performance: 'excellent' | 'good' | 'average' | 'poor';
+  trend: 'increasing' | 'stable' | 'decreasing';
+}
+
+export interface ImpactStatistics {
+  byRole: {
+    admin: ImpactAnalysis[];
+    employee: ImpactAnalysis[];
+    customer: ImpactAnalysis[];
+  };
+  topPerformers: ImpactAnalysis[];
+  lowPerformers: ImpactAnalysis[];
+  totalActions: number;
+  totalAmount: number;
+  averageActionsPerUser: number;
+}
+
+export interface ImpactChart {
+  userId: string;
+  userName: string;
+  data: {
+    date: string;
+    actions: number;
+    amount?: number;
+  }[];
+}
+
+export interface ImpactFilter {
+  startDate?: string;
+  endDate?: string;
+  city?: string;
+  location?: string;
+  role?: 'admin' | 'employee' | 'customer';
+  minActions?: number;
+  maxActions?: number;
+}
+
+export interface ImpactReport {
+  id: string;
+  title: string;
+  description: string;
+  period: {
+    startDate: string;
+    endDate: string;
+  };
+  statistics: ImpactStatistics;
+  charts: ImpactChart[];
+  generatedAt: string;
+  generatedBy: string;
+}
