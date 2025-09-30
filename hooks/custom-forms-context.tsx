@@ -3,7 +3,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { trpc } from '@/lib/trpc';
 import type { CustomForm, CustomField, FormType } from '@/types/custom-forms';
 
-export const [CustomFormsContext, useCustomForms] = createContextHook(() => {
+export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
   const [selectedForm, setSelectedForm] = useState<CustomForm | null>(null);
   const [isCreatingForm, setIsCreatingForm] = useState<boolean>(false);
   const [isEditingForm, setIsEditingForm] = useState<boolean>(false);
