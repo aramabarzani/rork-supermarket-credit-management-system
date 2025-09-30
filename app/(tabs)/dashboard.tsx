@@ -35,12 +35,14 @@ import {
   CheckCircle,
   Clock,
   X,
+  MapPin,
 } from 'lucide-react-native';
 import { LineChart, BarChart, PieChart as RNPieChart } from 'react-native-chart-kit';
 import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useUsers } from '@/hooks/users-context';
 import { useNotifications } from '@/hooks/notification-context';
+import { useLocationTracking } from '@/hooks/location-tracking-context';
 import { KurdishText } from '@/components/KurdishText';
 import { GlobalSearchBar } from '@/components/GlobalSearchBar';
 
@@ -58,6 +60,7 @@ export default function DashboardScreen() {
   const { users } = usersContext || {};
   const notificationContext = useNotifications();
   const { notifications } = notificationContext || {};
+  const locationTracking = useLocationTracking();
   
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
   const [showFilters, setShowFilters] = useState(false);
@@ -327,6 +330,27 @@ export default function DashboardScreen() {
 
             {/* Global Search Bar */}
             <GlobalSearchBar />
+
+            {/* Location Info Card */}
+            {user?.role === 'admin' && locationTracking?.currentLocation && (
+              <TouchableOpacity 
+                style={styles.locationCard}
+                onPress={() => router.push('/location-tracking')}
+              >
+                <View style={styles.locationHeader}>
+                  <MapPin size={20} color="#3B82F6" />
+                  <KurdishText style={styles.locationTitle}>
+                    شوێنی ئێستا
+                  </KurdishText>
+                </View>
+                <Text style={styles.locationCoords}>
+                  {locationTracking.currentLocation.latitude.toFixed(4)}, {locationTracking.currentLocation.longitude.toFixed(4)}
+                </Text>
+                <Text style={styles.locationAccuracy}>
+                  وردی: {locationTracking.currentLocation.accuracy.toFixed(0)} مەتر
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Filter Controls */}
             <View style={styles.filterSection}>
@@ -1346,5 +1370,35 @@ const styles = StyleSheet.create({
   },
   tabletCustomerDebt: {
     fontSize: 16,
+  },
+  locationCard: {
+    backgroundColor: '#EFF6FF',
+    marginHorizontal: 20,
+    marginVertical: 10,
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3B82F6',
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  locationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  locationCoords: {
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  locationAccuracy: {
+    fontSize: 12,
+    color: '#6B7280',
   },
 });

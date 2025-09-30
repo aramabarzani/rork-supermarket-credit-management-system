@@ -5,333 +5,483 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   Switch,
-  TextInput,
-  Alert,
+  RefreshControl,
 } from 'react-native';
-import { Stack } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { MapPin, Activity, AlertTriangle, Settings, Users, Clock } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import {
+  MapPin,
+  Clock,
+  User,
+  Calendar,
+  AlertTriangle,
+  CheckCircle,
+  Settings,
+} from 'lucide-react-native';
+import { useLocationTracking } from '@/hooks/location-tracking-context';
+import { useAuth } from '@/hooks/auth-context';
 import { trpc } from '@/lib/trpc';
 import { KurdishText } from '@/components/KurdishText';
+import type { LoginActivity, LocationAlert } from '@/types/location-tracking';
 
 export default function LocationTrackingScreen() {
-  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { user } = useAuth();
+  const locationTracking = useLocationTracking();
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'activities' | 'alerts' | 'settings'>('activities');
+  const [filterRole, setFilterRole] = useState<'all' | 'admin' | 'employee' | 'customer'>('all');
 
-  const activitiesQuery = trpc.location.tracking.getActivities.useQuery({});
-  const alertsQuery = trpc.location.tracking.getAlerts.useQuery({ resolved: false });
-  const settingsQuery = trpc.location.tracking.getSettings.useQuery();
-  const updateSettingsMutation = trpc.location.tracking.updateSettings.useMutation();
-  const resolveAlertMutation = trpc.location.tracking.resolveAlert.useMutation();
+  const activitiesQuery = trpc.location.tracking.getActivities.useQuery({
+    userRole: filterRole === 'all' ? undefined : filterRole,
+  });
 
-  const handleUpdateSettings = async (newSettings: any) => {
-    try {
-      await updateSettingsMutation.mutateAsync(newSettings);
-      Alert.alert('سەرکەوتوو', 'ڕێکخستنەکان نوێکرانەوە');
-      settingsQuery.refetch();
-    } catch {
-      Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە نوێکردنەوەی ڕێکخستنەکان');
+  const alertsQuery = trpc.location.tracking.getAlerts.useQuery({
+    resolved: false,
+  });
+
+  const activities = activitiesQuery.data || [];
+  const alerts = alertsQuery.data || [];
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      activitiesQuery.refetch(),
+      alertsQuery.refetch(),
+    ]);
+    setRefreshing(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('ckb-IQ', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const formatDuration = (seconds?: number) => {
+    if (!seconds) return 'چالاک';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}س ${minutes}خ`;
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return '#EF4444';
+      case 'employee':
+        return '#3B82F6';
+      case 'customer':
+        return '#10B981';
+      default:
+        return '#6B7280';
     }
   };
 
-  const handleResolveAlert = async (alertId: string) => {
-    try {
-      await resolveAlertMutation.mutateAsync({ alertId });
-      Alert.alert('سەرکەوتوو', 'ئاگاداری چارەسەرکرا');
-      alertsQuery.refetch();
-    } catch {
-      Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'بەڕێوەبەر';
+      case 'employee':
+        return 'کارمەند';
+      case 'customer':
+        return 'کڕیار';
+      default:
+        return role;
     }
   };
 
-  const renderActivities = () => {
-    if (activitiesQuery.isLoading) {
-      return (
-        <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
-        </View>
-      );
-    }
-
-    const activities = activitiesQuery.data || [];
-
-    return (
-      <View style={styles.tabContent}>
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Activity size={24} color="#10b981" />
-            <Text style={styles.statValue}>{activities.filter(a => a.status === 'active').length}</Text>
-            <KurdishText style={styles.statLabel}>چالاک</KurdishText>
-          </View>
-          <View style={styles.statCard}>
-            <Clock size={24} color="#6366f1" />
-            <Text style={styles.statValue}>{activities.length}</Text>
-            <KurdishText style={styles.statLabel}>کۆی گشتی</KurdishText>
+  const renderActivityItem = (activity: LoginActivity) => (
+    <View key={activity.id} style={styles.activityCard}>
+      <View style={styles.activityHeader}>
+        <View style={styles.activityUser}>
+          <View style={[styles.roleIndicator, { backgroundColor: getRoleColor(activity.userRole) }]} />
+          <View style={styles.activityUserInfo}>
+            <KurdishText style={styles.activityUserName}>{activity.userName}</KurdishText>
+            <Text style={styles.activityUserRole}>{getRoleLabel(activity.userRole)}</Text>
           </View>
         </View>
-
-        <ScrollView style={styles.listContainer}>
-          {activities.map((activity) => (
-            <View key={activity.id} style={styles.activityCard}>
-              <View style={styles.activityHeader}>
-                <View style={styles.activityInfo}>
-                  <Users size={20} color="#6366f1" />
-                  <KurdishText style={styles.activityName}>{activity.userName}</KurdishText>
-                </View>
-                <View style={[
-                  styles.statusBadge,
-                  activity.status === 'active' ? styles.statusActive : styles.statusEnded
-                ]}>
-                  <Text style={styles.statusText}>
-                    {activity.status === 'active' ? 'چالاک' : 'کۆتایی هاتووە'}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.activityDetails}>
-                <View style={styles.detailRow}>
-                  <MapPin size={16} color="#64748b" />
-                  <KurdishText style={styles.detailText}>
-                    {activity.location.address || `${activity.location.latitude.toFixed(4)}, ${activity.location.longitude.toFixed(4)}`}
-                  </KurdishText>
-                </View>
-                <View style={styles.detailRow}>
-                  <Clock size={16} color="#64748b" />
-                  <Text style={styles.detailText}>
-                    {new Date(activity.loginTime).toLocaleString('ku')}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Activity size={16} color="#64748b" />
-                  <Text style={styles.detailText}>
-                    {activity.deviceInfo.platform} - {activity.deviceInfo.deviceType}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
+        <View style={[
+          styles.statusBadge,
+          { backgroundColor: activity.status === 'active' ? '#10B981' : '#6B7280' }
+        ]}>
+          <Text style={styles.statusText}>
+            {activity.status === 'active' ? 'چالاک' : 'کۆتایی هاتووە'}
+          </Text>
+        </View>
       </View>
-    );
-  };
 
-  const renderAlerts = () => {
-    if (alertsQuery.isLoading) {
-      return (
-        <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
+      <View style={styles.activityDetails}>
+        <View style={styles.activityDetailRow}>
+          <Clock size={16} color="#6B7280" />
+          <Text style={styles.activityDetailText}>
+            چوونەژوورەوە: {formatDate(activity.loginTime)}
+          </Text>
         </View>
-      );
-    }
 
-    const alerts = alertsQuery.data || [];
+        {activity.logoutTime && (
+          <View style={styles.activityDetailRow}>
+            <Clock size={16} color="#6B7280" />
+            <Text style={styles.activityDetailText}>
+              دەرچوون: {formatDate(activity.logoutTime)}
+            </Text>
+          </View>
+        )}
 
-    return (
-      <View style={styles.tabContent}>
-        <View style={styles.alertsHeader}>
-          <AlertTriangle size={24} color="#ef4444" />
-          <KurdishText style={styles.alertsTitle}>
-            {alerts.length} ئاگاداری نوێ
+        <View style={styles.activityDetailRow}>
+          <MapPin size={16} color="#6B7280" />
+          <Text style={styles.activityDetailText}>
+            {activity.location.address || `${activity.location.latitude.toFixed(4)}, ${activity.location.longitude.toFixed(4)}`}
+          </Text>
+        </View>
+
+        <View style={styles.activityDetailRow}>
+          <User size={16} color="#6B7280" />
+          <Text style={styles.activityDetailText}>
+            {activity.deviceInfo.platform} - {activity.deviceInfo.deviceType}
+          </Text>
+        </View>
+
+        {activity.sessionDuration && (
+          <View style={styles.activityDetailRow}>
+            <Calendar size={16} color="#6B7280" />
+            <Text style={styles.activityDetailText}>
+              ماوە: {formatDuration(activity.sessionDuration)}
+            </Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+
+  const renderAlertItem = (alert: LocationAlert) => (
+    <View key={alert.id} style={styles.alertCard}>
+      <View style={styles.alertHeader}>
+        <View style={styles.alertIcon}>
+          <AlertTriangle size={20} color="#EF4444" />
+        </View>
+        <View style={styles.alertContent}>
+          <KurdishText style={styles.alertTitle}>{alert.userName}</KurdishText>
+          <Text style={styles.alertMessage}>{alert.message}</Text>
+          <Text style={styles.alertTime}>{formatDate(alert.timestamp)}</Text>
+        </View>
+        <View style={[
+          styles.severityBadge,
+          {
+            backgroundColor:
+              alert.severity === 'high' ? '#FEE2E2' :
+              alert.severity === 'medium' ? '#FEF3C7' : '#DBEAFE'
+          }
+        ]}>
+          <Text style={[
+            styles.severityText,
+            {
+              color:
+                alert.severity === 'high' ? '#EF4444' :
+                alert.severity === 'medium' ? '#F59E0B' : '#3B82F6'
+            }
+          ]}>
+            {alert.severity === 'high' ? 'بەرز' :
+             alert.severity === 'medium' ? 'مامناوەند' : 'نزم'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.alertLocation}>
+        <MapPin size={14} color="#6B7280" />
+        <Text style={styles.alertLocationText}>
+          {alert.location.address || `${alert.location.latitude.toFixed(4)}, ${alert.location.longitude.toFixed(4)}`}
+        </Text>
+      </View>
+    </View>
+  );
+
+  const renderSettingsTab = () => (
+    <View style={styles.settingsContainer}>
+      <View style={styles.settingCard}>
+        <View style={styles.settingHeader}>
+          <KurdishText style={styles.settingTitle}>
+            چالاککردنی چاودێری شوێن
           </KurdishText>
-        </View>
-
-        <ScrollView style={styles.listContainer}>
-          {alerts.map((alert) => (
-            <View key={alert.id} style={[
-              styles.alertCard,
-              alert.severity === 'high' ? styles.alertHigh : alert.severity === 'medium' ? styles.alertMedium : null,
-            ]}>
-              <View style={styles.alertHeader}>
-                <KurdishText style={styles.alertUserName}>{alert.userName}</KurdishText>
-                <View style={[styles.severityBadge, { backgroundColor: getSeverityColor(alert.severity) }]}>
-                  <Text style={styles.severityText}>{getSeverityLabel(alert.severity)}</Text>
-                </View>
-              </View>
-
-              <KurdishText style={styles.alertMessage}>{alert.message}</KurdishText>
-
-              <View style={styles.alertDetails}>
-                <View style={styles.detailRow}>
-                  <MapPin size={14} color="#64748b" />
-                  <Text style={styles.detailTextSmall}>
-                    {alert.location.address || 'شوێنی نامۆ'}
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Clock size={14} color="#64748b" />
-                  <Text style={styles.detailTextSmall}>
-                    {new Date(alert.timestamp).toLocaleString('ku')}
-                  </Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.resolveButton}
-                onPress={() => handleResolveAlert(alert.id)}
-              >
-                <KurdishText style={styles.resolveButtonText}>چارەسەرکردن</KurdishText>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-    );
-  };
-
-  const renderSettings = () => {
-    if (settingsQuery.isLoading) {
-      return (
-        <View style={styles.centerContainer}>
-          <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
-        </View>
-      );
-    }
-
-    const settings = settingsQuery.data;
-    if (!settings) return null;
-
-    return (
-      <ScrollView style={styles.tabContent}>
-        <View style={styles.settingsSection}>
-          <KurdishText style={styles.sectionTitle}>ڕێکخستنەکانی گشتی</KurdishText>
-
-          <View style={styles.settingRow}>
-            <KurdishText style={styles.settingLabel}>چالاککردنی شوێنپێکەوتن</KurdishText>
-            <Switch
-              value={settings.enableLocationTracking}
-              onValueChange={(value) => handleUpdateSettings({ ...settings, enableLocationTracking: value })}
-            />
-          </View>
-
-          <View style={styles.settingRow}>
-            <KurdishText style={styles.settingLabel}>شوێنپێکەوتنی کارمەندان</KurdishText>
-            <Switch
-              value={settings.trackEmployeeLocation}
-              onValueChange={(value) => handleUpdateSettings({ ...settings, trackEmployeeLocation: value })}
-            />
-          </View>
-
-          <View style={styles.settingRow}>
-            <KurdishText style={styles.settingLabel}>شوێنپێکەوتنی کڕیاران</KurdishText>
-            <Switch
-              value={settings.trackCustomerLocation}
-              onValueChange={(value) => handleUpdateSettings({ ...settings, trackCustomerLocation: value })}
-            />
-          </View>
-
-          <View style={styles.settingRow}>
-            <KurdishText style={styles.settingLabel}>پێویستی بە شوێن بۆ چوونەژوورەوە</KurdishText>
-            <Switch
-              value={settings.requireLocationForLogin}
-              onValueChange={(value) => handleUpdateSettings({ ...settings, requireLocationForLogin: value })}
-            />
-          </View>
-
-          <View style={styles.settingRow}>
-            <KurdishText style={styles.settingLabel}>سنووردارکردنی چوونەژوورەوە بە شوێن</KurdishText>
-            <Switch
-              value={settings.restrictLoginByLocation}
-              onValueChange={(value) => handleUpdateSettings({ ...settings, restrictLoginByLocation: value })}
-            />
-          </View>
-        </View>
-
-        <View style={styles.settingsSection}>
-          <KurdishText style={styles.sectionTitle}>ماوەی نوێکردنەوە (چرکە)</KurdishText>
-          <TextInput
-            style={styles.input}
-            value={String(settings.locationUpdateInterval)}
-            onChangeText={(text) => {
-              const value = parseInt(text) || 300;
-              handleUpdateSettings({ ...settings, locationUpdateInterval: value });
+          <Switch
+            value={locationTracking?.settings.enableLocationTracking}
+            onValueChange={(value) => {
+              locationTracking?.updateSettings({ enableLocationTracking: value });
             }}
-            keyboardType="numeric"
-            placeholder="300"
+            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+            thumbColor="#FFFFFF"
           />
         </View>
-      </ScrollView>
-    );
-  };
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'high': return '#ef4444';
-      case 'medium': return '#f59e0b';
-      case 'low': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
-
-  const getSeverityLabel = (severity: string) => {
-    switch (severity) {
-      case 'high': return 'بەرز';
-      case 'medium': return 'مامناوەند';
-      case 'low': return 'نزم';
-      default: return severity;
-    }
-  };
-
-  return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Stack.Screen
-        options={{
-          title: 'شوێنپێکەوتن',
-          headerStyle: { backgroundColor: '#6366f1' },
-          headerTintColor: '#fff',
-        }}
-      />
-
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'activities' && styles.tabActive]}
-          onPress={() => setSelectedTab('activities')}
-        >
-          <Activity size={20} color={selectedTab === 'activities' ? '#6366f1' : '#64748b'} />
-          <KurdishText style={[styles.tabText, selectedTab === 'activities' && styles.tabTextActive]}>
-            چالاکی
-          </KurdishText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'alerts' && styles.tabActive]}
-          onPress={() => setSelectedTab('alerts')}
-        >
-          <AlertTriangle size={20} color={selectedTab === 'alerts' ? '#6366f1' : '#64748b'} />
-          <KurdishText style={[styles.tabText, selectedTab === 'alerts' && styles.tabTextActive]}>
-            ئاگاداری
-          </KurdishText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.tab, selectedTab === 'settings' && styles.tabActive]}
-          onPress={() => setSelectedTab('settings')}
-        >
-          <Settings size={20} color={selectedTab === 'settings' ? '#6366f1' : '#64748b'} />
-          <KurdishText style={[styles.tabText, selectedTab === 'settings' && styles.tabTextActive]}>
-            ڕێکخستن
-          </KurdishText>
-        </TouchableOpacity>
+        <Text style={styles.settingDescription}>
+          چاودێری شوێنی جوگرافی بۆ هەموو بەکارهێنەران
+        </Text>
       </View>
 
-      {selectedTab === 'activities' && renderActivities()}
-      {selectedTab === 'alerts' && renderAlerts()}
-      {selectedTab === 'settings' && renderSettings()}
+      <View style={styles.settingCard}>
+        <View style={styles.settingHeader}>
+          <KurdishText style={styles.settingTitle}>
+            چاودێری کارمەندان
+          </KurdishText>
+          <Switch
+            value={locationTracking?.settings.trackEmployeeLocation}
+            onValueChange={(value) => {
+              locationTracking?.updateSettings({ trackEmployeeLocation: value });
+            }}
+            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+        <Text style={styles.settingDescription}>
+          تۆمارکردنی شوێنی کارمەندان لە کاتی چوونەژوورەوە
+        </Text>
+      </View>
+
+      <View style={styles.settingCard}>
+        <View style={styles.settingHeader}>
+          <KurdishText style={styles.settingTitle}>
+            چاودێری کڕیاران
+          </KurdishText>
+          <Switch
+            value={locationTracking?.settings.trackCustomerLocation}
+            onValueChange={(value) => {
+              locationTracking?.updateSettings({ trackCustomerLocation: value });
+            }}
+            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+        <Text style={styles.settingDescription}>
+          تۆمارکردنی شوێنی کڕیاران لە کاتی چوونەژوورەوە
+        </Text>
+      </View>
+
+      <View style={styles.settingCard}>
+        <View style={styles.settingHeader}>
+          <KurdishText style={styles.settingTitle}>
+            پێویستی بە شوێن بۆ چوونەژوورەوە
+          </KurdishText>
+          <Switch
+            value={locationTracking?.settings.requireLocationForLogin}
+            onValueChange={(value) => {
+              locationTracking?.updateSettings({ requireLocationForLogin: value });
+            }}
+            trackColor={{ false: '#D1D5DB', true: '#10B981' }}
+            thumbColor="#FFFFFF"
+          />
+        </View>
+        <Text style={styles.settingDescription}>
+          پێویستکردنی دەستەبەری شوێن بۆ چوونەژوورەوە
+        </Text>
+      </View>
+
+      {locationTracking?.currentLocation && (
+        <View style={styles.currentLocationCard}>
+          <View style={styles.currentLocationHeader}>
+            <MapPin size={20} color="#3B82F6" />
+            <KurdishText style={styles.currentLocationTitle}>
+              شوێنی ئێستا
+            </KurdishText>
+          </View>
+          <Text style={styles.currentLocationText}>
+            {locationTracking.currentLocation.latitude.toFixed(6)}, {locationTracking.currentLocation.longitude.toFixed(6)}
+          </Text>
+          <Text style={styles.currentLocationAccuracy}>
+            وردی: {locationTracking.currentLocation.accuracy.toFixed(0)} مەتر
+          </Text>
+        </View>
+      )}
     </View>
+  );
+
+  if (!user || user.role !== 'admin') {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.errorContainer}>
+          <AlertTriangle size={48} color="#EF4444" />
+          <KurdishText style={styles.errorText}>
+            تەنها بەڕێوەبەر دەتوانێت ئەم بەشە ببینێت
+          </KurdishText>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>گەڕانەوە</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <LinearGradient colors={['#F3F4F6', '#FFFFFF']} style={styles.gradient}>
+        <View style={styles.container}>
+          <View style={styles.header}>
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity
+                style={[styles.tab, selectedTab === 'activities' && styles.activeTab]}
+                onPress={() => setSelectedTab('activities')}
+              >
+                <Clock size={20} color={selectedTab === 'activities' ? '#3B82F6' : '#6B7280'} />
+                <Text style={[styles.tabText, selectedTab === 'activities' && styles.activeTabText]}>
+                  چالاکیەکان
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.tab, selectedTab === 'alerts' && styles.activeTab]}
+                onPress={() => setSelectedTab('alerts')}
+              >
+                <AlertTriangle size={20} color={selectedTab === 'alerts' ? '#3B82F6' : '#6B7280'} />
+                <Text style={[styles.tabText, selectedTab === 'alerts' && styles.activeTabText]}>
+                  ئاگاداریەکان
+                </Text>
+                {alerts.length > 0 && (
+                  <View style={styles.alertBadge}>
+                    <Text style={styles.alertBadgeText}>{alerts.length}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.tab, selectedTab === 'settings' && styles.activeTab]}
+                onPress={() => setSelectedTab('settings')}
+              >
+                <Settings size={20} color={selectedTab === 'settings' ? '#3B82F6' : '#6B7280'} />
+                <Text style={[styles.tabText, selectedTab === 'settings' && styles.activeTabText]}>
+                  ڕێکخستن
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {selectedTab === 'activities' && (
+              <View style={styles.filterContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <TouchableOpacity
+                    style={[styles.filterButton, filterRole === 'all' && styles.activeFilter]}
+                    onPress={() => setFilterRole('all')}
+                  >
+                    <Text style={[styles.filterText, filterRole === 'all' && styles.activeFilterText]}>
+                      هەموو
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.filterButton, filterRole === 'admin' && styles.activeFilter]}
+                    onPress={() => setFilterRole('admin')}
+                  >
+                    <Text style={[styles.filterText, filterRole === 'admin' && styles.activeFilterText]}>
+                      بەڕێوەبەر
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.filterButton, filterRole === 'employee' && styles.activeFilter]}
+                    onPress={() => setFilterRole('employee')}
+                  >
+                    <Text style={[styles.filterText, filterRole === 'employee' && styles.activeFilterText]}>
+                      کارمەند
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.filterButton, filterRole === 'customer' && styles.activeFilter]}
+                    onPress={() => setFilterRole('customer')}
+                  >
+                    <Text style={[styles.filterText, filterRole === 'customer' && styles.activeFilterText]}>
+                      کڕیار
+                    </Text>
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#3B82F6']}
+                tintColor="#3B82F6"
+              />
+            }
+          >
+            {selectedTab === 'activities' && (
+              <View style={styles.activitiesContainer}>
+                {activitiesQuery.isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#3B82F6" />
+                    <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
+                  </View>
+                ) : activities.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <MapPin size={48} color="#D1D5DB" />
+                    <Text style={styles.emptyText}>هیچ چالاکییەک نییە</Text>
+                  </View>
+                ) : (
+                  activities.map(renderActivityItem)
+                )}
+              </View>
+            )}
+
+            {selectedTab === 'alerts' && (
+              <View style={styles.alertsContainer}>
+                {alertsQuery.isLoading ? (
+                  <View style={styles.loadingContainer}>
+                    <ActivityIndicator size="large" color="#3B82F6" />
+                    <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
+                  </View>
+                ) : alerts.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <CheckCircle size={48} color="#10B981" />
+                    <Text style={styles.emptyText}>هیچ ئاگادارییەک نییە</Text>
+                  </View>
+                ) : (
+                  alerts.map(renderAlertItem)
+                )}
+              </View>
+            )}
+
+            {selectedTab === 'settings' && renderSettingsTab()}
+          </ScrollView>
+        </View>
+      </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
   },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 16,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
-    paddingVertical: 8,
+    borderBottomColor: '#E5E7EB',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 8,
   },
   tab: {
     flex: 1,
@@ -339,75 +489,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    backgroundColor: '#F9FAFB',
     gap: 8,
   },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: '#6366f1',
+  activeTab: {
+    backgroundColor: '#EFF6FF',
   },
   tabText: {
     fontSize: 14,
-    color: '#64748b',
-    fontWeight: '500' as const,
+    color: '#6B7280',
+    fontWeight: '500',
   },
-  tabTextActive: {
-    color: '#6366f1',
-    fontWeight: '600' as const,
+  activeTabText: {
+    color: '#3B82F6',
   },
-  tabContent: {
-    flex: 1,
-    padding: 16,
-  },
-  centerContainer: {
-    flex: 1,
+  alertBadge: {
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 6,
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#64748b',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700' as const,
-    color: '#1e293b',
-    marginTop: 8,
-  },
-  statLabel: {
+  alertBadgeText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    color: '#64748b',
-    marginTop: 4,
+    fontWeight: 'bold',
   },
-  listContainer: {
+  filterContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  filterButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#F9FAFB',
+    marginRight: 8,
+  },
+  activeFilter: {
+    backgroundColor: '#3B82F6',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  activeFilterText: {
+    color: '#FFFFFF',
+  },
+  content: {
     flex: 1,
+  },
+  activitiesContainer: {
+    padding: 16,
+    gap: 12,
   },
   activityCard: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
+    elevation: 3,
   },
   activityHeader: {
     flexDirection: 'row',
@@ -415,161 +565,220 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  activityInfo: {
+  activityUser: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
-  activityName: {
+  roleIndicator: {
+    width: 4,
+    height: 40,
+    borderRadius: 2,
+  },
+  activityUserInfo: {
+    gap: 4,
+  },
+  activityUserName: {
     fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#1e293b',
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  activityUserRole: {
+    fontSize: 12,
+    color: '#6B7280',
   },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
   },
-  statusActive: {
-    backgroundColor: '#dcfce7',
-  },
-  statusEnded: {
-    backgroundColor: '#f1f5f9',
-  },
   statusText: {
     fontSize: 12,
-    fontWeight: '500' as const,
-    color: '#1e293b',
+    color: '#FFFFFF',
+    fontWeight: '500',
   },
   activityDetails: {
     gap: 8,
   },
-  detailRow: {
+  activityDetailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  detailText: {
+  activityDetailText: {
     fontSize: 14,
-    color: '#64748b',
+    color: '#6B7280',
     flex: 1,
   },
-  detailTextSmall: {
-    fontSize: 12,
-    color: '#64748b',
-    flex: 1,
-  },
-  alertsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
+  alertsContainer: {
     padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-  },
-  alertsTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: '#1e293b',
+    gap: 12,
   },
   alertCard: {
-    backgroundColor: '#fff',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#6b7280',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
-  },
-  alertHigh: {
-    borderLeftColor: '#ef4444',
-  },
-  alertMedium: {
-    borderLeftColor: '#f59e0b',
+    elevation: 3,
   },
   alertHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  alertIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  alertContent: {
+    flex: 1,
+    gap: 4,
+  },
+  alertTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  alertMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  alertTime: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  severityBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    height: 24,
+  },
+  severityText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  alertLocation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  alertLocationText: {
+    fontSize: 12,
+    color: '#6B7280',
+    flex: 1,
+  },
+  settingsContainer: {
+    padding: 16,
+    gap: 12,
+  },
+  settingCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  settingHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  alertUserName: {
+  settingTitle: {
     fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#1e293b',
+    fontWeight: '600',
+    color: '#1F2937',
   },
-  severityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  severityText: {
-    fontSize: 12,
-    fontWeight: '500' as const,
-    color: '#fff',
-  },
-  alertMessage: {
+  settingDescription: {
     fontSize: 14,
-    color: '#475569',
-    marginBottom: 12,
+    color: '#6B7280',
   },
-  alertDetails: {
-    gap: 6,
-    marginBottom: 12,
-  },
-  resolveButton: {
-    backgroundColor: '#6366f1',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  resolveButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600' as const,
-  },
-  settingsSection: {
-    backgroundColor: '#fff',
-    padding: 16,
+  currentLocationCard: {
+    backgroundColor: '#EFF6FF',
     borderRadius: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 16,
+    marginTop: 8,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#1e293b',
-    marginBottom: 16,
-  },
-  settingRow: {
+  currentLocationHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  currentLocationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  currentLocationText: {
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  currentLocationAccuracy: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  emptyText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#EF4444',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  backButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 24,
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  settingLabel: {
-    fontSize: 14,
-    color: '#475569',
-  },
-  input: {
-    backgroundColor: '#f8fafc',
-    padding: 12,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    fontSize: 14,
-    color: '#1e293b',
+  },
+  backButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
