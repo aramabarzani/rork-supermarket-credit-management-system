@@ -259,6 +259,12 @@ function RootLayoutNav() {
           title: "چاودێری کاتی ڕاستەوخۆ",
         }} 
       />
+      <Stack.Screen 
+        name="backup-management" 
+        options={{ 
+          title: "بەڕێوەبردنی باکاپ",
+        }} 
+      />
 
     </Stack>
   );

@@ -185,6 +185,17 @@ import {
   generateCustomerReportProcedure,
   deleteCustomReportProcedure
 } from "./routes/monitoring/reports/route";
+import {
+  getBackupConfigProcedure,
+  updateBackupConfigProcedure,
+  getBackupRecordsProcedure as getBackupRecordsNewProcedure,
+  createBackupProcedure,
+  getBackupStatsProcedure,
+  restoreBackupProcedure as restoreBackupNewProcedure,
+  generateBackupReportProcedure,
+  verifyBackupProcedure,
+  deleteBackupProcedure as deleteBackupNewProcedure
+} from "./routes/backup/management/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -386,6 +397,17 @@ export const appRouter = createTRPCRouter({
       generateCustomer: generateCustomerReportProcedure,
       delete: deleteCustomReportProcedure,
     }),
+  }),
+  backup: createTRPCRouter({
+    getConfig: getBackupConfigProcedure,
+    updateConfig: updateBackupConfigProcedure,
+    getRecords: getBackupRecordsNewProcedure,
+    create: createBackupProcedure,
+    getStats: getBackupStatsProcedure,
+    restore: restoreBackupNewProcedure,
+    generateReport: generateBackupReportProcedure,
+    verify: verifyBackupProcedure,
+    delete: deleteBackupNewProcedure,
   }),
 });
 
