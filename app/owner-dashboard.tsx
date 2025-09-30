@@ -213,7 +213,11 @@ export default function OwnerDashboardScreen() {
   }
 
   if (error) {
-    const isNetworkError = error.message.includes('Network request failed') || error.message.includes('fetch');
+    const isNetworkError = error.message.includes('Network request failed') || 
+                          error.message.includes('fetch') || 
+                          error.message.includes('Cannot connect');
+    const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'localhost';
+    
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
@@ -224,11 +228,11 @@ export default function OwnerDashboardScreen() {
           
           {isNetworkError && (
             <View style={styles.errorDetailsCard}>
-              <Text style={styles.errorDetailsTitle}>زانیاری تەکنیکی:</Text>
-              <Text style={styles.errorDetailsText}>• سێرڤەری باکێند کارناکات</Text>
-              <Text style={styles.errorDetailsText}>• دڵنیابە لەوەی سێرڤەر داگیرساوە</Text>
-              <Text style={styles.errorDetailsText}>• بەستەری API: {typeof window !== 'undefined' ? window.location.origin : 'localhost'}/api/trpc</Text>
+              <Text style={styles.errorDetailsTitle}>چارەسەری کێشە:</Text>
+              <Text style={styles.errorDetailsText}>• دڵنیابە لەوەی سێرڤەری گەشەپێدان کاردەکات</Text>
+              <Text style={styles.errorDetailsText}>• بەستەری ئێستا: {currentUrl}/api/trpc</Text>
               <Text style={styles.errorDetailsText}>• تکایە کۆنسۆڵی گەشەپێدەر بپشکنە بۆ زانیاری زیاتر</Text>
+              <Text style={styles.errorDetailsText}>• ئەگەر کێشەکە بەردەوام بوو، سێرڤەر دووبارە دەستپێبکەرەوە</Text>
             </View>
           )}
           
