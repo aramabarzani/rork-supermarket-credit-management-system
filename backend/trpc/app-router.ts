@@ -381,6 +381,43 @@ import {
   getLocationAlertsProcedure,
   resolveLocationAlertProcedure
 } from "./routes/location/tracking/route";
+import {
+  generateLicenseProcedure,
+  validateLicenseProcedure,
+  activateLicenseProcedure,
+  deactivateLicenseProcedure,
+  suspendLicenseProcedure,
+  getAllLicensesProcedure,
+  getLicenseByKeyProcedure,
+  updateLicenseProcedure
+} from "./routes/license/management/route";
+import {
+  createSubscriptionProcedure,
+  getAllSubscriptionsProcedure,
+  getSubscriptionByIdProcedure,
+  getSubscriptionsByCustomerProcedure,
+  cancelSubscriptionProcedure,
+  renewSubscriptionProcedure,
+  upgradeSubscriptionProcedure,
+  createInAppPurchaseProcedure,
+  getPaymentHistoryProcedure,
+  getPurchaseHistoryProcedure,
+  getRevenueStatsProcedure
+} from "./routes/subscription/management/route";
+import {
+  getAllRolesProcedure,
+  getRoleByIdProcedure,
+  createRoleProcedure,
+  updateRoleProcedure,
+  deleteRoleProcedure,
+  assignRoleProcedure,
+  revokeRoleProcedure,
+  getUserRolesProcedure,
+  getUserPermissionsProcedure,
+  checkPermissionProcedure,
+  getAllPermissionsProcedure,
+  getPermissionsByCategoryProcedure
+} from "./routes/rbac/management/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -815,6 +852,49 @@ export const appRouter = createTRPCRouter({
       updateSettings: updateLocationSettingsProcedure,
       getAlerts: getLocationAlertsProcedure,
       resolveAlert: resolveLocationAlertProcedure,
+    }),
+  }),
+  license: createTRPCRouter({
+    generate: generateLicenseProcedure,
+    validate: validateLicenseProcedure,
+    activate: activateLicenseProcedure,
+    deactivate: deactivateLicenseProcedure,
+    suspend: suspendLicenseProcedure,
+    getAll: getAllLicensesProcedure,
+    getByKey: getLicenseByKeyProcedure,
+    update: updateLicenseProcedure,
+  }),
+  subscription: createTRPCRouter({
+    create: createSubscriptionProcedure,
+    getAll: getAllSubscriptionsProcedure,
+    getById: getSubscriptionByIdProcedure,
+    getByCustomer: getSubscriptionsByCustomerProcedure,
+    cancel: cancelSubscriptionProcedure,
+    renew: renewSubscriptionProcedure,
+    upgrade: upgradeSubscriptionProcedure,
+    createPurchase: createInAppPurchaseProcedure,
+    getPaymentHistory: getPaymentHistoryProcedure,
+    getPurchaseHistory: getPurchaseHistoryProcedure,
+    getRevenueStats: getRevenueStatsProcedure,
+  }),
+  rbac: createTRPCRouter({
+    roles: createTRPCRouter({
+      getAll: getAllRolesProcedure,
+      getById: getRoleByIdProcedure,
+      create: createRoleProcedure,
+      update: updateRoleProcedure,
+      delete: deleteRoleProcedure,
+    }),
+    userRoles: createTRPCRouter({
+      assign: assignRoleProcedure,
+      revoke: revokeRoleProcedure,
+      getByUser: getUserRolesProcedure,
+    }),
+    permissions: createTRPCRouter({
+      getAll: getAllPermissionsProcedure,
+      getByCategory: getPermissionsByCategoryProcedure,
+      getByUser: getUserPermissionsProcedure,
+      check: checkPermissionProcedure,
     }),
   }),
 });
