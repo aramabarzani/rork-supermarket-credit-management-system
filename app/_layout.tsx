@@ -15,6 +15,7 @@ import { ReceiptProvider } from "@/hooks/receipt-context";
 import { CustomerSettingsProvider } from "@/hooks/customer-settings-context";
 import { MessagingProvider } from "@/hooks/messaging-context";
 import { IntegrationProvider } from "@/hooks/integration-context";
+import { AdvancedFiltersProvider } from "@/hooks/advanced-filters-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -219,6 +220,12 @@ function RootLayoutNav() {
           title: "ڕێکخستنی هەموهانگکردن",
         }} 
       />
+      <Stack.Screen 
+        name="advanced-filters" 
+        options={{ 
+          title: "فلتەری پێشکەوتوو",
+        }} 
+      />
 
     </Stack>
   );
@@ -291,7 +298,8 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <SettingsProvider>
               <IntegrationProvider>
-                <AuthProvider>
+                <AdvancedFiltersProvider>
+                  <AuthProvider>
                   <SecurityProvider>
                     <CustomerSettingsProvider>
                       <MessagingProvider>
@@ -308,7 +316,8 @@ export default function RootLayout() {
                       </MessagingProvider>
                     </CustomerSettingsProvider>
                   </SecurityProvider>
-                </AuthProvider>
+                  </AuthProvider>
+                </AdvancedFiltersProvider>
               </IntegrationProvider>
             </SettingsProvider>
           </QueryClientProvider>

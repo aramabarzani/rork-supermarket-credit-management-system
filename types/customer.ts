@@ -15,6 +15,11 @@ export interface Customer {
   createdByName: string;
   status: 'active' | 'inactive';
   notes?: string;
+  city?: string; // شار
+  location?: string; // شوێن
+  isVIP?: boolean; // کڕیاری VIP
+  vipLevel?: number; // پلەی VIP (1-5)
+  usageDuration?: number; // ماوەی بەکارهێنان بە ڕۆژ
 }
 
 export interface CustomerAnalytics {
@@ -56,4 +61,23 @@ export interface YearlyCustomerReport {
     debt: number;
     paid: number;
   }[];
+}
+
+export interface CustomerFilters {
+  searchText?: string;
+  group?: string;
+  rating?: number;
+  status?: 'active' | 'inactive' | 'all';
+  city?: string;
+  location?: string;
+  isVIP?: boolean;
+  vipLevel?: number;
+  minUsageDuration?: number;
+  maxUsageDuration?: number;
+  minTotalDebt?: number;
+  maxTotalDebt?: number;
+  minTotalPaid?: number;
+  maxTotalPaid?: number;
+  sortBy?: 'name' | 'totalDebt' | 'totalPaid' | 'createdAt' | 'usageDuration';
+  sortOrder?: 'asc' | 'desc';
 }

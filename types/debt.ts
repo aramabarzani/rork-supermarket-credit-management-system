@@ -13,6 +13,9 @@ export interface Debt {
   status: 'active' | 'paid' | 'partial';
   dueDate?: string;
   receiptNumber?: string; // ژمارەی وەسڵ
+  city?: string; // شار
+  location?: string; // شوێن
+  isVIP?: boolean; // قەرزی کڕیاری VIP
 }
 
 export interface Payment {
@@ -47,6 +50,11 @@ export interface SearchFilters {
   paymentStatus?: 'complete' | 'incomplete' | 'all';
   sortBy?: 'date' | 'amount' | 'customer' | 'category';
   sortOrder?: 'asc' | 'desc';
+  city?: string;
+  location?: string;
+  isVIP?: boolean;
+  vipLevel?: number;
+  amountRange?: 'small' | 'medium' | 'large';
 }
 
 export interface PaymentFilters {
@@ -60,6 +68,11 @@ export interface PaymentFilters {
   endDate?: string;
   sortBy?: 'date' | 'amount' | 'customer';
   sortOrder?: 'asc' | 'desc';
+  city?: string;
+  location?: string;
+  isVIP?: boolean;
+  vipLevel?: number;
+  amountRange?: 'small' | 'medium' | 'large';
 }
 
 export interface Receipt {
@@ -115,4 +128,7 @@ export interface ReceiptFilters {
   endDate?: string;
   sortBy?: 'date' | 'amount' | 'customer' | 'receiptNumber';
   sortOrder?: 'asc' | 'desc';
+  minAmount?: number;
+  maxAmount?: number;
+  amountRange?: 'small' | 'medium' | 'large';
 }
