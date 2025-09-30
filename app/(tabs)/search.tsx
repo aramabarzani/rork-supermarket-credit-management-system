@@ -18,7 +18,9 @@ import {
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
-import { AdvancedSearch } from '@/components/AdvancedSearch';
+
+import VoiceSearchButton from '@/components/VoiceSearchButton';
+import AdvancedSearchModal from '@/components/AdvancedSearchModal';
 import { useDebts } from '@/hooks/debt-context';
 import { SearchFilters, PaymentFilters, Debt, Payment } from '@/types/debt';
 
@@ -130,6 +132,11 @@ export default function SearchTab() {
               textAlign="right"
             />
           </View>
+          <VoiceSearchButton
+            onResult={(text) => setQuickSearch(text)}
+            language="ku"
+            searchType="general"
+          />
           <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setShowAdvancedSearch(true)}
@@ -349,13 +356,17 @@ export default function SearchTab() {
       </ScrollView>
 
       {/* Advanced Search Modal */}
-      <AdvancedSearch
-        visible={showAdvancedSearch}
-        onClose={() => setShowAdvancedSearch(false)}
-        onSearch={handleAdvancedSearch}
-        searchType={searchType === 'all' ? 'debts' : searchType}
-        initialFilters={currentFilters}
-      />
+      {showAdvancedSearch && (
+        <AdvancedSearchModal
+          visible={showAdvancedSearch}
+          onClose={() => setShowAdvancedSearch(false)}
+          onSearch={(filters) => {
+            handleAdvancedSearch(filters as SearchFilters | PaymentFilters);
+            setShowAdvancedSearch(false);
+          }}
+          searchType={searchType === 'all' ? 'customer' : searchType === 'debts' ? 'debt' : 'payment'}
+        />
+      )}
     </View>
   );
 }

@@ -107,6 +107,12 @@ import {
   shareReportProcedure,
   scheduledShareProcedure
 } from "./routes/integration/share/route";
+import {
+  voiceSearchProcedure,
+  advancedSearchProcedure,
+  quickSearchProcedure,
+  autoEmailSearchProcedure
+} from "./routes/voice/search/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -226,6 +232,14 @@ export const appRouter = createTRPCRouter({
       report: shareReportProcedure,
       scheduled: scheduledShareProcedure,
     }),
+  }),
+  voice: createTRPCRouter({
+    search: voiceSearchProcedure,
+  }),
+  search: createTRPCRouter({
+    advanced: advancedSearchProcedure,
+    quick: quickSearchProcedure,
+    autoEmail: autoEmailSearchProcedure,
   }),
 });
 
