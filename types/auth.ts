@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   phone: string;
-  role: 'admin' | 'employee' | 'customer';
+  role: 'owner' | 'admin' | 'employee' | 'customer';
   createdAt: string;
   permissions?: Permission[];
   isActive: boolean;

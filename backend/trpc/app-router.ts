@@ -357,6 +357,23 @@ import {
   getChatStatsProcedure,
   shareChatProcedure
 } from "./routes/messaging/chat/route";
+import {
+  ownerProcedure,
+  createAdminProcedure,
+  updateSubscriptionProcedure,
+  renewSubscriptionProcedure,
+  suspendTenantProcedure,
+  activateTenantProcedure,
+  deleteTenantProcedure,
+  getTenantDetailsProcedure
+} from "./routes/subscription/owner/route";
+import {
+  getNotificationsProcedure as getSubscriptionNotificationsProcedure,
+  markAsReadProcedure as markSubscriptionNotificationAsReadProcedure,
+  checkExpiryProcedure,
+  sendExpiryWarningProcedure,
+  sendExpiredNoticeProcedure
+} from "./routes/subscription/notifications/route";
 
 
 
@@ -774,6 +791,25 @@ export const appRouter = createTRPCRouter({
       markAsRead: markChatAsReadProcedure,
       getStats: getChatStatsProcedure,
       share: shareChatProcedure,
+    }),
+  }),
+  subscription: createTRPCRouter({
+    owner: createTRPCRouter({
+      getAll: ownerProcedure,
+      createAdmin: createAdminProcedure,
+      updateSubscription: updateSubscriptionProcedure,
+      renew: renewSubscriptionProcedure,
+      suspend: suspendTenantProcedure,
+      activate: activateTenantProcedure,
+      delete: deleteTenantProcedure,
+      getDetails: getTenantDetailsProcedure,
+    }),
+    notifications: createTRPCRouter({
+      getAll: getSubscriptionNotificationsProcedure,
+      markAsRead: markSubscriptionNotificationAsReadProcedure,
+      checkExpiry: checkExpiryProcedure,
+      sendWarning: sendExpiryWarningProcedure,
+      sendExpired: sendExpiredNoticeProcedure,
     }),
   }),
 
