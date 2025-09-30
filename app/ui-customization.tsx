@@ -125,25 +125,28 @@ export default function UICustomizationScreen() {
             قەبارەی فۆنت (٧٠٥، ٧٠٦)
           </KurdishText>
           <GradientCard>
-            {(['small', 'medium', 'large', 'xlarge'] as FontSize[]).map((size) => (
-              <TouchableOpacity
-                key={size}
-                style={[
-                  styles.optionRow,
-                  fontSize === size && styles.optionRowSelected,
-                ]}
-                onPress={() => setFontSize(size)}
-              >
-                <Type size={20} color={fontSize === size ? '#3B82F6' : '#6B7280'} />
-                <KurdishText
-                  variant="body"
-                  color={fontSize === size ? '#3B82F6' : '#1F2937'}
-                  style={[{ fontSize: FONT_SIZE_VALUES[size] as number }]}
+            {(['small', 'medium', 'large', 'xlarge'] as FontSize[]).map((size) => {
+              const fontSizeValue = FONT_SIZE_VALUES[size];
+              return (
+                <TouchableOpacity
+                  key={size}
+                  style={[
+                    styles.optionRow,
+                    fontSize === size && styles.optionRowSelected,
+                  ]}
+                  onPress={() => setFontSize(size)}
                 >
-                  {size === 'small' ? 'بچووک' : size === 'medium' ? 'ناوەند' : size === 'large' ? 'گەورە' : 'زۆر گەورە'}
-                </KurdishText>
-              </TouchableOpacity>
-            ))}
+                  <Type size={20} color={fontSize === size ? '#3B82F6' : '#6B7280'} />
+                  <KurdishText
+                    variant="body"
+                    color={fontSize === size ? '#3B82F6' : '#1F2937'}
+                    style={{ fontSize: fontSizeValue }}
+                  >
+                    {size === 'small' ? 'بچووک' : size === 'medium' ? 'ناوەند' : size === 'large' ? 'گەورە' : 'زۆر گەورە'}
+                  </KurdishText>
+                </TouchableOpacity>
+              );
+            })}
           </GradientCard>
         </View>
 
