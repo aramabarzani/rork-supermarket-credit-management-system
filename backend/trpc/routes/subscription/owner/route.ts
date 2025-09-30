@@ -4,6 +4,8 @@ import type {
   TenantSubscription
 } from '@/types/subscription';
 import { safeStorage } from '@/utils/storage';
+import type { User } from '@/types/auth';
+import { PERMISSIONS } from '@/constants/permissions';
 
 let mockTenants: TenantSubscription[] = [];
 
@@ -108,30 +110,68 @@ export const createAdminProcedure = publicProcedure
   .mutation(async ({ input }) => {
     await loadTenants();
     
-    const newTenant: TenantSubscription = {
-      id: `tenant-${Date.now()}`,
-      adminId: `admin-${Date.now()}`,
-      adminName: input.name,
-      adminPhone: input.phone,
-      plan: input.plan,
-      status: 'active',
-      startDate: new Date().toISOString(),
-      expiryDate: new Date(Date.now() + input.duration * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date().toISOString(),
-      createdBy: 'owner',
-      staffCount: 0,
-      customerCount: 0,
-      notificationsSent: 0,
-    };
+    try {
+      let existingUsers = await safeStorage.getItem<User[]>('users', null);
+      if (!existingUsers || !Array.isArray(existingUsers)) {
+        existingUsers = [];
+      }
+      
+      const phoneExists = existingUsers.some(u => u.phone === input.phone);
+      if (phoneExists) {
+        throw new Error('ژمارەی مۆبایل پێشتر تۆمارکراوە');
+      }
+      
+      const adminId = `admin-${Date.now()}`;
+      const tenantId = `tenant-${Date.now()}`;
+      
+      const newAdmin: User = {
+        id: adminId,
+        name: input.name,
+        phone: input.phone,
+        password: input.password,
+        role: 'admin',
+        createdAt: new Date().toISOString(),
+        isActive: true,
+        permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
+        failedLoginAttempts: 0,
+        twoFactorEnabled: false,
+        allowedDevices: 5,
+        currentSessions: [],
+        tenantId: tenantId,
+      };
+      
+      const newTenant: TenantSubscription = {
+        id: tenantId,
+        adminId: adminId,
+        adminName: input.name,
+        adminPhone: input.phone,
+        plan: input.plan,
+        status: 'active',
+        startDate: new Date().toISOString(),
+        expiryDate: new Date(Date.now() + input.duration * 24 * 60 * 60 * 1000).toISOString(),
+        createdAt: new Date().toISOString(),
+        createdBy: 'owner',
+        staffCount: 0,
+        customerCount: 0,
+        notificationsSent: 0,
+      };
 
-    mockTenants.push(newTenant);
-    await saveTenants();
+      mockTenants.push(newTenant);
+      await saveTenants();
+      
+      existingUsers.push(newAdmin);
+      await safeStorage.setItem('users', existingUsers);
 
-    return {
-      success: true,
-      tenant: newTenant,
-      message: 'بەڕێوەبەر بە سەرکەوتوویی دروستکرا',
-    };
+      return {
+        success: true,
+        tenant: newTenant,
+        admin: newAdmin,
+        message: 'بەڕێوەبەر بە سەرکەوتوویی دروستکرا',
+      };
+    } catch (error) {
+      console.error('Error creating admin:', error);
+      throw error;
+    }
   });
 
 export const updateSubscriptionProcedure = publicProcedure

@@ -14,16 +14,12 @@ export interface User {
   allowedDevices?: number;
   currentSessions?: UserSession[];
   isStarEmployee?: boolean;
-  // Detailed customer information (Requirement 201)
+  tenantId?: string;
   address?: string;
   nationalId?: string;
-  // Customer email for notifications and receipts (Requirement 203)
   email?: string;
-  // Customer group classification (Requirement 204)
   customerGroup?: string;
-  // Customer rating/level (Requirement 205)
   customerRating?: string;
-  // Additional customer metrics for rating calculation
   onTimePayments?: number;
   latePayments?: number;
   lastPaymentDate?: string;
