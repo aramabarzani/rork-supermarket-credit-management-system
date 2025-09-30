@@ -43,6 +43,12 @@ export const PERMISSIONS = {
   MANAGE_VIP_CUSTOMERS: 'manage_vip_customers',
   MANAGE_CUSTOMER_RATINGS: 'manage_customer_ratings',
   SEND_NOTIFICATIONS: 'send_notifications',
+  
+  // Admin Management (Section 32: 621-640)
+  MANAGE_ADMINS: 'manage_admins',
+  MANAGE_ROLES: 'manage_roles',
+  VIEW_PERMISSIONS_REPORT: 'view_permissions_report',
+  EXPORT_PERMISSIONS_REPORT: 'export_permissions_report',
 } as const;
 
 export const PERMISSION_LABELS: Record<string, string> = {
@@ -83,6 +89,11 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.MANAGE_VIP_CUSTOMERS]: 'بەڕێوەبردنی کڕیارانی VIP',
   [PERMISSIONS.MANAGE_CUSTOMER_RATINGS]: 'بەڕێوەبردنی پلەی کڕیار',
   [PERMISSIONS.SEND_NOTIFICATIONS]: 'ناردنی ئاگاداری',
+  
+  [PERMISSIONS.MANAGE_ADMINS]: 'بەڕێوەبردنی بەڕێوەبەران',
+  [PERMISSIONS.MANAGE_ROLES]: 'بەڕێوەبردنی ڕۆڵەکان',
+  [PERMISSIONS.VIEW_PERMISSIONS_REPORT]: 'بینینی ڕاپۆرتی دەسەڵاتەکان',
+  [PERMISSIONS.EXPORT_PERMISSIONS_REPORT]: 'دەرهێنانی ڕاپۆرتی دەسەڵاتەکان',
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS = [

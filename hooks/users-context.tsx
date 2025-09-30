@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, Permission, ActivityLog, UserSession } from '@/types/auth';
+import { User, Permission, ActivityLog, UserSession, CustomRole, RoleAssignment } from '@/types/auth';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
 
 interface EmployeeStats {
@@ -165,6 +165,8 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const [userSessions, setUserSessions] = useState<UserSession[]>([]);
   const [employeeStats, setEmployeeStats] = useState<Record<string, EmployeeStats>>({});
   const [employeeSchedules, setEmployeeSchedules] = useState<Record<string, EmployeeWorkSchedule>>({});
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([]);
+  const [roleAssignments, setRoleAssignments] = useState<RoleAssignment[]>([]);
 
   useEffect(() => {
     const initializeUsers = async () => {
@@ -189,6 +191,8 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await loadUserSessions();
       await loadEmployeeStats();
       await loadEmployeeSchedules();
+      await loadCustomRoles();
+      await loadRoleAssignments();
       setIsLoading(false);
     };
     
@@ -252,6 +256,28 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     }
   };
 
+  const loadCustomRoles = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('customRoles');
+      if (stored) {
+        setCustomRoles(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading custom roles:', error);
+    }
+  };
+
+  const loadRoleAssignments = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('roleAssignments');
+      if (stored) {
+        setRoleAssignments(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading role assignments:', error);
+    }
+  };
+
   const saveUsers = async (updatedUsers: User[]) => {
     try {
       await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
@@ -294,6 +320,24 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       setEmployeeSchedules(schedules);
     } catch (error) {
       console.error('Error saving employee schedules:', error);
+    }
+  };
+
+  const saveCustomRoles = async (roles: CustomRole[]) => {
+    try {
+      await AsyncStorage.setItem('customRoles', JSON.stringify(roles));
+      setCustomRoles(roles);
+    } catch (error) {
+      console.error('Error saving custom roles:', error);
+    }
+  };
+
+  const saveRoleAssignments = async (assignments: RoleAssignment[]) => {
+    try {
+      await AsyncStorage.setItem('roleAssignments', JSON.stringify(assignments));
+      setRoleAssignments(assignments);
+    } catch (error) {
+      console.error('Error saving role assignments:', error);
     }
   };
 
@@ -569,6 +613,244 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     return [];
   }, []);
 
+  // 621. Add new admin
+  const addAdmin = useCallback(async (userData: Partial<User>) => {
+    const newAdmin: User = {
+      id: Date.now().toString(),
+      name: userData.name || '',
+      phone: userData.phone || '',
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+      isActive: true,
+      permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
+      password: userData.password || 'admin123',
+      failedLoginAttempts: 0,
+      twoFactorEnabled: false,
+      allowedDevices: 5,
+      currentSessions: [],
+    };
+
+    const updatedUsers = [...users, newAdmin];
+    await saveUsers(updatedUsers);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'ADD_ADMIN',
+      details: `Added new admin: ${newAdmin.name}`,
+      resourceType: 'user',
+      resourceId: newAdmin.id,
+    });
+
+    console.log('Admin added successfully:', newAdmin);
+  }, [users]);
+
+  // 622. Remove admin
+  const removeAdmin = useCallback(async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (user?.role !== 'admin') {
+      throw new Error('User is not an admin');
+    }
+
+    const adminCount = users.filter(u => u.role === 'admin').length;
+    if (adminCount <= 1) {
+      throw new Error('Cannot remove the last admin');
+    }
+
+    const updatedUsers = users.filter(u => u.id !== userId);
+    await saveUsers(updatedUsers);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'REMOVE_ADMIN',
+      details: `Removed admin: ${user.name}`,
+      resourceType: 'user',
+      resourceId: userId,
+    });
+  }, [users]);
+
+  // 630. Set custom permissions for employee
+  const setCustomPermissions = useCallback(async (userId: string, permissionCodes: string[]) => {
+    const permissions = permissionCodes.map(code => ({
+      id: code,
+      name: code,
+      code,
+      description: '',
+    }));
+
+    const updatedUsers = users.map(user => 
+      user.id === userId ? { ...user, permissions } : user
+    );
+    await saveUsers(updatedUsers);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'SET_CUSTOM_PERMISSIONS',
+      details: `Set custom permissions for user: ${userId}`,
+      resourceType: 'user',
+      resourceId: userId,
+    });
+  }, [users]);
+
+  // 631. Set custom permissions for customer
+  const setCustomerPermissions = useCallback(async (userId: string, permissionCodes: string[]) => {
+    const permissions = permissionCodes.map(code => ({
+      id: code,
+      name: code,
+      code,
+      description: '',
+    }));
+
+    const updatedUsers = users.map(user => 
+      user.id === userId ? { ...user, permissions } : user
+    );
+    await saveUsers(updatedUsers);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'SET_CUSTOMER_PERMISSIONS',
+      details: `Set permissions for customer: ${userId}`,
+      resourceType: 'user',
+      resourceId: userId,
+    });
+  }, [users]);
+
+  // 632. Create custom role
+  const createCustomRole = useCallback(async (roleData: Omit<CustomRole, 'id' | 'createdAt' | 'createdBy'>) => {
+    const newRole: CustomRole = {
+      ...roleData,
+      id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      createdBy: 'admin',
+    };
+
+    const updatedRoles = [...customRoles, newRole];
+    await saveCustomRoles(updatedRoles);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'CREATE_ROLE',
+      details: `Created custom role: ${newRole.name}`,
+      resourceType: 'role',
+      resourceId: newRole.id,
+    });
+
+    return newRole;
+  }, [customRoles]);
+
+  // 633. Delete custom role
+  const deleteCustomRole = useCallback(async (roleId: string) => {
+    const role = customRoles.find(r => r.id === roleId);
+    if (role?.isSystem) {
+      throw new Error('Cannot delete system role');
+    }
+
+    const updatedRoles = customRoles.filter(r => r.id !== roleId);
+    await saveCustomRoles(updatedRoles);
+
+    const updatedAssignments = roleAssignments.filter(a => a.roleId !== roleId);
+    await saveRoleAssignments(updatedAssignments);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'DELETE_ROLE',
+      details: `Deleted custom role: ${role?.name || roleId}`,
+      resourceType: 'role',
+      resourceId: roleId,
+    });
+  }, [customRoles, roleAssignments]);
+
+  // 634. Update custom role
+  const updateCustomRole = useCallback(async (roleId: string, updates: Partial<CustomRole>) => {
+    const role = customRoles.find(r => r.id === roleId);
+    if (role?.isSystem) {
+      throw new Error('Cannot update system role');
+    }
+
+    const updatedRoles = customRoles.map(r => 
+      r.id === roleId ? { ...r, ...updates } : r
+    );
+    await saveCustomRoles(updatedRoles);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'UPDATE_ROLE',
+      details: `Updated custom role: ${role?.name || roleId}`,
+      resourceType: 'role',
+      resourceId: roleId,
+    });
+  }, [customRoles]);
+
+  // 635. Assign role to user
+  const assignRoleToUser = useCallback(async (userId: string, roleId: string) => {
+    const role = customRoles.find(r => r.id === roleId);
+    if (!role) {
+      throw new Error('Role not found');
+    }
+
+    const existingAssignment = roleAssignments.find(
+      a => a.userId === userId && a.roleId === roleId
+    );
+
+    if (!existingAssignment) {
+      const newAssignment: RoleAssignment = {
+        userId,
+        roleId,
+        assignedAt: new Date().toISOString(),
+        assignedBy: 'admin',
+      };
+
+      const updatedAssignments = [...roleAssignments, newAssignment];
+      await saveRoleAssignments(updatedAssignments);
+    }
+
+    const permissions = role.permissions.map(code => ({
+      id: code,
+      name: code,
+      code,
+      description: '',
+    }));
+
+    const updatedUsers = users.map(user => 
+      user.id === userId ? { ...user, permissions } : user
+    );
+    await saveUsers(updatedUsers);
+
+    await logActivity({
+      userId: 'admin',
+      action: 'ASSIGN_ROLE',
+      details: `Assigned role ${role.name} to user: ${userId}`,
+      resourceType: 'user',
+      resourceId: userId,
+    });
+  }, [customRoles, roleAssignments, users]);
+
+  // 636. Get employee permissions
+  const getEmployeePermissions = useCallback((userId: string) => {
+    const user = users.find(u => u.id === userId);
+    return user?.permissions || [];
+  }, [users]);
+
+  // 637. Get customer permissions
+  const getCustomerPermissions = useCallback((userId: string) => {
+    const user = users.find(u => u.id === userId);
+    return user?.permissions || [];
+  }, [users]);
+
+  // Get all admins
+  const getAdmins = useCallback(() => {
+    return users.filter(user => user.role === 'admin');
+  }, [users]);
+
+  // Get user by ID
+  const getUserById = useCallback((userId: string) => {
+    return users.find(u => u.id === userId);
+  }, [users]);
+
+  // Update permissions (alias for backward compatibility)
+  const updatePermissions = useCallback(async (userId: string, permissionCodes: string[]) => {
+    await setCustomPermissions(userId, permissionCodes);
+  }, [setCustomPermissions]);
+
   return useMemo(() => ({
     users,
     isLoading,
@@ -576,11 +858,15 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     userSessions,
     employeeStats,
     employeeSchedules,
+    customRoles,
+    roleAssignments,
     addUser,
     updateUser,
     deleteUser,
     getCustomers,
     getEmployees,
+    getAdmins,
+    getUserById,
     setEmployeePermissions,
     setStarEmployee,
     trackUserSession,
@@ -594,6 +880,17 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     getEmployeeStats,
     getEmployeeSchedule,
     getEmployeeCustomers,
+    addAdmin,
+    removeAdmin,
+    setCustomPermissions,
+    setCustomerPermissions,
+    createCustomRole,
+    deleteCustomRole,
+    updateCustomRole,
+    assignRoleToUser,
+    getEmployeePermissions,
+    getCustomerPermissions,
+    updatePermissions,
   }), [
     users,
     isLoading,
@@ -601,11 +898,15 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     userSessions,
     employeeStats,
     employeeSchedules,
+    customRoles,
+    roleAssignments,
     addUser,
     updateUser,
     deleteUser,
     getCustomers,
     getEmployees,
+    getAdmins,
+    getUserById,
     setEmployeePermissions,
     setStarEmployee,
     trackUserSession,
@@ -619,5 +920,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     getEmployeeStats,
     getEmployeeSchedule,
     getEmployeeCustomers,
+    addAdmin,
+    removeAdmin,
+    setCustomPermissions,
+    setCustomerPermissions,
+    createCustomRole,
+    deleteCustomRole,
+    updateCustomRole,
+    assignRoleToUser,
+    getEmployeePermissions,
+    getCustomerPermissions,
+    updatePermissions,
   ]);
 });

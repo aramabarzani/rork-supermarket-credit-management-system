@@ -36,6 +36,23 @@ export interface Permission {
   description: string;
 }
 
+export interface CustomRole {
+  id: string;
+  name: string;
+  description: string;
+  permissions: string[];
+  createdAt: string;
+  createdBy: string;
+  isSystem: boolean;
+}
+
+export interface RoleAssignment {
+  userId: string;
+  roleId: string;
+  assignedAt: string;
+  assignedBy: string;
+}
+
 export interface LoginCredentials {
   phone: string;
   password: string;
