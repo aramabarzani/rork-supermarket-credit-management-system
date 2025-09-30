@@ -131,6 +131,20 @@ export default function SecurityManagementScreen() {
         </View>
 
         <View style={styles.settingRow}>
+          <Text style={styles.settingLabel}>کەمترین درێژی وشەی نهێنی</Text>
+          <TextInput
+            style={[styles.settingInput, !editMode && styles.disabledInput]}
+            value={tempSettings.passwordMinLength.toString()}
+            onChangeText={(text) => setTempSettings({
+              ...tempSettings,
+              passwordMinLength: parseInt(text) || 6
+            })}
+            keyboardType="numeric"
+            editable={editMode}
+          />
+        </View>
+
+        <View style={styles.settingRow}>
           <Text style={styles.settingLabel}>پێویستی بە دوو هەنگاو</Text>
           <Switch
             value={tempSettings.twoFactorRequired}
@@ -141,6 +155,34 @@ export default function SecurityManagementScreen() {
             disabled={!editMode}
           />
         </View>
+
+        <View style={styles.settingRow}>
+          <Text style={styles.settingLabel}>پێویستی بە گۆڕینی وشەی نهێنی</Text>
+          <Switch
+            value={tempSettings.requirePasswordChange}
+            onValueChange={(value) => setTempSettings({
+              ...tempSettings,
+              requirePasswordChange: value
+            })}
+            disabled={!editMode}
+          />
+        </View>
+
+        {tempSettings.requirePasswordChange && (
+          <View style={styles.settingRow}>
+            <Text style={styles.settingLabel}>ماوەی گۆڕینی وشەی نهێنی (ڕۆژ)</Text>
+            <TextInput
+              style={[styles.settingInput, !editMode && styles.disabledInput]}
+              value={tempSettings.passwordChangeInterval.toString()}
+              onChangeText={(text) => setTempSettings({
+                ...tempSettings,
+                passwordChangeInterval: parseInt(text) || 90
+              })}
+              keyboardType="numeric"
+              editable={editMode}
+            />
+          </View>
+        )}
 
         <View style={styles.buttonRow}>
           {!editMode ? (

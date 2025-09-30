@@ -59,8 +59,6 @@ const DEMO_USERS: User[] = [
   },
 ];
 
-const DEMO_ADMIN: User = DEMO_USERS[0];
-
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -92,30 +90,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           console.log('AuthProvider: Found stored user:', storedUser.name);
           setUser(storedUser);
         } else {
-          // Auto-login demo admin for testing
-          console.log('AuthProvider: Auto-logging in demo admin');
-          const demoUser = {
-            ...DEMO_ADMIN,
-            lastLoginAt: new Date().toISOString(),
-            failedLoginAttempts: 0,
-          };
-          setUser(demoUser);
-          // Don't await storage on web to prevent hydration issues
-          if (Platform.OS !== 'web') {
-            await safeStorage.setItem('user', demoUser);
-          } else {
-            safeStorage.setItem('user', demoUser); // Fire and forget on web
-          }
+          console.log('AuthProvider: No stored user, user must login');
+          setUser(null);
         }
       } catch (error) {
         console.error('AuthProvider: Error loading stored user:', error);
-        // On error, still set demo user to prevent app from being stuck
-        const demoUser = {
-          ...DEMO_ADMIN,
-          lastLoginAt: new Date().toISOString(),
-          failedLoginAttempts: 0,
-        };
-        setUser(demoUser);
+        setUser(null);
       } finally {
         console.log('AuthProvider: Setting isLoading to false');
         setIsLoading(false);
@@ -132,15 +112,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('AuthProvider: Login attempt for:', credentials.phone);
       
-      let allUsers = DEMO_USERS;
+      let allUsers: User[] = [...DEMO_USERS];
       try {
         const storedUsers = await AsyncStorage.getItem('users');
         if (storedUsers) {
-          allUsers = JSON.parse(storedUsers);
-          console.log('AuthProvider: Loaded users from storage:', allUsers.length);
+          const parsedUsers = JSON.parse(storedUsers) as User[];
+          console.log('AuthProvider: Loaded users from storage:', parsedUsers.length);
+          allUsers = parsedUsers;
+        } else {
+          console.log('AuthProvider: No stored users, initializing with demo users');
+          await AsyncStorage.setItem('users', JSON.stringify(DEMO_USERS));
         }
-      } catch {
+      } catch (error) {
+        console.error('AuthProvider: Error loading users:', error);
         console.log('AuthProvider: Using demo users');
+        await AsyncStorage.setItem('users', JSON.stringify(DEMO_USERS));
       }
       
       const foundUser = allUsers.find(
