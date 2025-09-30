@@ -309,7 +309,19 @@ function RootLayoutNav() {
           title: "ئاماری بەکارهێنان",
         }} 
       />
-
+      <Stack.Screen 
+        name="owner-dashboard" 
+        options={{ 
+          title: "داشبۆردی خاوەندار",
+          headerShown: true,
+        }} 
+      />
+      <Stack.Screen 
+        name="subscription-details" 
+        options={{ 
+          title: "وردەکاریەکانی ئابوونە",
+        }} 
+      />
 
     </Stack>
   );
