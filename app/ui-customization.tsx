@@ -79,7 +79,9 @@ export default function UICustomizationScreen() {
           <GradientCard>
             <View style={styles.settingRow}>
               <View style={styles.settingLeft}>
-                <Palette size={20} color="#3B82F6" />
+                <View style={styles.settingIcon}>
+                  <Palette size={20} color="#3B82F6" />
+                </View>
                 <KurdishText variant="body" color="#1F2937">
                   مۆدی شەو-ڕۆژ
                 </KurdishText>
@@ -133,7 +135,9 @@ export default function UICustomizationScreen() {
                 ]}
                 onPress={() => setFontSize(size)}
               >
-                <Type size={20} color={fontSize === size ? '#3B82F6' : '#6B7280'} />
+                <View style={styles.optionIcon}>
+                  <Type size={20} color={fontSize === size ? '#3B82F6' : '#6B7280'} />
+                </View>
                 <KurdishText
                   variant="body"
                   color={fontSize === size ? '#3B82F6' : '#1F2937'}
@@ -159,7 +163,9 @@ export default function UICustomizationScreen() {
                 ]}
                 onPress={() => setDateFormat(format)}
               >
-                <Calendar size={20} color={dateFormat === format ? '#3B82F6' : '#6B7280'} />
+                <View style={styles.optionIcon}>
+                  <Calendar size={20} color={dateFormat === format ? '#3B82F6' : '#6B7280'} />
+                </View>
                 <KurdishText
                   variant="body"
                   color={dateFormat === format ? '#3B82F6' : '#1F2937'}
@@ -185,7 +191,9 @@ export default function UICustomizationScreen() {
                 ]}
                 onPress={() => setLanguage(lang)}
               >
-                <Globe size={20} color={language === lang ? '#3B82F6' : '#6B7280'} />
+                <View style={styles.optionIcon}>
+                  <Globe size={20} color={language === lang ? '#3B82F6' : '#6B7280'} />
+                </View>
                 <KurdishText
                   variant="body"
                   color={language === lang ? '#3B82F6' : '#1F2937'}
@@ -211,7 +219,9 @@ export default function UICustomizationScreen() {
                 ]}
                 onPress={() => setDisplayMode(mode)}
               >
-                <Layout size={20} color={displayMode === mode ? '#3B82F6' : '#6B7280'} />
+                <View style={styles.optionIcon}>
+                  <Layout size={20} color={displayMode === mode ? '#3B82F6' : '#6B7280'} />
+                </View>
                 <KurdishText
                   variant="body"
                   color={displayMode === mode ? '#3B82F6' : '#1F2937'}
@@ -237,7 +247,9 @@ export default function UICustomizationScreen() {
                 ]}
                 onPress={() => setChartType(type)}
               >
-                <BarChart3 size={20} color={chartType === type ? '#3B82F6' : '#6B7280'} />
+                <View style={styles.optionIcon}>
+                  <BarChart3 size={20} color={chartType === type ? '#3B82F6' : '#6B7280'} />
+                </View>
                 <KurdishText
                   variant="body"
                   color={chartType === type ? '#3B82F6' : '#1F2937'}
@@ -276,14 +288,18 @@ export default function UICustomizationScreen() {
 
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-            <Save size={20} color="#FFFFFF" />
+            <View style={styles.buttonIcon}>
+              <Save size={20} color="#FFFFFF" />
+            </View>
             <KurdishText variant="subtitle" color="#FFFFFF">
               پاشەکەوتکردن
             </KurdishText>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-            <RotateCcw size={20} color="#EF4444" />
+            <View style={styles.buttonIcon}>
+              <RotateCcw size={20} color="#EF4444" />
+            </View>
             <KurdishText variant="subtitle" color="#EF4444">
               گەڕانەوە بۆ بنەڕەت
             </KurdishText>
@@ -314,12 +330,14 @@ const styles = StyleSheet.create({
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+  },
+  settingIcon: {
+    marginRight: 12,
   },
   colorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    marginHorizontal: -6,
   },
   colorOption: {
     width: 50,
@@ -329,6 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
     borderColor: '#E5E7EB',
+    margin: 6,
   },
   colorOptionSelected: {
     borderColor: '#3B82F6',
@@ -343,34 +362,37 @@ const styles = StyleSheet.create({
   optionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 8,
+  },
+  optionIcon: {
+    marginRight: 12,
   },
   optionRowSelected: {
     backgroundColor: '#EFF6FF',
   },
   buttonContainer: {
     padding: 16,
-    gap: 12,
   },
   saveButton: {
     backgroundColor: '#3B82F6',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     paddingVertical: 14,
     borderRadius: 8,
+    marginBottom: 12,
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   resetButton: {
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
     paddingVertical: 14,
     borderRadius: 8,
     borderWidth: 1,
