@@ -146,9 +146,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         await safeStorage.setItem('users', allUsers);
       }
       
+      console.log('AuthProvider: Searching for user with phone:', credentials.phone);
+      console.log('AuthProvider: Available users:', allUsers.map(u => ({ phone: u.phone, role: u.role })));
+      
       const foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
       );
+      
+      console.log('AuthProvider: Found user:', foundUser ? foundUser.name : 'Not found');
       
       if (foundUser) {
         if (!foundUser.isActive) {
