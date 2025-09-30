@@ -122,12 +122,20 @@ const styles = StyleSheet.create({
 });
 
 export function ErrorBoundary({ children }: Props) {
-  const errorLogging = useErrorLogging();
-  const logError = errorLogging?.logError;
-  
-  return (
-    <ErrorBoundaryClass logError={logError}>
-      {children}
-    </ErrorBoundaryClass>
-  );
+  try {
+    const errorLogging = useErrorLogging();
+    const logError = errorLogging?.logError;
+    
+    return (
+      <ErrorBoundaryClass logError={logError}>
+        {children}
+      </ErrorBoundaryClass>
+    );
+  } catch (error) {
+    return (
+      <ErrorBoundaryClass>
+        {children}
+      </ErrorBoundaryClass>
+    );
+  }
 }
