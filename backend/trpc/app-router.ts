@@ -113,6 +113,21 @@ import {
   quickSearchProcedure,
   autoEmailSearchProcedure
 } from "./routes/voice/search/route";
+import {
+  debtReportByPeriodProcedure,
+  paymentReportByPeriodProcedure,
+  customerReportByLevelProcedure,
+  employeeReportByLevelProcedure,
+  inactiveCustomersReportProcedure,
+  inactiveEmployeesReportProcedure,
+  debtReportByCityProcedure,
+  paymentReportByCityProcedure,
+  debtReportByLocationProcedure,
+  paymentReportByLocationProcedure,
+  vipCustomersReportProcedure,
+  allDebtsByDateProcedure,
+  allPaymentsByDateProcedure
+} from "./routes/financial/advanced-reports/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -144,6 +159,21 @@ export const appRouter = createTRPCRouter({
       topDebtors: topDebtorsProcedure,
       topPayers: topPayersProcedure,
       export: exportReportProcedure,
+    }),
+    advancedReports: createTRPCRouter({
+      debtByPeriod: debtReportByPeriodProcedure,
+      paymentByPeriod: paymentReportByPeriodProcedure,
+      customerByLevel: customerReportByLevelProcedure,
+      employeeByLevel: employeeReportByLevelProcedure,
+      inactiveCustomers: inactiveCustomersReportProcedure,
+      inactiveEmployees: inactiveEmployeesReportProcedure,
+      debtByCity: debtReportByCityProcedure,
+      paymentByCity: paymentReportByCityProcedure,
+      debtByLocation: debtReportByLocationProcedure,
+      paymentByLocation: paymentReportByLocationProcedure,
+      vipCustomers: vipCustomersReportProcedure,
+      allDebtsByDate: allDebtsByDateProcedure,
+      allPaymentsByDate: allPaymentsByDateProcedure,
     }),
   }),
   notifications: createTRPCRouter({

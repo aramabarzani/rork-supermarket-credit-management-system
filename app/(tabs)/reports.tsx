@@ -713,6 +713,16 @@ export default function ReportsScreen() {
                 شیکاری کڕیاران
               </KurdishText>
             </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.exportButton}
+              onPress={() => router.push('/advanced-reports')}
+            >
+              <PieChart size={24} color="#F59E0B" />
+              <KurdishText variant="body" color="#F59E0B">
+                ڕاپۆرتە پێشکەوتووەکان
+              </KurdishText>
+            </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
