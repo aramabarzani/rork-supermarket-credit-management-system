@@ -130,6 +130,9 @@ export default function LoginScreen() {
                     حسابە نموونەکان:
                   </Text>
                   <Text style={styles.demoText}>
+                    خاوەندار: 07700000000 / owner123
+                  </Text>
+                  <Text style={styles.demoText}>
                     بەڕێوەبەر: 07501234567 / admin123
                   </Text>
                   <Text style={styles.demoText}>
