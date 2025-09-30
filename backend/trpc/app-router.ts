@@ -370,6 +370,17 @@ import {
   getChatStatsProcedure,
   shareChatProcedure
 } from "./routes/messaging/chat/route";
+import {
+  recordLoginActivityProcedure,
+  recordLogoutActivityProcedure,
+  getLoginActivitiesProcedure,
+  getActivitySessionsProcedure,
+  getLocationReportProcedure,
+  getLocationSettingsProcedure,
+  updateLocationSettingsProcedure,
+  getLocationAlertsProcedure,
+  resolveLocationAlertProcedure
+} from "./routes/location/tracking/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -791,6 +802,19 @@ export const appRouter = createTRPCRouter({
       markAsRead: markChatAsReadProcedure,
       getStats: getChatStatsProcedure,
       share: shareChatProcedure,
+    }),
+  }),
+  location: createTRPCRouter({
+    tracking: createTRPCRouter({
+      recordLogin: recordLoginActivityProcedure,
+      recordLogout: recordLogoutActivityProcedure,
+      getActivities: getLoginActivitiesProcedure,
+      getSessions: getActivitySessionsProcedure,
+      getReport: getLocationReportProcedure,
+      getSettings: getLocationSettingsProcedure,
+      updateSettings: updateLocationSettingsProcedure,
+      getAlerts: getLocationAlertsProcedure,
+      resolveAlert: resolveLocationAlertProcedure,
     }),
   }),
 });
