@@ -469,8 +469,24 @@ import {
   extendTenantLicenseProcedure,
   recordTenantAccessProcedure
 } from "./routes/tenant/management/route";
+import {
+  loginProcedure,
+  verifyOTPProcedure,
+  resendOTPProcedure,
+  logoutProcedure,
+  whoamiProcedure,
+  getSessionsProcedure
+} from "./routes/auth/enhanced/route";
 
 export const appRouter = createTRPCRouter({
+  auth: createTRPCRouter({
+    login: loginProcedure,
+    verifyOTP: verifyOTPProcedure,
+    resendOTP: resendOTPProcedure,
+    logout: logoutProcedure,
+    whoami: whoamiProcedure,
+    getSessions: getSessionsProcedure,
+  }),
   example: createTRPCRouter({
     hi: hiRoute,
   }),

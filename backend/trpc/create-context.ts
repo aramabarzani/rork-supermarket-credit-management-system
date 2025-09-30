@@ -1,20 +1,17 @@
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
+import type { User } from "@/types/auth-enhanced";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
-  // Mock user for development - in production, extract from auth token
-  const mockUser = {
-    id: '1',
-    name: 'بەڕێوەبەر',
-    phone: '07501234567',
-    role: 'admin' as const,
-  };
+  const authHeader = opts.req.headers.get('authorization');
+  const token = authHeader?.replace('Bearer ', '');
 
   return {
     req: opts.req,
-    user: mockUser,
+    token: token || null,
+    user: null as User | null,
   };
 };
 
@@ -29,8 +26,16 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 // Protected procedure (add authentication logic here)
-export const protectedProcedure = t.procedure.use(async ({ next }) => {
-  // Add authentication check here
-  // For now, we'll just pass through
-  return next();
+export const protectedProcedure = t.procedure.use(async ({ ctx, next }) => {
+  if (!ctx.token) {
+    throw new Error('UNAUTHORIZED');
+  }
+  
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+      token: ctx.token,
+    },
+  });
 });
