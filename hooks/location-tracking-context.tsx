@@ -128,7 +128,7 @@ export const [LocationTrackingProvider, useLocationTracking] = createContextHook
   const recordLoginActivity = useCallback(async (
     userId: string,
     userName: string,
-    userRole: 'admin' | 'employee' | 'customer'
+    userRole: 'owner' | 'admin' | 'employee' | 'customer'
   ) => {
     try {
       const location = await getCurrentLocation();

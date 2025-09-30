@@ -10,7 +10,7 @@ const DEMO_USERS: User[] = [
   {
     id: 'owner',
     name: 'خاوەندار',
-    phone: '07501111111',
+    phone: '07500000000',
     role: 'owner',
     createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
     isActive: true,

@@ -369,6 +369,9 @@ export default function LoginScreen() {
                   بۆ تاقیکردنەوە:
                 </KurdishText>
                 <Text style={styles.demoText}>
+                  خاوەندار: 07500000000 / owner123
+                </Text>
+                <Text style={styles.demoText}>
                   بەڕێوەبەر: 07501234567 / admin123
                 </Text>
                 <Text style={styles.demoText}>

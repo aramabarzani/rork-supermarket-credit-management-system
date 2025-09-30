@@ -23,7 +23,7 @@ export const recordLoginActivityProcedure = publicProcedure
     z.object({
       userId: z.string(),
       userName: z.string(),
-      userRole: z.enum(['admin', 'employee', 'customer']),
+      userRole: z.enum(['owner', 'admin', 'employee', 'customer']),
       location: locationDataSchema,
       ipAddress: z.string(),
       deviceInfo: deviceInfoSchema,
@@ -57,7 +57,7 @@ export const getLoginActivitiesProcedure = publicProcedure
   .input(
     z.object({
       userId: z.string().optional(),
-      userRole: z.enum(['admin', 'employee', 'customer']).optional(),
+      userRole: z.enum(['owner', 'admin', 'employee', 'customer']).optional(),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
       status: z.enum(['active', 'ended']).optional(),
