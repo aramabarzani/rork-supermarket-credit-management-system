@@ -47,6 +47,13 @@ export default function SettingsScreen() {
 
   const menuItems = [
     {
+      icon: Key,
+      title: 'بەڕێوەبردنی لایسەنس',
+      subtitle: 'دروستکردن و بەڕێوەبردنی لایسەنسی کڕیاران',
+      onPress: () => router.push('/license-management'),
+      color: '#F59E0B',
+    },
+    {
       icon: Users,
       title: 'بەڕێوەبردنی کارمەندەکان',
       subtitle: `${employees.length} کارمەند`,
