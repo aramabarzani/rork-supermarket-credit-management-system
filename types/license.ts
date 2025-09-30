@@ -58,3 +58,17 @@ export interface ValidateLicenseInput {
   deviceId?: string;
   ipAddress?: string;
 }
+
+export type LicenseRole = 'owner' | 'admin' | 'employee';
+
+export interface LicensePermissions {
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canSuspend: boolean;
+  canActivate: boolean;
+  canRenew: boolean;
+  canViewStats: boolean;
+  canViewDetails: boolean;
+  canExport: boolean;
+}

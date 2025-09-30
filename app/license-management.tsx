@@ -10,9 +10,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { trpc } from '@/lib/trpc';
 import { KurdishText } from '@/components/KurdishText';
+import { useAuth } from '@/hooks/auth-context';
 import { 
   CheckCircle, 
   XCircle, 
@@ -32,8 +33,14 @@ import type { License, LicenseType } from '@/types/license';
 type BusinessType = 'supermarket' | 'grocery' | 'retail' | 'wholesale' | 'other';
 
 export default function LicenseManagementScreen() {
+  const router = useRouter();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const isOwner = user?.role === 'admin' && user?.id === 'admin';
+  const isAdmin = user?.role === 'admin' && user?.id !== 'admin';
+  const isEmployee = user?.role === 'employee';
 
   const licensesQuery = trpc.license.getAll.useQuery();
   const licenseStatsQuery = trpc.license.getStats.useQuery();
@@ -60,6 +67,11 @@ export default function LicenseManagementScreen() {
   });
 
   const handleCreateLicense = async () => {
+    if (!isOwner) {
+      Alert.alert('هەڵە', 'تۆ دەسەڵاتی دروستکردنی لایسێنس نەدەتەوێت. تکایە پەیوەندی بکە بە دابینکەر.');
+      return;
+    }
+
     if (!newLicense.clientName || !newLicense.businessName || !newLicense.contactPerson || !newLicense.contactPhone) {
       Alert.alert('هەڵە', 'تکایە هەموو خانە پێویستەکان پڕبکەرەوە');
       return;
@@ -93,6 +105,11 @@ export default function LicenseManagementScreen() {
   };
 
   const handleUpdateStatus = async (licenseId: string, status: 'active' | 'suspended' | 'expired' | 'trial') => {
+    if (!isOwner) {
+      Alert.alert('هەڵە', 'تۆ دەسەڵاتی گۆڕانکاری لە لایسێنس نەدەتەوێت. تکایە پەیوەندی بکە بە دابینکەر.');
+      return;
+    }
+
     try {
       await updateStatusMutation.mutateAsync({ licenseId, status });
       licensesQuery.refetch();
@@ -104,6 +121,11 @@ export default function LicenseManagementScreen() {
   };
 
   const handleRenewLicense = async (licenseId: string, durationMonths: number) => {
+    if (!isOwner) {
+      Alert.alert('هەڵە', 'تۆ دەسەڵاتی نوێکردنەوەی لایسێنس نەدەتەوێت. تکایە پەیوەندی بکە بە دابینکەر.');
+      return;
+    }
+
     try {
       await renewLicenseMutation.mutateAsync({ licenseId, durationMonths });
       licensesQuery.refetch();
@@ -115,6 +137,11 @@ export default function LicenseManagementScreen() {
   };
 
   const handleDeactivate = async (licenseId: string) => {
+    if (!isOwner) {
+      Alert.alert('هەڵە', 'تۆ دەسەڵاتی ناچالاککردنی لایسێنس نەدەتەوێت. تکایە پەیوەندی بکە بە دابینکەر.');
+      return;
+    }
+
     Alert.alert(
       'دڵنیایی',
       'دڵنیایت لە ناچالاککردنی ئەم لایسەنسە؟',
@@ -221,6 +248,33 @@ export default function LicenseManagementScreen() {
     license.city?.toLowerCase().includes(searchQuery.toLowerCase())
   ) || [];
 
+  if (isEmployee) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen
+          options={{
+            title: 'بەڕێوەبردنی لایسێنس',
+            headerStyle: { backgroundColor: '#3b82f6' },
+            headerTintColor: '#fff',
+          }}
+        />
+        <View style={styles.noAccessContainer}>
+          <AlertTriangle size={64} color="#f59e0b" />
+          <KurdishText style={styles.noAccessTitle}>دەسەڵات نییە</KurdishText>
+          <KurdishText style={styles.noAccessText}>
+            تۆ دەسەڵاتی دەستگەیشتن بە ئەم بەشە نەدەتەوێت.
+          </KurdishText>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <KurdishText style={styles.backButtonText}>گەڕانەوە</KurdishText>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   if (licensesQuery.isLoading || licenseStatsQuery.isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -263,13 +317,22 @@ export default function LicenseManagementScreen() {
             <RefreshCw size={20} color="#fff" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => setShowCreateModal(true)}
-          >
-            <Plus size={20} color="#fff" />
-            <KurdishText style={styles.addButtonText}>لایسەنسی نوێ</KurdishText>
-          </TouchableOpacity>
+          {isOwner && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => setShowCreateModal(true)}
+            >
+              <Plus size={20} color="#fff" />
+              <KurdishText style={styles.addButtonText}>لایسەنسی نوێ</KurdishText>
+            </TouchableOpacity>
+          )}
+
+          {isAdmin && (
+            <View style={styles.readOnlyBadge}>
+              <AlertTriangle size={16} color="#f59e0b" />
+              <KurdishText style={styles.readOnlyText}>تەنیا بینین</KurdishText>
+            </View>
+          )}
         </View>
       </View>
 
@@ -409,42 +472,53 @@ export default function LicenseManagementScreen() {
               </View>
             </View>
 
-            <View style={styles.licenseActions}>
-              {license.status === 'active' && (
-                <>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.suspendButton]}
-                    onPress={() => handleUpdateStatus(license.id, 'suspended')}
-                  >
-                    <KurdishText style={styles.actionButtonText}>ڕاگرتن</KurdishText>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.deactivateButton]}
-                    onPress={() => handleDeactivate(license.id)}
-                  >
-                    <KurdishText style={styles.actionButtonText}>ناچالاککردن</KurdishText>
-                  </TouchableOpacity>
-                </>
-              )}
+            {isOwner && (
+              <View style={styles.licenseActions}>
+                {license.status === 'active' && (
+                  <>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.suspendButton]}
+                      onPress={() => handleUpdateStatus(license.id, 'suspended')}
+                    >
+                      <KurdishText style={styles.actionButtonText}>ڕاگرتن</KurdishText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, styles.deactivateButton]}
+                      onPress={() => handleDeactivate(license.id)}
+                    >
+                      <KurdishText style={styles.actionButtonText}>ناچالاککردن</KurdishText>
+                    </TouchableOpacity>
+                  </>
+                )}
 
-              {license.status === 'suspended' && (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.activateButton]}
-                  onPress={() => handleUpdateStatus(license.id, 'active')}
-                >
-                  <KurdishText style={styles.actionButtonText}>چالاککردن</KurdishText>
-                </TouchableOpacity>
-              )}
+                {license.status === 'suspended' && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.activateButton]}
+                    onPress={() => handleUpdateStatus(license.id, 'active')}
+                  >
+                    <KurdishText style={styles.actionButtonText}>چالاککردن</KurdishText>
+                  </TouchableOpacity>
+                )}
 
-              {(license.status === 'active' || license.status === 'trial' || license.status === 'expired') && (
-                <TouchableOpacity
-                  style={[styles.actionButton, styles.renewButton]}
-                  onPress={() => handleRenewLicense(license.id, license.type === 'yearly' ? 12 : 1)}
-                >
-                  <KurdishText style={styles.actionButtonText}>نوێکردنەوە</KurdishText>
-                </TouchableOpacity>
-              )}
-            </View>
+                {(license.status === 'active' || license.status === 'trial' || license.status === 'expired') && (
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.renewButton]}
+                    onPress={() => handleRenewLicense(license.id, license.type === 'yearly' ? 12 : 1)}
+                  >
+                    <KurdishText style={styles.actionButtonText}>نوێکردنەوە</KurdishText>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            {isAdmin && (
+              <View style={styles.adminInfoBox}>
+                <AlertTriangle size={16} color="#f59e0b" />
+                <KurdishText style={styles.adminInfoText}>
+                  بۆ گۆڕانکاری لە لایسێنس، پەیوەندی بکە بە دابینکەر
+                </KurdishText>
+              </View>
+            )}
           </View>
         ))}
       </ScrollView>
@@ -977,5 +1051,66 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  noAccessContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  noAccessTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  noAccessText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  backButton: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  readOnlyBadge: {
+    flex: 1,
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  readOnlyText: {
+    color: '#92400e',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  adminInfoBox: {
+    backgroundColor: '#fef3c7',
+    padding: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  adminInfoText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#92400e',
+    lineHeight: 18,
   },
 });

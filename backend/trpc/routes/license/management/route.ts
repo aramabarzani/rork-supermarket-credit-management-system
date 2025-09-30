@@ -30,7 +30,10 @@ export const createLicenseProcedure = protectedProcedure
     address: z.string().optional(),
     city: z.string().optional(),
   }))
-  .mutation(async ({ input }): Promise<License> => {
+  .mutation(async ({ input, ctx }): Promise<License> => {
+    if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
+      throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس دروست بکات');
+    }
     const now = new Date();
     let expiresAt: string | null = null;
 
@@ -144,7 +147,10 @@ export const updateLicenseStatusProcedure = protectedProcedure
     licenseId: z.string(),
     status: z.enum(['active', 'expired', 'suspended', 'trial']),
   }))
-  .mutation(async ({ input }): Promise<License> => {
+  .mutation(async ({ input, ctx }): Promise<License> => {
+    if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
+      throw new Error('تەنیا خاوەندار دەتوانێت دۆخی لایسەنس بگۆڕێت');
+    }
     const license = mockLicenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
@@ -159,7 +165,10 @@ export const renewLicenseProcedure = protectedProcedure
     licenseId: z.string(),
     durationMonths: z.number(),
   }))
-  .mutation(async ({ input }): Promise<License> => {
+  .mutation(async ({ input, ctx }): Promise<License> => {
+    if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
+      throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس نوێ بکاتەوە');
+    }
     const license = mockLicenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
@@ -182,7 +191,10 @@ export const activateLicenseProcedure = protectedProcedure
     deviceId: z.string().optional(),
     ipAddress: z.string().optional(),
   }))
-  .mutation(async ({ input }): Promise<License> => {
+  .mutation(async ({ input, ctx }): Promise<License> => {
+    if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
+      throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس چالاک بکات');
+    }
     const license = mockLicenses.find(l => l.key === input.key);
     if (!license) {
       throw new Error('لایسەنسی نادروست');
@@ -219,7 +231,10 @@ export const deactivateLicenseProcedure = protectedProcedure
   .input(z.object({
     licenseId: z.string(),
   }))
-  .mutation(async ({ input }): Promise<License> => {
+  .mutation(async ({ input, ctx }): Promise<License> => {
+    if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
+      throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس ناچالاک بکات');
+    }
     const license = mockLicenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
@@ -237,7 +252,10 @@ export const transferLicenseProcedure = protectedProcedure
     licenseId: z.string(),
     newHardwareId: z.string(),
   }))
-  .mutation(async ({ input }): Promise<License> => {
+  .mutation(async ({ input, ctx }): Promise<License> => {
+    if (ctx.user?.role !== 'admin' || ctx.user?.id !== 'admin') {
+      throw new Error('تەنیا خاوەندار دەتوانێت لایسەنس بگوازێتەوە');
+    }
     const license = mockLicenses.find(l => l.id === input.licenseId);
     if (!license) {
       throw new Error('لایسەنس نەدۆزرایەوە');
