@@ -68,6 +68,7 @@ export const trpcClient = trpc.createClient({
               'Authorization': `Bearer ${token}`,
               ...options?.headers,
             },
+            signal: options?.signal,
           });
           
           if (!response.ok) {
@@ -79,6 +80,11 @@ export const trpcClient = trpc.createClient({
           return response;
         } catch (error) {
           console.error('[tRPC] Request failed:', error);
+          if (error instanceof Error) {
+            if (error.message.includes('Network request failed')) {
+              throw new Error('لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت أو إعادة تشغيل التطبيق.');
+            }
+          }
           throw error;
         }
       },
