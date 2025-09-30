@@ -65,7 +65,7 @@ export const generateQuickReportProcedure = publicProcedure
       type: z.enum(['debt', 'payment', 'customer', 'employee', 'financial', 'system']),
       format: z.enum(['pdf', 'excel', 'json']),
       dateRange: z.string().optional(),
-      filters: z.record(z.any()).optional(),
+      filters: z.record(z.string(), z.any()).optional(),
     })
   )
   .mutation(({ input }) => {
@@ -96,7 +96,7 @@ export const createReportTemplateProcedure = publicProcedure
       name: z.string(),
       type: z.string(),
       fields: z.array(z.string()),
-      filters: z.record(z.any()),
+      filters: z.record(z.string(), z.any()),
       sortBy: z.string().optional(),
       sortOrder: z.enum(['asc', 'desc']).optional(),
       isDefault: z.boolean().optional(),
