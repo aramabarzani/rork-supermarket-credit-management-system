@@ -57,6 +57,18 @@ import {
   getAutomationSettingsProcedure,
   updateAutomationSettingsProcedure
 } from "./routes/notifications/automation/route";
+import {
+  createIssueProcedure,
+  getIssuesProcedure,
+  getIssueProcedure,
+  updateIssueProcedure,
+  rateIssueProcedure,
+  addCommentProcedure,
+  getCommentsProcedure,
+  getIssueStatsProcedure,
+  getMonthlyIssueReportProcedure,
+  getYearlyIssueReportProcedure
+} from "./routes/support/issues/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -121,6 +133,20 @@ export const appRouter = createTRPCRouter({
       triggerManagerNotification: triggerManagerNotificationProcedure,
       getSettings: getAutomationSettingsProcedure,
       updateSettings: updateAutomationSettingsProcedure,
+    }),
+  }),
+  support: createTRPCRouter({
+    issues: createTRPCRouter({
+      create: createIssueProcedure,
+      getAll: getIssuesProcedure,
+      getOne: getIssueProcedure,
+      update: updateIssueProcedure,
+      rate: rateIssueProcedure,
+      addComment: addCommentProcedure,
+      getComments: getCommentsProcedure,
+      getStats: getIssueStatsProcedure,
+      getMonthlyReport: getMonthlyIssueReportProcedure,
+      getYearlyReport: getYearlyIssueReportProcedure,
     }),
   }),
 });

@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Key,
   Settings,
+  MessageCircle,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -64,6 +65,13 @@ export default function SettingsScreen() {
       subtitle: 'ڕێکخستنی پاراستن، تۆماری چوونەژوورەوە و چالاکی',
       onPress: () => router.push('/security-management'),
       color: '#EF4444',
+    },
+    {
+      icon: MessageCircle,
+      title: 'کێشەکان و پشتگیری',
+      subtitle: 'بەڕێوەبردنی کێشەکان و چارەسەرکردن',
+      onPress: () => router.push('/support-issues'),
+      color: '#EC4899',
     },
     {
       icon: Key,

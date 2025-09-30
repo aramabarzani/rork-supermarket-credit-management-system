@@ -4,9 +4,17 @@ import superjson from "superjson";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {
+  // Mock user for development - in production, extract from auth token
+  const mockUser = {
+    id: '1',
+    name: 'بەڕێوەبەر',
+    phone: '07501234567',
+    role: 'admin' as const,
+  };
+
   return {
     req: opts.req,
-    // You can add more context items here like database connections, auth, etc.
+    user: mockUser,
   };
 };
 
