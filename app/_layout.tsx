@@ -22,6 +22,9 @@ import { UICustomizationProvider } from "@/hooks/ui-customization-context";
 import { NotesProvider } from "@/hooks/notes-context";
 import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
 import { IPTrackingProvider } from "@/hooks/ip-tracking-context";
+import { GuidanceContext } from "@/hooks/guidance-context";
+import { BackupContext } from "@/hooks/backup-context";
+import { SystemConfigContext } from "@/hooks/system-config-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -365,7 +368,10 @@ export default function RootLayout() {
                         <NotesProvider>
                           <ProfileTrackingProvider>
                             <IPTrackingProvider>
-                              <AuthProvider>
+                              <GuidanceContext>
+                                <BackupContext>
+                                  <SystemConfigContext>
+                                    <AuthProvider>
                                 <SecurityProvider>
                                   <CustomerSettingsProvider>
                                     <MessagingProvider>
@@ -382,7 +388,10 @@ export default function RootLayout() {
                                     </MessagingProvider>
                                   </CustomerSettingsProvider>
                                 </SecurityProvider>
-                              </AuthProvider>
+                                    </AuthProvider>
+                                  </SystemConfigContext>
+                                </BackupContext>
+                              </GuidanceContext>
                             </IPTrackingProvider>
                           </ProfileTrackingProvider>
                         </NotesProvider>
