@@ -353,6 +353,23 @@ import {
   globalSearchProcedure,
   quickSearchSuggestionsProcedure
 } from "./routes/search/global/route";
+import {
+  getMessagesProcedure,
+  sendMessageProcedure,
+  markAsReadProcedure,
+  deleteMessageProcedure,
+  getMessageStatsProcedure,
+  shareMessageProcedure
+} from "./routes/messaging/internal/route";
+import {
+  getConversationsProcedure,
+  getChatMessagesProcedure,
+  sendChatMessageProcedure,
+  createConversationProcedure,
+  markChatAsReadProcedure,
+  getChatStatsProcedure,
+  shareChatProcedure
+} from "./routes/messaging/chat/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -755,6 +772,25 @@ export const appRouter = createTRPCRouter({
       getAll: helpMessagesProcedure,
       create: createHelpMessageProcedure,
       delete: deleteHelpMessageProcedure,
+    }),
+  }),
+  messaging: createTRPCRouter({
+    internal: createTRPCRouter({
+      getMessages: getMessagesProcedure,
+      send: sendMessageProcedure,
+      markAsRead: markAsReadProcedure,
+      delete: deleteMessageProcedure,
+      getStats: getMessageStatsProcedure,
+      share: shareMessageProcedure,
+    }),
+    chat: createTRPCRouter({
+      getConversations: getConversationsProcedure,
+      getMessages: getChatMessagesProcedure,
+      send: sendChatMessageProcedure,
+      createConversation: createConversationProcedure,
+      markAsRead: markChatAsReadProcedure,
+      getStats: getChatStatsProcedure,
+      share: shareChatProcedure,
     }),
   }),
 });

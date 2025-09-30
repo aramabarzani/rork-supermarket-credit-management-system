@@ -73,3 +73,63 @@ export interface RatingReport {
   trend: 'improving' | 'declining' | 'stable';
   lastRatingDate: string;
 }
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'admin' | 'employee' | 'customer';
+  content: string;
+  createdAt: string;
+  isRead: boolean;
+  readAt?: string;
+}
+
+export interface Conversation {
+  id: string;
+  participants: ConversationParticipant[];
+  lastMessage?: ChatMessage;
+  unreadCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ConversationParticipant {
+  userId: string;
+  userName: string;
+  userRole: 'admin' | 'employee' | 'customer';
+  joinedAt: string;
+}
+
+export interface MessageStats {
+  totalMessages: number;
+  unreadMessages: number;
+  sentMessages: number;
+  receivedMessages: number;
+  messagesByDate: { date: string; count: number }[];
+}
+
+export interface ChatStats {
+  totalConversations: number;
+  activeConversations: number;
+  totalChatMessages: number;
+  averageResponseTime: number;
+  chatsByDate: { date: string; count: number }[];
+}
+
+export interface MessageFilters {
+  startDate?: string;
+  endDate?: string;
+  senderId?: string;
+  recipientId?: string;
+  isRead?: boolean;
+  role?: 'admin' | 'employee' | 'customer';
+}
+
+export interface ChatFilters {
+  startDate?: string;
+  endDate?: string;
+  participantId?: string;
+  hasUnread?: boolean;
+}
