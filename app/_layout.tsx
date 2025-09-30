@@ -14,6 +14,7 @@ import { SecurityProvider } from "@/hooks/security-context";
 import { ReceiptProvider } from "@/hooks/receipt-context";
 import { CustomerSettingsProvider } from "@/hooks/customer-settings-context";
 import { MessagingProvider } from "@/hooks/messaging-context";
+import { IntegrationProvider } from "@/hooks/integration-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -212,6 +213,12 @@ function RootLayoutNav() {
           title: "پشکنینی سیستەم",
         }} 
       />
+      <Stack.Screen 
+        name="integration-settings" 
+        options={{ 
+          title: "ڕێکخستنی هەموهانگکردن",
+        }} 
+      />
 
     </Stack>
   );
@@ -283,24 +290,26 @@ export default function RootLayout() {
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
             <SettingsProvider>
-              <AuthProvider>
-                <SecurityProvider>
-                  <CustomerSettingsProvider>
-                    <MessagingProvider>
-                      <DebtProvider>
-                        <ReceiptProvider>
-                          <UsersProvider>
-                            <NotificationProvider>
-                              <RootLayoutNav />
-                              <SessionTimeoutWarning />
-                            </NotificationProvider>
-                          </UsersProvider>
-                        </ReceiptProvider>
-                      </DebtProvider>
-                    </MessagingProvider>
-                  </CustomerSettingsProvider>
-                </SecurityProvider>
-              </AuthProvider>
+              <IntegrationProvider>
+                <AuthProvider>
+                  <SecurityProvider>
+                    <CustomerSettingsProvider>
+                      <MessagingProvider>
+                        <DebtProvider>
+                          <ReceiptProvider>
+                            <UsersProvider>
+                              <NotificationProvider>
+                                <RootLayoutNav />
+                                <SessionTimeoutWarning />
+                              </NotificationProvider>
+                            </UsersProvider>
+                          </ReceiptProvider>
+                        </DebtProvider>
+                      </MessagingProvider>
+                    </CustomerSettingsProvider>
+                  </SecurityProvider>
+                </AuthProvider>
+              </IntegrationProvider>
             </SettingsProvider>
           </QueryClientProvider>
         </trpc.Provider>

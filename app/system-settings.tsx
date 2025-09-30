@@ -23,6 +23,7 @@ import {
   Shield,
   Download,
   Upload,
+  Share2,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -114,6 +115,13 @@ export default function SystemSettingsScreen() {
       title: 'ڕۆڵەکان و دەسەڵاتەکان',
       subtitle: 'بەڕێوەبردنی دەسەڵاتی بەکارهێنەران',
       color: '#6366F1',
+    },
+    {
+      id: 'integration',
+      icon: Share2,
+      title: 'هەموهانگکردن و هاوبەشی',
+      subtitle: 'Excel، Google Drive، واتساپ، تێلێگرام',
+      color: '#10B981',
     },
   ];
 
@@ -656,6 +664,26 @@ export default function SystemSettingsScreen() {
             {activeSection === 'categories' && renderCategoriesSettings()}
             {activeSection === 'theme' && renderThemeSettings()}
             {activeSection === 'roles' && renderRolesSettings()}
+            {activeSection === 'integration' && (
+              <GradientCard>
+                <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+                  هەموهانگکردن و هاوبەشی
+                </KurdishText>
+                
+                <KurdishText variant="body" color="#6B7280" style={{ marginBottom: 12 }}>
+                  بۆ ڕێکخستنی هەموهانگکردن و هاوبەشکردنی داتا، بڕۆ بۆ بەشی تایبەت
+                </KurdishText>
+                
+                <TouchableOpacity
+                  style={styles.linkButton}
+                  onPress={() => router.push('/integration-settings')}
+                >
+                  <KurdishText variant="body" color="#3B82F6">
+                    ڕێکخستنی هەموهانگکردن
+                  </KurdishText>
+                </TouchableOpacity>
+              </GradientCard>
+            )}
           </View>
         )}
       </ScrollView>

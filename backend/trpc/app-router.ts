@@ -84,6 +84,29 @@ import {
   updateAutoValidationSettingsProcedure,
   exportValidationReportProcedure
 } from "./routes/validation/system/route";
+import {
+  exportToExcelProcedure,
+  exportToPDFProcedure,
+  exportDashboardProcedure,
+  exportChartProcedure
+} from "./routes/integration/export/route";
+import {
+  syncToGoogleDriveProcedure,
+  syncToDropboxProcedure,
+  syncToOneDriveProcedure,
+  syncToGoogleSheetsProcedure,
+  getCloudSyncSettingsProcedure,
+  updateCloudSyncSettingsProcedure
+} from "./routes/integration/cloud/route";
+import {
+  shareViaEmailProcedure,
+  shareViaWhatsAppProcedure,
+  shareViaTelegramProcedure,
+  shareViaSMSProcedure,
+  shareReceiptProcedure,
+  shareReportProcedure,
+  scheduledShareProcedure
+} from "./routes/integration/share/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -178,6 +201,31 @@ export const appRouter = createTRPCRouter({
     getAutoSettings: getAutoValidationSettingsProcedure,
     updateAutoSettings: updateAutoValidationSettingsProcedure,
     exportReport: exportValidationReportProcedure,
+  }),
+  integration: createTRPCRouter({
+    export: createTRPCRouter({
+      toExcel: exportToExcelProcedure,
+      toPDF: exportToPDFProcedure,
+      dashboard: exportDashboardProcedure,
+      chart: exportChartProcedure,
+    }),
+    cloud: createTRPCRouter({
+      syncToGoogleDrive: syncToGoogleDriveProcedure,
+      syncToDropbox: syncToDropboxProcedure,
+      syncToOneDrive: syncToOneDriveProcedure,
+      syncToGoogleSheets: syncToGoogleSheetsProcedure,
+      getSettings: getCloudSyncSettingsProcedure,
+      updateSettings: updateCloudSyncSettingsProcedure,
+    }),
+    share: createTRPCRouter({
+      viaEmail: shareViaEmailProcedure,
+      viaWhatsApp: shareViaWhatsAppProcedure,
+      viaTelegram: shareViaTelegramProcedure,
+      viaSMS: shareViaSMSProcedure,
+      receipt: shareReceiptProcedure,
+      report: shareReportProcedure,
+      scheduled: scheduledShareProcedure,
+    }),
   }),
 });
 
