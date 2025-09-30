@@ -18,6 +18,7 @@ import { IntegrationProvider } from "@/hooks/integration-context";
 import { AdvancedFiltersProvider } from "@/hooks/advanced-filters-context";
 import { CustomFormsContext } from "@/hooks/custom-forms-context";
 import { ErrorLoggingContext } from "@/hooks/error-logging-context";
+import { UICustomizationProvider } from "@/hooks/ui-customization-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -246,6 +247,18 @@ function RootLayoutNav() {
           title: "چاودێری هەڵەکان",
         }} 
       />
+      <Stack.Screen 
+        name="ui-customization" 
+        options={{ 
+          title: "دەستکاریکردنی ڕووکار",
+        }} 
+      />
+      <Stack.Screen 
+        name="realtime-monitoring" 
+        options={{ 
+          title: "چاودێری کاتی ڕاستەوخۆ",
+        }} 
+      />
 
     </Stack>
   );
@@ -317,8 +330,9 @@ export default function RootLayout() {
           <QueryClientProvider client={queryClient}>
             <ErrorLoggingContext>
               <ErrorBoundary>
-                <SettingsProvider>
-                  <IntegrationProvider>
+                <UICustomizationProvider>
+                  <SettingsProvider>
+                    <IntegrationProvider>
                     <AdvancedFiltersProvider>
                       <CustomFormsContext>
                         <AuthProvider>
@@ -341,8 +355,9 @@ export default function RootLayout() {
                         </AuthProvider>
                       </CustomFormsContext>
                     </AdvancedFiltersProvider>
-                  </IntegrationProvider>
-                </SettingsProvider>
+                    </IntegrationProvider>
+                  </SettingsProvider>
+                </UICustomizationProvider>
               </ErrorBoundary>
             </ErrorLoggingContext>
           </QueryClientProvider>

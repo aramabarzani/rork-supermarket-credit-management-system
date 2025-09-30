@@ -15,7 +15,7 @@ const ERROR_LOGS_KEY = 'error_logs';
 const AUTO_RESOLVE_RULES_KEY = 'auto_resolve_rules';
 const MAX_STORED_ERRORS = 1000;
 
-export const [ErrorLoggingContext, useErrorLogging] = createContextHook(() => {
+const [ErrorLoggingContext, useErrorLogging] = createContextHook(() => {
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [autoResolveRules, setAutoResolveRules] = useState<AutoResolveRule[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -273,3 +273,5 @@ export const [ErrorLoggingContext, useErrorLogging] = createContextHook(() => {
     deleteAutoResolveRule,
   };
 });
+
+export { ErrorLoggingContext, useErrorLogging };

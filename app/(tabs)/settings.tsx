@@ -53,6 +53,13 @@ export default function SettingsScreen() {
       color: '#3B82F6',
     },
     {
+      icon: Settings,
+      title: 'دەستکاریکردنی ڕووکار',
+      subtitle: 'ڕەنگ، فۆنت، مۆد و دیزاین',
+      onPress: () => router.push('/ui-customization'),
+      color: '#EC4899',
+    },
+    {
       icon: Shield,
       title: 'دەسەڵاتەکان',
       subtitle: 'بەڕێوەبردنی دەسەڵاتی کارمەندەکان',
