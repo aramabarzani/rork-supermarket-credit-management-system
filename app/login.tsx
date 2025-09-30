@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Shield, AlertTriangle, Smartphone, MessageSquare } from 'lucide-react-native';
+import { Shield, Smartphone, MessageSquare } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
 import { useSecurity } from '@/hooks/security-context';
 import { KurdishText } from '@/components/KurdishText';
@@ -23,47 +23,21 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const { 
     recordLoginAttempt, 
-    isUserLocked, 
-    getFailedAttemptsCount, 
-    createUserSession,
-    securitySettings 
+    createUserSession
   } = useSecurity();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [lockoutTime, setLockoutTime] = useState<number | null>(null);
   const [loginMethod, setLoginMethod] = useState<'password' | 'sms'>('password');
   const [smsCode, setSmsCode] = useState('');
   const [isSmsSent, setIsSmsSent] = useState(false);
   const [smsCountdown, setSmsCountdown] = useState(0);
   
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const { width: screenWidth } = Dimensions.get('window');
   const isTablet = screenWidth > 768;
 
-  // Check if user is locked on component mount
-  useEffect(() => {
-    if (phone && isUserLocked(phone)) {
-      const failedCount = getFailedAttemptsCount(phone);
-      setError(`حسابەکەت قەدەغەکراوە بۆ ${securitySettings.lockoutDuration} خولەک بەهۆی ${failedCount} هەوڵی سەرنەکەوتوو`);
-      setLockoutTime(Date.now() + (securitySettings.lockoutDuration * 60 * 1000));
-    }
-  }, [phone, isUserLocked, getFailedAttemptsCount, securitySettings]);
 
-  // Update lockout countdown
-  useEffect(() => {
-    if (!lockoutTime) return;
-
-    const interval = setInterval(() => {
-      const remaining = lockoutTime - Date.now();
-      if (remaining <= 0) {
-        setLockoutTime(null);
-        setError('');
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [lockoutTime]);
 
   // SMS countdown effect
   useEffect(() => {
@@ -90,7 +64,7 @@ export default function LoginScreen() {
       setIsSmsSent(true);
       setSmsCountdown(60);
       setError('');
-    } catch (err) {
+    } catch {
       setError('نەتوانرا SMS بنێررێت. دووبارە هەوڵ بدەرەوە');
     }
     
@@ -117,7 +91,7 @@ export default function LoginScreen() {
         setError('کۆدی SMS هەڵەیە');
         recordLoginAttempt(phone, false, 'Invalid SMS code');
       }
-    } catch (err) {
+    } catch {
       setError('هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە');
     }
 
@@ -133,15 +107,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // Check if user is locked
-    if (isUserLocked(phone)) {
-      const failedCount = getFailedAttemptsCount(phone);
-      const remainingTime = Math.ceil(securitySettings.lockoutDuration);
-      setError(`حسابەکەت قەدەغەکراوە بۆ ${remainingTime} خولەک بەهۆی ${failedCount} هەوڵی سەرنەکەوتوو`);
-      recordLoginAttempt(phone, false, 'Account locked');
-      return;
-    }
-
     setIsLoading(true);
     
     try {
@@ -154,15 +119,7 @@ export default function LoginScreen() {
         router.replace('/(tabs)/dashboard');
       } else {
         recordLoginAttempt(phone, false, result.error || 'Invalid credentials');
-        const failedCount = getFailedAttemptsCount(phone) + 1;
-        const remainingAttempts = securitySettings.maxFailedAttempts - failedCount;
-        
-        if (remainingAttempts > 0) {
-          setError(`${result.error || 'ژمارەی مۆبایل یان وشەی نهێنی هەڵەیە'}. ${remainingAttempts} هەوڵی ماوە`);
-        } else {
-          setError(`حسابەکەت قەدەغەکراوە بۆ ${securitySettings.lockoutDuration} خولەک`);
-          setLockoutTime(Date.now() + (securitySettings.lockoutDuration * 60 * 1000));
-        }
+        setError(result.error || 'ژمارەی مۆبایل یان وشەی نهێنی هەڵەیە');
       }
     } catch (err) {
       console.error('LoginScreen: Login error:', err);
@@ -332,28 +289,20 @@ export default function LoginScreen() {
               )}
 
               {error ? (
-                <View style={[styles.errorContainer, lockoutTime && styles.lockoutContainer]}>
-                  {lockoutTime && (
-                    <AlertTriangle size={20} color="#EF4444" style={styles.errorIcon} />
-                  )}
-                  <KurdishText style={[styles.errorText, lockoutTime && styles.lockoutText]}>
+                <View style={styles.errorContainer}>
+                  <KurdishText style={styles.errorText}>
                     {error}
                   </KurdishText>
-                  {lockoutTime && (
-                    <KurdishText style={styles.countdownText}>
-                      کاتی ماوە: {Math.ceil((lockoutTime - Date.now()) / 1000 / 60)} خولەک
-                    </KurdishText>
-                  )}
                 </View>
               ) : null}
 
               <TouchableOpacity
                 style={[
                   styles.loginButton,
-                  (isLoading || lockoutTime || (loginMethod === 'sms' && !isSmsSent)) && styles.loginButtonDisabled
+                  (isLoading || (loginMethod === 'sms' && !isSmsSent)) && styles.loginButtonDisabled
                 ]}
                 onPress={handleLogin}
-                disabled={isLoading || !!lockoutTime || (loginMethod === 'sms' && !isSmsSent)}
+                disabled={isLoading || (loginMethod === 'sms' && !isSmsSent)}
               >
                 {isLoading ? (
                   <ActivityIndicator color="white" />
@@ -623,24 +572,5 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     textAlign: 'center',
     fontSize: 14,
-  },
-  lockoutContainer: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FECACA',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  lockoutText: {
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  errorIcon: {
-    marginBottom: 4,
-  },
-  countdownText: {
-    color: '#DC2626',
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '500',
   },
 });

@@ -134,29 +134,7 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     console.log('Security: Login attempt recorded:', { phone, success, failureReason });
   }, [loginAttempts, getDeviceInfo]);
 
-  // Check if user is locked
-  const isUserLocked = useCallback((phone: string): boolean => {
-    const recentAttempts = loginAttempts.filter(
-      attempt => 
-        attempt.phone === phone && 
-        !attempt.success &&
-        new Date(attempt.attemptAt).getTime() > Date.now() - (securitySettings.lockoutDuration * 60 * 1000)
-    );
 
-    return recentAttempts.length >= securitySettings.maxFailedAttempts;
-  }, [loginAttempts, securitySettings]);
-
-  // Get failed attempts count
-  const getFailedAttemptsCount = useCallback((phone: string): number => {
-    const recentAttempts = loginAttempts.filter(
-      attempt => 
-        attempt.phone === phone && 
-        !attempt.success &&
-        new Date(attempt.attemptAt).getTime() > Date.now() - (securitySettings.lockoutDuration * 60 * 1000)
-    );
-
-    return recentAttempts.length;
-  }, [loginAttempts, securitySettings]);
 
   // Create user session
   const createUserSession = useCallback((userId: string) => {
@@ -408,8 +386,6 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     passwordPolicy,
     ipWhitelist,
     recordLoginAttempt,
-    isUserLocked,
-    getFailedAttemptsCount,
     createUserSession,
     updateSessionActivity,
     endUserSession,
@@ -438,8 +414,6 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     passwordPolicy,
     ipWhitelist,
     recordLoginAttempt,
-    isUserLocked,
-    getFailedAttemptsCount,
     createUserSession,
     updateSessionActivity,
     endUserSession,
