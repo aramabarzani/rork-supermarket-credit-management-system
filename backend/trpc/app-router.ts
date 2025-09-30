@@ -151,6 +151,40 @@ import {
   generateErrorReportProcedure,
   sendErrorReportProcedure
 } from "./routes/errors/management/route";
+import {
+  getActiveUsersProcedure,
+  getRecentActivitiesProcedure,
+  getLoginRecordsProcedure,
+  getLoginStatisticsProcedure,
+  getRealtimeStatsProcedure,
+  trackUserActivityProcedure,
+  updateUserLastActivityProcedure
+} from "./routes/monitoring/activity/route";
+import {
+  getBackupRecordsProcedure,
+  getBackupSettingsProcedure,
+  updateBackupSettingsProcedure,
+  createManualBackupProcedure,
+  deleteBackupProcedure,
+  restoreBackupProcedure
+} from "./routes/monitoring/backup/route";
+import {
+  getInactivityAlertsProcedure,
+  getInactivitySettingsProcedure,
+  updateInactivitySettingsProcedure,
+  checkInactiveUsersProcedure,
+  sendInactivityAlertProcedure,
+  resolveInactivityAlertProcedure,
+  getInactivityReportProcedure
+} from "./routes/monitoring/inactivity/route";
+import {
+  getCustomReportsProcedure,
+  getCustomReportByIdProcedure,
+  generateAdminReportProcedure,
+  generateEmployeeReportProcedure,
+  generateCustomerReportProcedure,
+  deleteCustomReportProcedure
+} from "./routes/monitoring/reports/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -316,6 +350,42 @@ export const appRouter = createTRPCRouter({
     delete: deleteErrorProcedure,
     generateReport: generateErrorReportProcedure,
     sendReport: sendErrorReportProcedure,
+  }),
+  monitoring: createTRPCRouter({
+    activity: createTRPCRouter({
+      getActiveUsers: getActiveUsersProcedure,
+      getRecentActivities: getRecentActivitiesProcedure,
+      getLoginRecords: getLoginRecordsProcedure,
+      getLoginStatistics: getLoginStatisticsProcedure,
+      getRealtimeStats: getRealtimeStatsProcedure,
+      trackActivity: trackUserActivityProcedure,
+      updateLastActivity: updateUserLastActivityProcedure,
+    }),
+    backup: createTRPCRouter({
+      getRecords: getBackupRecordsProcedure,
+      getSettings: getBackupSettingsProcedure,
+      updateSettings: updateBackupSettingsProcedure,
+      createManual: createManualBackupProcedure,
+      delete: deleteBackupProcedure,
+      restore: restoreBackupProcedure,
+    }),
+    inactivity: createTRPCRouter({
+      getAlerts: getInactivityAlertsProcedure,
+      getSettings: getInactivitySettingsProcedure,
+      updateSettings: updateInactivitySettingsProcedure,
+      checkInactive: checkInactiveUsersProcedure,
+      sendAlert: sendInactivityAlertProcedure,
+      resolveAlert: resolveInactivityAlertProcedure,
+      getReport: getInactivityReportProcedure,
+    }),
+    reports: createTRPCRouter({
+      getAll: getCustomReportsProcedure,
+      getById: getCustomReportByIdProcedure,
+      generateAdmin: generateAdminReportProcedure,
+      generateEmployee: generateEmployeeReportProcedure,
+      generateCustomer: generateCustomerReportProcedure,
+      delete: deleteCustomReportProcedure,
+    }),
   }),
 });
 
