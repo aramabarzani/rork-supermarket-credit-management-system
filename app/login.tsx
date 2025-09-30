@@ -318,11 +318,6 @@ export default function LoginScreen() {
                   بۆ تاقیکردنەوە:
                 </KurdishText>
                 <View style={styles.demoSection}>
-                  <View style={[styles.demoCard, { borderColor: '#7C3AED' }]}>
-                    <KurdishText style={[styles.demoRole, { color: '#7C3AED' }]}>خاوەندار</KurdishText>
-                    <Text style={styles.demoCredential}>📱 07500000000</Text>
-                    <Text style={styles.demoCredential}>🔑 owner123</Text>
-                  </View>
                   <View style={[styles.demoCard, { borderColor: '#1E3A8A' }]}>
                     <KurdishText style={[styles.demoRole, { color: '#1E3A8A' }]}>بەڕێوەبەر</KurdishText>
                     <Text style={styles.demoCredential}>📱 07501234567</Text>
