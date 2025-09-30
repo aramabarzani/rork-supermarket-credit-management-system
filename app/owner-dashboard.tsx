@@ -28,18 +28,24 @@ export default function OwnerDashboardScreen() {
   });
 
   const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
-    retry: 3,
-    retryDelay: 1000,
+    retry: 1,
+    retryDelay: 500,
+    staleTime: 30000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
   });
 
-  const { data, isLoading, error, refetch } = queryResult;
+  const { data, isLoading, error, refetch, isFetching } = queryResult;
 
-  console.log('OwnerDashboard: Full query result:', queryResult);
-  console.log('OwnerDashboard: isLoading:', isLoading);
-  console.log('OwnerDashboard: data:', data);
-  console.log('OwnerDashboard: error:', error);
-  console.log('OwnerDashboard: status:', queryResult.status);
-  console.log('OwnerDashboard: fetchStatus:', queryResult.fetchStatus);
+  console.log('OwnerDashboard: Full query result:', JSON.stringify({
+    isLoading,
+    isFetching,
+    status: queryResult.status,
+    fetchStatus: queryResult.fetchStatus,
+    dataExists: !!data,
+    errorExists: !!error,
+    errorMessage: error?.message,
+  }));
   const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();
   const activateMutation = trpc.subscription.owner.activate.useMutation();
@@ -192,13 +198,15 @@ export default function OwnerDashboardScreen() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading) {
+  if (isLoading || isFetching) {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
           <Text style={styles.loadingSubtext}>داتاکان بارکراوە...</Text>
+          <Text style={styles.debugText}>Status: {queryResult.status}</Text>
+          <Text style={styles.debugText}>Fetch: {queryResult.fetchStatus}</Text>
         </View>
       </View>
     );
@@ -827,5 +835,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#fff',
+  },
+  debugText: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
   },
 });
