@@ -288,6 +288,36 @@ import {
   shareImpactReportProcedure,
   checkPoorPerformanceProcedure
 } from "./routes/monitoring/impact/route";
+import {
+  shareReportViaEmailProcedure,
+  shareReportViaWhatsAppProcedure,
+  shareReportViaTelegramProcedure,
+  shareReportViaViberProcedure,
+  shareBackupViaEmailProcedure,
+  shareBackupViaWhatsAppProcedure,
+  shareBackupViaTelegramProcedure,
+  shareBackupViaViberProcedure,
+  downloadReportPDFProcedure,
+  downloadReportExcelProcedure,
+  downloadDebtRecordsPDFProcedure,
+  downloadDebtRecordsExcelProcedure,
+  downloadPaymentRecordsPDFProcedure,
+  downloadPaymentRecordsExcelProcedure,
+  downloadCustomerRecordsPDFProcedure,
+  downloadCustomerRecordsExcelProcedure,
+  downloadEmployeeRecordsPDFProcedure,
+  downloadEmployeeRecordsExcelProcedure,
+  downloadMonthlyReportProcedure,
+  downloadYearlyReportProcedure,
+  getShareHistoryProcedure,
+  getScheduledSharesProcedure,
+  createScheduledShareProcedure,
+  updateScheduledShareProcedure,
+  deleteScheduledShareProcedure,
+  getShareStatsProcedure,
+  getAutoShareSettingsProcedure,
+  updateAutoShareSettingsProcedure
+} from "./routes/sharing/management/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -607,6 +637,46 @@ export const appRouter = createTRPCRouter({
       getAll: getIpWhitelistProcedure,
       add: addIpToWhitelistProcedure,
       remove: removeIpFromWhitelistProcedure,
+    }),
+  }),
+  sharing: createTRPCRouter({
+    reports: createTRPCRouter({
+      shareViaEmail: shareReportViaEmailProcedure,
+      shareViaWhatsApp: shareReportViaWhatsAppProcedure,
+      shareViaTelegram: shareReportViaTelegramProcedure,
+      shareViaViber: shareReportViaViberProcedure,
+    }),
+    backups: createTRPCRouter({
+      shareViaEmail: shareBackupViaEmailProcedure,
+      shareViaWhatsApp: shareBackupViaWhatsAppProcedure,
+      shareViaTelegram: shareBackupViaTelegramProcedure,
+      shareViaViber: shareBackupViaViberProcedure,
+    }),
+    downloads: createTRPCRouter({
+      reportPDF: downloadReportPDFProcedure,
+      reportExcel: downloadReportExcelProcedure,
+      debtRecordsPDF: downloadDebtRecordsPDFProcedure,
+      debtRecordsExcel: downloadDebtRecordsExcelProcedure,
+      paymentRecordsPDF: downloadPaymentRecordsPDFProcedure,
+      paymentRecordsExcel: downloadPaymentRecordsExcelProcedure,
+      customerRecordsPDF: downloadCustomerRecordsPDFProcedure,
+      customerRecordsExcel: downloadCustomerRecordsExcelProcedure,
+      employeeRecordsPDF: downloadEmployeeRecordsPDFProcedure,
+      employeeRecordsExcel: downloadEmployeeRecordsExcelProcedure,
+      monthlyReport: downloadMonthlyReportProcedure,
+      yearlyReport: downloadYearlyReportProcedure,
+    }),
+    history: getShareHistoryProcedure,
+    scheduled: createTRPCRouter({
+      getAll: getScheduledSharesProcedure,
+      create: createScheduledShareProcedure,
+      update: updateScheduledShareProcedure,
+      delete: deleteScheduledShareProcedure,
+    }),
+    stats: getShareStatsProcedure,
+    autoSettings: createTRPCRouter({
+      get: getAutoShareSettingsProcedure,
+      update: updateAutoShareSettingsProcedure,
     }),
   }),
 });
