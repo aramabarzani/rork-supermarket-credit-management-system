@@ -87,11 +87,11 @@ const saveTenants = async () => {
   }
 };
 
-export const ownerProcedure = publicProcedure.query(async () => {
-  console.log('ownerProcedure: Starting...');
+export const getAllTenantsProcedure = publicProcedure.query(async () => {
+  console.log('getAllTenantsProcedure: Starting...');
   try {
     await loadTenants();
-    console.log('ownerProcedure: Loaded tenants:', mockTenants.length);
+    console.log('getAllTenantsProcedure: Loaded tenants:', mockTenants.length);
     
     const result = {
       getAllTenants: mockTenants,
@@ -109,17 +109,11 @@ export const ownerProcedure = publicProcedure.query(async () => {
       }, 0),
     };
     
-    console.log('ownerProcedure: Returning result');
+    console.log('getAllTenantsProcedure: Returning result:', result);
     return result;
   } catch (error) {
-    console.error('ownerProcedure: Error:', error);
-    return {
-      getAllTenants: [],
-      getActiveTenants: [],
-      getExpiredTenants: [],
-      getSuspendedTenants: [],
-      getTotalRevenue: 0,
-    };
+    console.error('getAllTenantsProcedure: Error:', error);
+    throw error;
   }
 });
 

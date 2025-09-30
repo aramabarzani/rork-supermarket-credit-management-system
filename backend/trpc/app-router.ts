@@ -358,7 +358,7 @@ import {
   shareChatProcedure
 } from "./routes/messaging/chat/route";
 import {
-  ownerProcedure,
+  getAllTenantsProcedure,
   createAdminProcedure,
   updateSubscriptionProcedure,
   renewSubscriptionProcedure,
@@ -795,7 +795,7 @@ export const appRouter = createTRPCRouter({
   }),
   subscription: createTRPCRouter({
     owner: createTRPCRouter({
-      getAll: ownerProcedure,
+      getAll: getAllTenantsProcedure,
       createAdmin: createAdminProcedure,
       updateSubscription: updateSubscriptionProcedure,
       renew: renewSubscriptionProcedure,
