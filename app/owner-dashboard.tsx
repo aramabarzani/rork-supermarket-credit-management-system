@@ -27,14 +27,19 @@ export default function OwnerDashboardScreen() {
     duration: 30,
   });
 
-  const { data, isLoading, error, refetch } = trpc.subscription.owner.getAll.useQuery(undefined, {
+  const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
     retry: 3,
     retryDelay: 1000,
   });
 
+  const { data, isLoading, error, refetch } = queryResult;
+
+  console.log('OwnerDashboard: Full query result:', queryResult);
   console.log('OwnerDashboard: isLoading:', isLoading);
   console.log('OwnerDashboard: data:', data);
   console.log('OwnerDashboard: error:', error);
+  console.log('OwnerDashboard: status:', queryResult.status);
+  console.log('OwnerDashboard: fetchStatus:', queryResult.fetchStatus);
   const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();
   const activateMutation = trpc.subscription.owner.activate.useMutation();

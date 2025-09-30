@@ -1,7 +1,7 @@
 import { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
-import type { User } from "@/types/auth-enhanced";
+import type { User } from "@/types/auth";
 
 // Context creation function
 export const createContext = async (opts: FetchCreateContextFnOptions) => {

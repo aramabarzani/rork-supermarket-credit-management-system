@@ -389,8 +389,8 @@ export default function RootLayout() {
 
   return (
       <GestureHandlerRootView style={styles.container}>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <ErrorLoggingProvider>
               <ErrorBoundary>
                 <UICustomizationProvider>
@@ -435,8 +435,8 @@ export default function RootLayout() {
                 </UICustomizationProvider>
               </ErrorBoundary>
             </ErrorLoggingProvider>
-          </QueryClientProvider>
         </trpc.Provider>
+          </QueryClientProvider>
       </GestureHandlerRootView>
   );
 }
