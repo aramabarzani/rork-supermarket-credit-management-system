@@ -16,6 +16,7 @@ import {
   Key,
   Settings,
   MessageCircle,
+  Zap,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -93,6 +94,13 @@ export default function SettingsScreen() {
       subtitle: 'زمان، پارە، ئاگاداری و هیتر',
       onPress: () => router.push('/system-settings'),
       color: '#8B5CF6',
+    },
+    {
+      icon: Zap,
+      title: 'ڕێکخستنی بەکارهێنان',
+      subtitle: 'زمان، ڕووکار، پاراستن، کارایی و ئاپتیمایزکردن',
+      onPress: () => router.push('/usability-settings'),
+      color: '#06B6D4',
     },
   ];
 

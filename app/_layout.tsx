@@ -25,6 +25,7 @@ import { IPTrackingProvider } from "@/hooks/ip-tracking-context";
 import { GuidanceContext } from "@/hooks/guidance-context";
 import { BackupContext } from "@/hooks/backup-context";
 import { SystemConfigContext } from "@/hooks/system-config-context";
+import { UsabilityProvider } from "@/hooks/usability-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -289,6 +290,24 @@ function RootLayoutNav() {
           title: "پاراستنی IP",
         }} 
       />
+      <Stack.Screen 
+        name="usability-settings" 
+        options={{ 
+          title: "ڕێکخستنی بەکارهێنان",
+        }} 
+      />
+      <Stack.Screen 
+        name="performance-monitoring" 
+        options={{ 
+          title: "چاودێری کارایی",
+        }} 
+      />
+      <Stack.Screen 
+        name="usage-statistics" 
+        options={{ 
+          title: "ئاماری بەکارهێنان",
+        }} 
+      />
 
     </Stack>
   );
@@ -371,7 +390,8 @@ export default function RootLayout() {
                               <GuidanceContext>
                                 <BackupContext>
                                   <SystemConfigContext>
-                                    <AuthProvider>
+                                    <UsabilityProvider>
+                                      <AuthProvider>
                                 <SecurityProvider>
                                   <CustomerSettingsProvider>
                                     <MessagingProvider>
@@ -388,7 +408,8 @@ export default function RootLayout() {
                                     </MessagingProvider>
                                   </CustomerSettingsProvider>
                                 </SecurityProvider>
-                                    </AuthProvider>
+                                      </AuthProvider>
+                                    </UsabilityProvider>
                                   </SystemConfigContext>
                                 </BackupContext>
                               </GuidanceContext>
