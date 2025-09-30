@@ -312,41 +312,41 @@ export default function RootLayout() {
   }
 
   return (
-    <ErrorBoundary>
       <GestureHandlerRootView style={styles.container}>
         <trpc.Provider client={trpcClient} queryClient={queryClient}>
           <QueryClientProvider client={queryClient}>
             <ErrorLoggingContext>
-              <SettingsProvider>
-                <IntegrationProvider>
-                  <AdvancedFiltersProvider>
-                    <CustomFormsContext>
-                      <AuthProvider>
-                  <SecurityProvider>
-                    <CustomerSettingsProvider>
-                      <MessagingProvider>
-                        <DebtProvider>
-                          <ReceiptProvider>
-                            <UsersProvider>
-                              <NotificationProvider>
-                                <RootLayoutNav />
-                                <SessionTimeoutWarning />
-                              </NotificationProvider>
-                            </UsersProvider>
-                          </ReceiptProvider>
-                        </DebtProvider>
-                      </MessagingProvider>
-                    </CustomerSettingsProvider>
-                  </SecurityProvider>
-                      </AuthProvider>
-                    </CustomFormsContext>
-                  </AdvancedFiltersProvider>
-                </IntegrationProvider>
-              </SettingsProvider>
+              <ErrorBoundary>
+                <SettingsProvider>
+                  <IntegrationProvider>
+                    <AdvancedFiltersProvider>
+                      <CustomFormsContext>
+                        <AuthProvider>
+                          <SecurityProvider>
+                            <CustomerSettingsProvider>
+                              <MessagingProvider>
+                                <DebtProvider>
+                                  <ReceiptProvider>
+                                    <UsersProvider>
+                                      <NotificationProvider>
+                                        <RootLayoutNav />
+                                        <SessionTimeoutWarning />
+                                      </NotificationProvider>
+                                    </UsersProvider>
+                                  </ReceiptProvider>
+                                </DebtProvider>
+                              </MessagingProvider>
+                            </CustomerSettingsProvider>
+                          </SecurityProvider>
+                        </AuthProvider>
+                      </CustomFormsContext>
+                    </AdvancedFiltersProvider>
+                  </IntegrationProvider>
+                </SettingsProvider>
+              </ErrorBoundary>
             </ErrorLoggingContext>
           </QueryClientProvider>
         </trpc.Provider>
       </GestureHandlerRootView>
-    </ErrorBoundary>
   );
 }
