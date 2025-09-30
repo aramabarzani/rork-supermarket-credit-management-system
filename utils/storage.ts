@@ -34,14 +34,13 @@ export const safeStorage = {
         return defaultValue;
       }
       
-      // Basic JSON validation
-      if (!item.startsWith('{') && !item.startsWith('[') && !item.startsWith('"') && !item.match(/^\d+$/)) {
-        console.warn(`Invalid JSON format for key ${key}, clearing`);
+      try {
+        return JSON.parse(item) as T;
+      } catch (parseError) {
+        console.warn(`Invalid JSON for key ${key}:`, parseError);
         await safeStorage.removeItem(key);
         return defaultValue;
       }
-      
-      return JSON.parse(item) as T;
     } catch (error) {
       console.error(`Error parsing storage item ${key}:`, error);
       // Clear corrupted data

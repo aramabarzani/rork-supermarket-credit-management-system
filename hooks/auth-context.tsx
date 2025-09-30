@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { User, LoginCredentials } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
 import { useLocationTracking } from '@/hooks/location-tracking-context';
 
@@ -117,21 +116,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       
       let allUsers: User[] = [];
       try {
-        const storedUsers = await AsyncStorage.getItem('users');
-        if (storedUsers) {
-          const parsedUsers = JSON.parse(storedUsers) as User[];
-          console.log('AuthProvider: Loaded users from storage:', parsedUsers.length);
-          allUsers = parsedUsers;
+        const storedUsers = await safeStorage.getItem<User[]>('users', null);
+        if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
+          console.log('AuthProvider: Loaded users from storage:', storedUsers.length);
+          allUsers = storedUsers;
         } else {
           console.log('AuthProvider: No stored users, initializing with demo users');
           allUsers = [...DEMO_USERS];
-          await AsyncStorage.setItem('users', JSON.stringify(allUsers));
+          await safeStorage.setItem('users', allUsers);
         }
       } catch (error) {
         console.error('AuthProvider: Error loading users:', error);
         console.log('AuthProvider: Using demo users');
         allUsers = [...DEMO_USERS];
-        await AsyncStorage.setItem('users', JSON.stringify(allUsers));
+        await safeStorage.setItem('users', allUsers);
       }
       
       const foundUser = allUsers.find(
@@ -173,7 +171,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const updatedUsers = allUsers.map(u => 
           u.id === foundUser.id ? updatedUser : u
         );
-        AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
+        safeStorage.setItem('users', updatedUsers);
         
         return { success: true };
       }
