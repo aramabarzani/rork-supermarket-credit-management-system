@@ -357,87 +357,15 @@ import {
   getChatStatsProcedure,
   shareChatProcedure
 } from "./routes/messaging/chat/route";
-import {
-  recordLoginActivityProcedure,
-  recordLogoutActivityProcedure,
-  getLoginActivitiesProcedure,
-  getActivitySessionsProcedure,
-  getLocationReportProcedure,
-  getLocationSettingsProcedure,
-  updateLocationSettingsProcedure,
-  getLocationAlertsProcedure,
-  resolveLocationAlertProcedure
-} from "./routes/location/tracking/route";
 
 
-import {
-  getAllRolesProcedure,
-  getRoleByIdProcedure,
-  createRoleProcedure,
-  updateRoleProcedure,
-  deleteRoleProcedure,
-  assignRoleProcedure,
-  revokeRoleProcedure,
-  getUserRolesProcedure,
-  getUserPermissionsProcedure,
-  checkPermissionProcedure,
-  getAllPermissionsProcedure,
-  getPermissionsByCategoryProcedure
-} from "./routes/rbac/management/route";
-import {
-  createCustomReportProcedure,
-  getCustomReportsProcedure,
-  generateCustomReportProcedure,
-  deleteCustomReportProcedure
-} from "./routes/reports/custom/route";
-import {
-  printReportProcedure,
-  printReceiptProcedure,
-  printCustomerCardProcedure,
-  printEmployeeCardProcedure,
-  printManagerCardProcedure,
-  getPrintTemplatesProcedure,
-  createPrintTemplateProcedure,
-  getPrintJobsProcedure
-} from "./routes/printing/management/route";
-import {
-  getIntegrationsProcedure,
-  createIntegrationProcedure,
-  updateIntegrationProcedure,
-  testIntegrationProcedure,
-  deleteIntegrationProcedure,
-  syncIntegrationProcedure
-} from "./routes/integrations/external/route";
-import {
-  generateYearEndReportProcedure,
-  getYearEndReportsProcedure,
-  exportYearEndReportProcedure
-} from "./routes/reports/year-end/route";
-import {
-  getSessionControlProcedure,
-  updateSessionControlProcedure,
-  getLoginAttemptsProcedure,
-  unlockAccountProcedure,
-  getAccountLockAlertsProcedure
-} from "./routes/session/control/route";
-import {
-  generateComprehensiveReportProcedure,
-  getComprehensiveReportsProcedure,
-  exportComprehensiveReportProcedure
-} from "./routes/system/comprehensive/route";
-import {
-  createTenantProcedure,
-  getAllTenantsProcedure,
-  getTenantByIdProcedure,
-  getTenantByLicenseProcedure,
-  updateTenantStatusProcedure,
-  updateTenantSettingsProcedure,
-  updateTenantStatsProcedure,
-  deleteTenantProcedure,
-  getTenantDashboardStatsProcedure,
-  extendTenantLicenseProcedure,
-  recordTenantAccessProcedure
-} from "./routes/tenant/management/route";
+
+
+
+
+
+
+
 
 
 export const appRouter = createTRPCRouter({
@@ -848,94 +776,7 @@ export const appRouter = createTRPCRouter({
       share: shareChatProcedure,
     }),
   }),
-  location: createTRPCRouter({
-    tracking: createTRPCRouter({
-      recordLogin: recordLoginActivityProcedure,
-      recordLogout: recordLogoutActivityProcedure,
-      getActivities: getLoginActivitiesProcedure,
-      getSessions: getActivitySessionsProcedure,
-      getReport: getLocationReportProcedure,
-      getSettings: getLocationSettingsProcedure,
-      updateSettings: updateLocationSettingsProcedure,
-      getAlerts: getLocationAlertsProcedure,
-      resolveAlert: resolveLocationAlertProcedure,
-    }),
-  }),
 
-  rbac: createTRPCRouter({
-    roles: createTRPCRouter({
-      getAll: getAllRolesProcedure,
-      getById: getRoleByIdProcedure,
-      create: createRoleProcedure,
-      update: updateRoleProcedure,
-      delete: deleteRoleProcedure,
-    }),
-    userRoles: createTRPCRouter({
-      assign: assignRoleProcedure,
-      revoke: revokeRoleProcedure,
-      getByUser: getUserRolesProcedure,
-    }),
-    permissions: createTRPCRouter({
-      getAll: getAllPermissionsProcedure,
-      getByCategory: getPermissionsByCategoryProcedure,
-      getByUser: getUserPermissionsProcedure,
-      check: checkPermissionProcedure,
-    }),
-  }),
-  customReports: createTRPCRouter({
-    create: createCustomReportProcedure,
-    getAll: getCustomReportsProcedure,
-    generate: generateCustomReportProcedure,
-    delete: deleteCustomReportProcedure,
-  }),
-  printing: createTRPCRouter({
-    printReport: printReportProcedure,
-    printReceipt: printReceiptProcedure,
-    printCustomerCard: printCustomerCardProcedure,
-    printEmployeeCard: printEmployeeCardProcedure,
-    printManagerCard: printManagerCardProcedure,
-    getTemplates: getPrintTemplatesProcedure,
-    createTemplate: createPrintTemplateProcedure,
-    getJobs: getPrintJobsProcedure,
-  }),
-  integrations: createTRPCRouter({
-    getAll: getIntegrationsProcedure,
-    create: createIntegrationProcedure,
-    update: updateIntegrationProcedure,
-    test: testIntegrationProcedure,
-    delete: deleteIntegrationProcedure,
-    sync: syncIntegrationProcedure,
-  }),
-  yearEndReports: createTRPCRouter({
-    generate: generateYearEndReportProcedure,
-    getAll: getYearEndReportsProcedure,
-    export: exportYearEndReportProcedure,
-  }),
-  sessionControl: createTRPCRouter({
-    getSettings: getSessionControlProcedure,
-    updateSettings: updateSessionControlProcedure,
-    getLoginAttempts: getLoginAttemptsProcedure,
-    unlockAccount: unlockAccountProcedure,
-    getAlerts: getAccountLockAlertsProcedure,
-  }),
-  comprehensiveReports: createTRPCRouter({
-    generate: generateComprehensiveReportProcedure,
-    getAll: getComprehensiveReportsProcedure,
-    export: exportComprehensiveReportProcedure,
-  }),
-  tenant: createTRPCRouter({
-    create: createTenantProcedure,
-    getAll: getAllTenantsProcedure,
-    getById: getTenantByIdProcedure,
-    getByLicense: getTenantByLicenseProcedure,
-    updateStatus: updateTenantStatusProcedure,
-    updateSettings: updateTenantSettingsProcedure,
-    updateStats: updateTenantStatsProcedure,
-    delete: deleteTenantProcedure,
-    getDashboardStats: getTenantDashboardStatsProcedure,
-    extendLicense: extendTenantLicenseProcedure,
-    recordAccess: recordTenantAccessProcedure,
-  }),
 });
 
 export type AppRouter = typeof appRouter;

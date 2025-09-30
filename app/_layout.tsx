@@ -26,7 +26,7 @@ import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
 import { BackupContext as BackupProvider } from "@/hooks/backup-context";
 import { SystemConfigContext as SystemConfigProvider } from "@/hooks/system-config-context";
 import { UsabilityProvider } from "@/hooks/usability-context";
-import { LocationTrackingProvider } from "@/hooks/location-tracking-context";
+
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -309,12 +309,7 @@ function RootLayoutNav() {
           title: "ئاماری بەکارهێنان",
         }} 
       />
-      <Stack.Screen 
-        name="location-tracking" 
-        options={{ 
-          title: "چاودێری شوێنی جوگرافی",
-        }} 
-      />
+
 
     </Stack>
   );
@@ -397,7 +392,6 @@ export default function RootLayout() {
                                 <BackupProvider>
                                   <SystemConfigProvider>
                                     <UsabilityProvider>
-                                      <LocationTrackingProvider>
                                         <AuthProvider>
                                 <SecurityProvider>
                                   <CustomerSettingsProvider>
@@ -416,7 +410,6 @@ export default function RootLayout() {
                                   </CustomerSettingsProvider>
                                 </SecurityProvider>
                                         </AuthProvider>
-                                      </LocationTrackingProvider>
                                     </UsabilityProvider>
                                   </SystemConfigProvider>
                                 </BackupProvider>
