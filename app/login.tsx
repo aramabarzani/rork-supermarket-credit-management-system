@@ -372,6 +372,12 @@ export default function LoginScreen() {
                   بەڕێوەبەر: 07501234567 / admin123
                 </Text>
                 <Text style={styles.demoText}>
+                  کارمەند: 07509876543 / employee123
+                </Text>
+                <Text style={styles.demoText}>
+                  کڕیار: 07701234567 / customer123
+                </Text>
+                <Text style={styles.demoText}>
                   SMS کۆد: 1234
                 </Text>
               </View>

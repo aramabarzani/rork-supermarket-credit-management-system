@@ -3,16 +3,63 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform } from 'react-native';
 import { User, LoginCredentials } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
 
-const DEMO_ADMIN: User = {
-  id: '1',
-  name: 'بەڕێوەبەر',
-  phone: '07501234567',
-  role: 'admin',
-  createdAt: new Date().toISOString(),
-  isActive: true,
-  permissions: [],
-};
+const DEMO_USERS: User[] = [
+  {
+    id: 'admin',
+    name: 'بەڕێوەبەر',
+    phone: '07501234567',
+    role: 'admin',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
+    password: 'admin123',
+    failedLoginAttempts: 0,
+    twoFactorEnabled: false,
+    allowedDevices: 5,
+    currentSessions: [],
+  },
+  {
+    id: 'employee-1',
+    name: 'کارمەند یەک',
+    phone: '07509876543',
+    role: 'employee',
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    permissions: DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })),
+    password: 'employee123',
+    failedLoginAttempts: 0,
+    twoFactorEnabled: false,
+    allowedDevices: 3,
+    currentSessions: [],
+    isStarEmployee: true,
+  },
+  {
+    id: 'customer-1',
+    name: 'ئەحمەد محەمەد',
+    phone: '07701234567',
+    role: 'customer',
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    isActive: true,
+    permissions: [],
+    password: 'customer123',
+    failedLoginAttempts: 0,
+    twoFactorEnabled: false,
+    allowedDevices: 2,
+    currentSessions: [],
+    address: 'هەولێر، شەقامی ٦٠ مەتری، ژمارە ١٢٣',
+    nationalId: '1234567890123',
+    email: 'ahmad.mohammed@example.com',
+    customerGroup: 'family',
+    customerRating: 'good',
+    onTimePayments: 8,
+    latePayments: 2,
+  },
+];
+
+const DEMO_ADMIN: User = DEMO_USERS[0];
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
@@ -85,17 +132,46 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('AuthProvider: Login attempt for:', credentials.phone);
       
-      if (credentials.phone === '07501234567' && credentials.password === 'admin123') {
-        console.log('AuthProvider: Demo admin login successful');
+      let allUsers = DEMO_USERS;
+      try {
+        const storedUsers = await AsyncStorage.getItem('users');
+        if (storedUsers) {
+          allUsers = JSON.parse(storedUsers);
+          console.log('AuthProvider: Loaded users from storage:', allUsers.length);
+        }
+      } catch {
+        console.log('AuthProvider: Using demo users');
+      }
+      
+      const foundUser = allUsers.find(
+        u => u.phone === credentials.phone && u.password === credentials.password
+      );
+      
+      if (foundUser) {
+        if (!foundUser.isActive) {
+          console.log('AuthProvider: User account is inactive');
+          return { success: false, error: 'حسابەکەت ناچالاککراوە. پەیوەندی بە بەڕێوەبەر بکە' };
+        }
+        
+        if (foundUser.lockedUntil && new Date(foundUser.lockedUntil) > new Date()) {
+          console.log('AuthProvider: User account is locked');
+          return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
+        }
+        
+        console.log('AuthProvider: Login successful for:', foundUser.name);
         const updatedUser = {
-          ...DEMO_ADMIN,
+          ...foundUser,
           lastLoginAt: new Date().toISOString(),
           failedLoginAttempts: 0,
         };
         setUser(updatedUser);
         
-        // Don't await storage operations to prevent blocking UI
         safeStorage.setItem('user', updatedUser);
+        
+        const updatedUsers = allUsers.map(u => 
+          u.id === foundUser.id ? updatedUser : u
+        );
+        AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
         
         return { success: true };
       }
