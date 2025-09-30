@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 import { User, LoginCredentials } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
-import { useLocationTracking } from '@/hooks/location-tracking-context';
+
 
 const DEMO_USERS: User[] = [
   {
@@ -60,12 +60,11 @@ const DEMO_USERS: User[] = [
 ];
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
-  const locationTracking = useLocationTracking();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isHydrated, setIsHydrated] = useState(Platform.OS !== 'web');
-  const [currentActivityId, setCurrentActivityId] = useState<string | null>(null);
+
 
   // Handle web hydration - ensure this runs only on client side
   useEffect(() => {
@@ -160,16 +159,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         };
         setUser(updatedUser);
         
-        if (locationTracking?.recordLoginActivity) {
-          const activity = await locationTracking.recordLoginActivity(
-            foundUser.id,
-            foundUser.name,
-            foundUser.role
-          );
-          if (activity) {
-            setCurrentActivityId(activity.id);
-          }
-        }
+
         
         safeStorage.setItem('user', updatedUser);
         
@@ -187,24 +177,20 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       console.error('AuthProvider: Login error:', error);
       return { success: false, error: 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە' };
     }
-  }, [locationTracking]);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
       console.log('AuthProvider: Logging out');
       
-      if (currentActivityId && locationTracking?.recordLogoutActivity) {
-        await locationTracking.recordLogoutActivity(currentActivityId);
-      }
+
       
       setUser(null);
-      setCurrentActivityId(null);
-      
       safeStorage.removeItem('user');
     } catch (error) {
       console.error('AuthProvider: Logout error:', error);
     }
-  }, [currentActivityId, locationTracking]);
+  }, []);
 
   const hasPermission = useCallback((permission: string): boolean => {
     if (!isInitialized || !user) return false;
