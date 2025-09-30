@@ -13,24 +13,39 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const configQuery = trpc.system.config.get.useQuery();
+  const configQuery = trpc.system.config.get.useQuery(undefined, {
+    retry: 1,
+    retryDelay: 1000,
+  });
   const updateConfigMutation = trpc.system.config.update.useMutation();
   const resetConfigMutation = trpc.system.config.reset.useMutation();
 
-  const passwordPolicyQuery = trpc.system.config.passwordPolicy.get.useQuery();
+  const passwordPolicyQuery = trpc.system.config.passwordPolicy.get.useQuery(undefined, {
+    retry: 1,
+    retryDelay: 1000,
+  });
   const updatePasswordPolicyMutation =
     trpc.system.config.passwordPolicy.update.useMutation();
 
   const notificationSettingsQuery =
-    trpc.system.config.notifications.get.useQuery();
+    trpc.system.config.notifications.get.useQuery(undefined, {
+      retry: 1,
+      retryDelay: 1000,
+    });
   const updateNotificationSettingsMutation =
     trpc.system.config.notifications.update.useMutation();
 
-  const backupSettingsQuery = trpc.system.config.backup.get.useQuery();
+  const backupSettingsQuery = trpc.system.config.backup.get.useQuery(undefined, {
+    retry: 1,
+    retryDelay: 1000,
+  });
   const updateBackupSettingsMutation =
     trpc.system.config.backup.update.useMutation();
 
-  const limitSettingsQuery = trpc.system.config.limits.get.useQuery();
+  const limitSettingsQuery = trpc.system.config.limits.get.useQuery(undefined, {
+    retry: 1,
+    retryDelay: 1000,
+  });
   const updateLimitSettingsMutation =
     trpc.system.config.limits.update.useMutation();
 
