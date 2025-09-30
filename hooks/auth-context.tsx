@@ -8,27 +8,13 @@ import { useLocationTracking } from '@/hooks/location-tracking-context';
 
 const DEMO_USERS: User[] = [
   {
-    id: 'owner',
-    name: 'خاوەندار',
-    phone: '07500000000',
-    role: 'owner',
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
-    password: 'owner123',
-    failedLoginAttempts: 0,
-    twoFactorEnabled: false,
-    allowedDevices: 10,
-    currentSessions: [],
-  },
-  {
     id: 'admin',
     name: 'بەڕێوەبەر',
     phone: '07501234567',
     role: 'admin',
     createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
     isActive: true,
-    permissions: Object.values(PERMISSIONS).filter(p => p !== PERMISSIONS.MANAGE_LICENSE).map(p => ({ id: p, name: p, code: p, description: '' })),
+    permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
     password: 'admin123',
     failedLoginAttempts: 0,
     twoFactorEnabled: false,
@@ -222,7 +208,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const hasPermission = useCallback((permission: string): boolean => {
     if (!isInitialized || !user) return false;
-    if (user.role === 'owner') return true;
     if (user.role === 'admin') return true;
     return user.permissions?.some(p => p.code === permission) || false;
   }, [user, isInitialized]);

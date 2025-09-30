@@ -21,7 +21,7 @@ import { ErrorLoggingProvider } from "@/hooks/error-logging-context";
 import { UICustomizationProvider } from "@/hooks/ui-customization-context";
 import { NotesProvider } from "@/hooks/notes-context";
 import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
-import { IPTrackingProvider } from "@/hooks/ip-tracking-context";
+
 import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
 import { BackupContext as BackupProvider } from "@/hooks/backup-context";
 import { SystemConfigContext as SystemConfigProvider } from "@/hooks/system-config-context";
@@ -393,7 +393,6 @@ export default function RootLayout() {
                       <CustomFormsProvider>
                         <NotesProvider>
                           <ProfileTrackingProvider>
-                            <IPTrackingProvider>
                               <GuidanceProvider>
                                 <BackupProvider>
                                   <SystemConfigProvider>
@@ -422,7 +421,6 @@ export default function RootLayout() {
                                   </SystemConfigProvider>
                                 </BackupProvider>
                               </GuidanceProvider>
-                            </IPTrackingProvider>
                           </ProfileTrackingProvider>
                         </NotesProvider>
                       </CustomFormsProvider>

@@ -248,18 +248,7 @@ import {
   getProfileStatsProcedure,
   exportProfileChangesProcedure
 } from "./routes/profile/tracking/route";
-import {
-  getIPRecordsProcedure,
-  trackIPProcedure,
-  trustIPProcedure,
-  blockIPProcedure,
-  getIPAlertsProcedure,
-  resolveIPAlertProcedure,
-  getIPStatsProcedure,
-  getIPSecurityReportProcedure,
-  exportIPReportProcedure,
-  getIPChartDataProcedure
-} from "./routes/security/ip-tracking/route";
+
 import {
   enable2FAProcedure,
   disable2FAProcedure,
@@ -271,9 +260,7 @@ import {
   generateSecurityReportProcedure,
   getPasswordPolicyProcedure,
   updatePasswordPolicyProcedure,
-  getIpWhitelistProcedure,
-  addIpToWhitelistProcedure,
-  removeIpFromWhitelistProcedure,
+
   checkPasswordStrengthProcedure
 } from "./routes/security/enhanced/route";
 import {
@@ -381,26 +368,8 @@ import {
   getLocationAlertsProcedure,
   resolveLocationAlertProcedure
 } from "./routes/location/tracking/route";
-import {
-  createLicenseProcedure,
-  validateLicenseProcedure,
-  getAllLicensesProcedure,
-  updateLicenseStatusProcedure,
-  renewLicenseProcedure,
-  activateLicenseProcedure,
-  deactivateLicenseProcedure,
-  transferLicenseProcedure,
-  getLicenseStatsProcedure
-} from "./routes/license/management/route";
-import {
-  getSubscriptionPlansProcedure,
-  createSubscriptionProcedure,
-  getClientSubscriptionProcedure,
-  getAllSubscriptionsProcedure,
-  cancelSubscriptionProcedure,
-  renewSubscriptionProcedure as renewSubscriptionNewProcedure,
-  getSubscriptionPaymentsProcedure
-} from "./routes/subscription/management/route";
+
+
 import {
   getAllRolesProcedure,
   getRoleByIdProcedure,
@@ -469,24 +438,10 @@ import {
   extendTenantLicenseProcedure,
   recordTenantAccessProcedure
 } from "./routes/tenant/management/route";
-import {
-  loginProcedure,
-  verifyOTPProcedure,
-  resendOTPProcedure,
-  logoutProcedure,
-  whoamiProcedure,
-  getSessionsProcedure
-} from "./routes/auth/enhanced/route";
+
 
 export const appRouter = createTRPCRouter({
-  auth: createTRPCRouter({
-    login: loginProcedure,
-    verifyOTP: verifyOTPProcedure,
-    resendOTP: resendOTPProcedure,
-    logout: logoutProcedure,
-    whoami: whoamiProcedure,
-    getSessions: getSessionsProcedure,
-  }),
+
   example: createTRPCRouter({
     hi: hiRoute,
   }),
@@ -790,18 +745,7 @@ export const appRouter = createTRPCRouter({
     exportChanges: exportProfileChangesProcedure,
   }),
   security: createTRPCRouter({
-    ip: createTRPCRouter({
-      getRecords: getIPRecordsProcedure,
-      track: trackIPProcedure,
-      trust: trustIPProcedure,
-      block: blockIPProcedure,
-      getAlerts: getIPAlertsProcedure,
-      resolveAlert: resolveIPAlertProcedure,
-      getStats: getIPStatsProcedure,
-      getSecurityReport: getIPSecurityReportProcedure,
-      exportReport: exportIPReportProcedure,
-      getChartData: getIPChartDataProcedure,
-    }),
+
     twoFactor: createTRPCRouter({
       enable: enable2FAProcedure,
       disable: disable2FAProcedure,
@@ -823,11 +767,7 @@ export const appRouter = createTRPCRouter({
       updatePolicy: updatePasswordPolicyProcedure,
       checkStrength: checkPasswordStrengthProcedure,
     }),
-    ipWhitelist: createTRPCRouter({
-      getAll: getIpWhitelistProcedure,
-      add: addIpToWhitelistProcedure,
-      remove: removeIpFromWhitelistProcedure,
-    }),
+
   }),
   sharing: createTRPCRouter({
     reports: createTRPCRouter({
@@ -921,26 +861,7 @@ export const appRouter = createTRPCRouter({
       resolveAlert: resolveLocationAlertProcedure,
     }),
   }),
-  license: createTRPCRouter({
-    create: createLicenseProcedure,
-    validate: validateLicenseProcedure,
-    getAll: getAllLicensesProcedure,
-    updateStatus: updateLicenseStatusProcedure,
-    renew: renewLicenseProcedure,
-    activate: activateLicenseProcedure,
-    deactivate: deactivateLicenseProcedure,
-    transfer: transferLicenseProcedure,
-    getStats: getLicenseStatsProcedure,
-  }),
-  subscription: createTRPCRouter({
-    getPlans: getSubscriptionPlansProcedure,
-    create: createSubscriptionProcedure,
-    getByClient: getClientSubscriptionProcedure,
-    getAll: getAllSubscriptionsProcedure,
-    cancel: cancelSubscriptionProcedure,
-    renew: renewSubscriptionNewProcedure,
-    getPayments: getSubscriptionPaymentsProcedure,
-  }),
+
   rbac: createTRPCRouter({
     roles: createTRPCRouter({
       getAll: getAllRolesProcedure,

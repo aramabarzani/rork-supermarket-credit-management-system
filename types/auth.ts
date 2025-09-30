@@ -2,7 +2,7 @@ export interface User {
   id: string;
   name: string;
   phone: string;
-  role: 'owner' | 'admin' | 'employee' | 'customer';
+  role: 'admin' | 'employee' | 'customer';
   createdAt: string;
   permissions?: Permission[];
   isActive: boolean;
@@ -167,23 +167,3 @@ export interface PasswordPolicy {
   preventReuse: number;
 }
 
-export interface IpWhitelist {
-  id: string;
-  ipAddress: string;
-  description: string;
-  addedBy: string;
-  addedAt: string;
-  isActive: boolean;
-}
-
-export interface License {
-  id: string;
-  businessName: string;
-  ownerName: string;
-  phone: string;
-  expiryDate: string;
-  isActive: boolean;
-  features: string[];
-  maxUsers: number;
-  createdAt: string;
-}

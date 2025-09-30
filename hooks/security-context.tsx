@@ -10,7 +10,7 @@ import {
   SecurityAlert,
   DigitalSignature,
   PasswordPolicy,
-  IpWhitelist
+
 } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
 import { useAuth } from './auth-context';
@@ -53,7 +53,7 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     expiryDays: 90,
     preventReuse: 5,
   });
-  const [ipWhitelist, setIpWhitelist] = useState<IpWhitelist[]>([]);
+
 
   // Handle web hydration
   useEffect(() => {
@@ -358,20 +358,7 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     logActivity('PASSWORD_POLICY_UPDATED', 'سیاسەتی وشەی تێپەڕ نوێ کرایەوە');
   }, [logActivity]);
 
-  const addIpToWhitelist = useCallback((ip: Omit<IpWhitelist, 'id'>) => {
-    const newEntry: IpWhitelist = {
-      ...ip,
-      id: `ip_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-    };
-    setIpWhitelist(prev => [newEntry, ...prev]);
-    logActivity('IP_WHITELISTED', `IP زیادکرا بۆ لیستی سپی: ${ip.ipAddress}`);
-    return newEntry;
-  }, [logActivity]);
 
-  const removeIpFromWhitelist = useCallback((ipId: string) => {
-    setIpWhitelist(prev => prev.filter(ip => ip.id !== ipId));
-    logActivity('IP_REMOVED', 'IP لابرا لە لیستی سپی');
-  }, [logActivity]);
 
   return useMemo(() => ({
     securitySettings,
@@ -384,7 +371,7 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     securityAlerts,
     digitalSignatures,
     passwordPolicy,
-    ipWhitelist,
+
     recordLoginAttempt,
     createUserSession,
     updateSessionActivity,
@@ -399,8 +386,7 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     resolveSecurityAlert,
     addDigitalSignature,
     updatePasswordPolicy,
-    addIpToWhitelist,
-    removeIpFromWhitelist,
+
   }), [
     securitySettings,
     loginAttempts,
@@ -412,7 +398,7 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     securityAlerts,
     digitalSignatures,
     passwordPolicy,
-    ipWhitelist,
+
     recordLoginAttempt,
     createUserSession,
     updateSessionActivity,
@@ -427,7 +413,6 @@ export const [SecurityProvider, useSecurity] = createContextHook(() => {
     resolveSecurityAlert,
     addDigitalSignature,
     updatePasswordPolicy,
-    addIpToWhitelist,
-    removeIpFromWhitelist,
+
   ]);
 });
