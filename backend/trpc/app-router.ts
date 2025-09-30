@@ -382,27 +382,20 @@ import {
   resolveLocationAlertProcedure
 } from "./routes/location/tracking/route";
 import {
-  generateLicenseProcedure,
+  createLicenseProcedure,
   validateLicenseProcedure,
-  activateLicenseProcedure,
-  deactivateLicenseProcedure,
-  suspendLicenseProcedure,
   getAllLicensesProcedure,
-  getLicenseByKeyProcedure,
-  updateLicenseProcedure
+  updateLicenseStatusProcedure,
+  renewLicenseProcedure
 } from "./routes/license/management/route";
 import {
+  getSubscriptionPlansProcedure,
   createSubscriptionProcedure,
+  getClientSubscriptionProcedure,
   getAllSubscriptionsProcedure,
-  getSubscriptionByIdProcedure,
-  getSubscriptionsByCustomerProcedure,
   cancelSubscriptionProcedure,
-  renewSubscriptionProcedure,
-  upgradeSubscriptionProcedure,
-  createInAppPurchaseProcedure,
-  getPaymentHistoryProcedure,
-  getPurchaseHistoryProcedure,
-  getRevenueStatsProcedure
+  renewSubscriptionProcedure as renewSubscriptionNewProcedure,
+  getSubscriptionPaymentsProcedure
 } from "./routes/subscription/management/route";
 import {
   getAllRolesProcedure,
@@ -855,27 +848,20 @@ export const appRouter = createTRPCRouter({
     }),
   }),
   license: createTRPCRouter({
-    generate: generateLicenseProcedure,
+    create: createLicenseProcedure,
     validate: validateLicenseProcedure,
-    activate: activateLicenseProcedure,
-    deactivate: deactivateLicenseProcedure,
-    suspend: suspendLicenseProcedure,
     getAll: getAllLicensesProcedure,
-    getByKey: getLicenseByKeyProcedure,
-    update: updateLicenseProcedure,
+    updateStatus: updateLicenseStatusProcedure,
+    renew: renewLicenseProcedure,
   }),
   subscription: createTRPCRouter({
+    getPlans: getSubscriptionPlansProcedure,
     create: createSubscriptionProcedure,
+    getByClient: getClientSubscriptionProcedure,
     getAll: getAllSubscriptionsProcedure,
-    getById: getSubscriptionByIdProcedure,
-    getByCustomer: getSubscriptionsByCustomerProcedure,
     cancel: cancelSubscriptionProcedure,
-    renew: renewSubscriptionProcedure,
-    upgrade: upgradeSubscriptionProcedure,
-    createPurchase: createInAppPurchaseProcedure,
-    getPaymentHistory: getPaymentHistoryProcedure,
-    getPurchaseHistory: getPurchaseHistoryProcedure,
-    getRevenueStats: getRevenueStatsProcedure,
+    renew: renewSubscriptionNewProcedure,
+    getPayments: getSubscriptionPaymentsProcedure,
   }),
   rbac: createTRPCRouter({
     roles: createTRPCRouter({

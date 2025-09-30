@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { publicProcedure } from '../../../create-context';
-import type { License, LicenseValidationResponse } from '../../../../../types/license';
+import { publicProcedure, protectedProcedure } from '../../../create-context';
+import type { License, LicenseValidation } from '@/types/license';
 
 const mockLicenses: License[] = [];
 
@@ -13,291 +13,147 @@ function generateLicenseKey(): string {
   return segments.join('-');
 }
 
-export const generateLicenseProcedure = publicProcedure
-  .input(
-    z.object({
-      customerName: z.string(),
-      customerEmail: z.string().email(),
-      customerPhone: z.string(),
-      type: z.enum(['trial', 'basic', 'professional', 'enterprise', 'lifetime']),
-      durationDays: z.number(),
-      maxEmployees: z.number(),
-      maxCustomers: z.number(),
-      maxBranches: z.number(),
-      features: z.array(z.string()),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const licenseKey = generateLicenseKey();
+export const createLicenseProcedure = protectedProcedure
+  .input(z.object({
+    clientName: z.string(),
+    type: z.enum(['trial', 'monthly', 'yearly', 'lifetime']),
+    maxUsers: z.number(),
+    maxCustomers: z.number(),
+    features: z.array(z.string()),
+    durationMonths: z.number().optional(),
+  }))
+  .mutation(async ({ input }): Promise<License> => {
     const now = new Date();
-    const expiryDate = new Date(now.getTime() + input.durationDays * 24 * 60 * 60 * 1000);
+    let expiresAt: string | null = null;
+
+    if (input.type === 'trial') {
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (input.type === 'monthly') {
+      expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (input.type === 'yearly') {
+      expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000).toISOString();
+    } else if (input.durationMonths) {
+      expiresAt = new Date(now.getTime() + input.durationMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
+    }
 
     const license: License = {
       id: `lic_${Date.now()}`,
-      licenseKey,
-      customerId: `cust_${Date.now()}`,
-      customerName: input.customerName,
-      customerEmail: input.customerEmail,
-      customerPhone: input.customerPhone,
+      key: generateLicenseKey(),
+      clientId: `client_${Date.now()}`,
+      clientName: input.clientName,
       type: input.type,
-      status: 'pending',
-      features: input.features,
-      maxEmployees: input.maxEmployees,
+      status: 'active',
+      maxUsers: input.maxUsers,
       maxCustomers: input.maxCustomers,
-      maxBranches: input.maxBranches,
-      issueDate: now.toISOString(),
-      expiryDate: expiryDate.toISOString(),
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
+      features: input.features,
+      issuedAt: now.toISOString(),
+      expiresAt,
+      lastValidated: now.toISOString(),
     };
 
     mockLicenses.push(license);
-
-    console.log('License generated:', license);
-
-    return {
-      success: true,
-      license,
-      message: 'License generated successfully',
-    };
+    return license;
   });
 
 export const validateLicenseProcedure = publicProcedure
-  .input(
-    z.object({
-      licenseKey: z.string(),
-      deviceId: z.string(),
-      ipAddress: z.string().optional(),
-      location: z
-        .object({
-          latitude: z.number(),
-          longitude: z.number(),
-        })
-        .optional(),
-    })
-  )
-  .mutation(async ({ input }): Promise<LicenseValidationResponse> => {
-    const license = mockLicenses.find((l) => l.licenseKey === input.licenseKey);
+  .input(z.object({
+    key: z.string(),
+    deviceId: z.string().optional(),
+    ipAddress: z.string().optional(),
+  }))
+  .query(async ({ input }): Promise<LicenseValidation> => {
+    const license = mockLicenses.find(l => l.key === input.key);
 
     if (!license) {
       return {
-        valid: false,
-        message: 'Invalid license key',
+        isValid: false,
+        message: 'لایسەنسی نادروست',
       };
     }
 
     if (license.status === 'suspended') {
       return {
-        valid: false,
+        isValid: false,
         license,
-        message: 'License is suspended',
+        message: 'لایسەنسەکە ڕاگیراوە',
       };
     }
 
-    if (license.status === 'inactive') {
+    if (license.expiresAt) {
+      const expiryDate = new Date(license.expiresAt);
+      const now = new Date();
+
+      if (now > expiryDate) {
+        license.status = 'expired';
+        return {
+          isValid: false,
+          license,
+          message: 'لایسەنسەکە بەسەرچووە',
+        };
+      }
+
+      const remainingDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      license.lastValidated = now.toISOString();
+      if (input.deviceId) license.deviceId = input.deviceId;
+      if (input.ipAddress) license.ipAddress = input.ipAddress;
+
       return {
-        valid: false,
+        isValid: true,
         license,
-        message: 'License is inactive',
+        message: 'لایسەنسی دروست',
+        remainingDays,
       };
+    }
+
+    license.lastValidated = new Date().toISOString();
+    if (input.deviceId) license.deviceId = input.deviceId;
+    if (input.ipAddress) license.ipAddress = input.ipAddress;
+
+    return {
+      isValid: true,
+      license,
+      message: 'لایسەنسی دروست',
+    };
+  });
+
+export const getAllLicensesProcedure = protectedProcedure
+  .query(async (): Promise<License[]> => {
+    return mockLicenses;
+  });
+
+export const updateLicenseStatusProcedure = protectedProcedure
+  .input(z.object({
+    licenseId: z.string(),
+    status: z.enum(['active', 'expired', 'suspended', 'trial']),
+  }))
+  .mutation(async ({ input }): Promise<License> => {
+    const license = mockLicenses.find(l => l.id === input.licenseId);
+    if (!license) {
+      throw new Error('لایسەنس نەدۆزرایەوە');
+    }
+
+    license.status = input.status;
+    return license;
+  });
+
+export const renewLicenseProcedure = protectedProcedure
+  .input(z.object({
+    licenseId: z.string(),
+    durationMonths: z.number(),
+  }))
+  .mutation(async ({ input }): Promise<License> => {
+    const license = mockLicenses.find(l => l.id === input.licenseId);
+    if (!license) {
+      throw new Error('لایسەنس نەدۆزرایەوە');
     }
 
     const now = new Date();
-    const expiryDate = new Date(license.expiryDate);
+    const currentExpiry = license.expiresAt ? new Date(license.expiresAt) : now;
+    const newExpiry = new Date(Math.max(currentExpiry.getTime(), now.getTime()) + input.durationMonths * 30 * 24 * 60 * 60 * 1000);
 
-    if (now > expiryDate) {
-      license.status = 'expired';
-      return {
-        valid: false,
-        license,
-        message: 'License has expired',
-      };
-    }
-
-    const remainingDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-
-    license.lastValidationDate = now.toISOString();
-    license.deviceId = input.deviceId;
-    license.ipAddress = input.ipAddress;
-    if (input.location) {
-      license.location = {
-        latitude: input.location.latitude,
-        longitude: input.location.longitude,
-        address: 'Unknown',
-      };
-    }
-
-    console.log('License validated:', license);
-
-    return {
-      valid: true,
-      license,
-      message: 'License is valid',
-      remainingDays,
-    };
-  });
-
-export const activateLicenseProcedure = publicProcedure
-  .input(
-    z.object({
-      licenseKey: z.string(),
-      deviceId: z.string(),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const license = mockLicenses.find((l) => l.licenseKey === input.licenseKey);
-
-    if (!license) {
-      return {
-        success: false,
-        message: 'License not found',
-      };
-    }
-
-    if (license.status === 'active') {
-      return {
-        success: false,
-        message: 'License is already active',
-      };
-    }
-
+    license.expiresAt = newExpiry.toISOString();
     license.status = 'active';
-    license.activationDate = new Date().toISOString();
-    license.deviceId = input.deviceId;
-    license.updatedAt = new Date().toISOString();
 
-    console.log('License activated:', license);
-
-    return {
-      success: true,
-      license,
-      message: 'License activated successfully',
-    };
-  });
-
-export const deactivateLicenseProcedure = publicProcedure
-  .input(
-    z.object({
-      licenseKey: z.string(),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const license = mockLicenses.find((l) => l.licenseKey === input.licenseKey);
-
-    if (!license) {
-      return {
-        success: false,
-        message: 'License not found',
-      };
-    }
-
-    license.status = 'inactive';
-    license.updatedAt = new Date().toISOString();
-
-    console.log('License deactivated:', license);
-
-    return {
-      success: true,
-      license,
-      message: 'License deactivated successfully',
-    };
-  });
-
-export const suspendLicenseProcedure = publicProcedure
-  .input(
-    z.object({
-      licenseKey: z.string(),
-      reason: z.string().optional(),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const license = mockLicenses.find((l) => l.licenseKey === input.licenseKey);
-
-    if (!license) {
-      return {
-        success: false,
-        message: 'License not found',
-      };
-    }
-
-    license.status = 'suspended';
-    license.updatedAt = new Date().toISOString();
-    if (input.reason) {
-      license.metadata = { ...license.metadata, suspensionReason: input.reason };
-    }
-
-    console.log('License suspended:', license);
-
-    return {
-      success: true,
-      license,
-      message: 'License suspended successfully',
-    };
-  });
-
-export const getAllLicensesProcedure = publicProcedure.query(async () => {
-  return {
-    licenses: mockLicenses,
-    total: mockLicenses.length,
-  };
-});
-
-export const getLicenseByKeyProcedure = publicProcedure
-  .input(
-    z.object({
-      licenseKey: z.string(),
-    })
-  )
-  .query(async ({ input }) => {
-    const license = mockLicenses.find((l) => l.licenseKey === input.licenseKey);
-
-    if (!license) {
-      return {
-        success: false,
-        message: 'License not found',
-      };
-    }
-
-    return {
-      success: true,
-      license,
-    };
-  });
-
-export const updateLicenseProcedure = publicProcedure
-  .input(
-    z.object({
-      licenseKey: z.string(),
-      maxEmployees: z.number().optional(),
-      maxCustomers: z.number().optional(),
-      maxBranches: z.number().optional(),
-      features: z.array(z.string()).optional(),
-      expiryDate: z.string().optional(),
-    })
-  )
-  .mutation(async ({ input }) => {
-    const license = mockLicenses.find((l) => l.licenseKey === input.licenseKey);
-
-    if (!license) {
-      return {
-        success: false,
-        message: 'License not found',
-      };
-    }
-
-    if (input.maxEmployees !== undefined) license.maxEmployees = input.maxEmployees;
-    if (input.maxCustomers !== undefined) license.maxCustomers = input.maxCustomers;
-    if (input.maxBranches !== undefined) license.maxBranches = input.maxBranches;
-    if (input.features !== undefined) license.features = input.features;
-    if (input.expiryDate !== undefined) license.expiryDate = input.expiryDate;
-
-    license.updatedAt = new Date().toISOString();
-
-    console.log('License updated:', license);
-
-    return {
-      success: true,
-      license,
-      message: 'License updated successfully',
-    };
+    return license;
   });
