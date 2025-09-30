@@ -16,6 +16,7 @@ import { CustomerSettingsProvider } from "@/hooks/customer-settings-context";
 import { MessagingProvider } from "@/hooks/messaging-context";
 import { IntegrationProvider } from "@/hooks/integration-context";
 import { AdvancedFiltersProvider } from "@/hooks/advanced-filters-context";
+import { CustomFormsContext } from "@/hooks/custom-forms-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
 
@@ -226,6 +227,18 @@ function RootLayoutNav() {
           title: "فلتەری پێشکەوتوو",
         }} 
       />
+      <Stack.Screen 
+        name="form-builder" 
+        options={{ 
+          title: "دروستکردنی فۆرم",
+        }} 
+      />
+      <Stack.Screen 
+        name="custom-forms" 
+        options={{ 
+          title: "فۆرمە تایبەتییەکان",
+        }} 
+      />
 
     </Stack>
   );
@@ -299,7 +312,8 @@ export default function RootLayout() {
             <SettingsProvider>
               <IntegrationProvider>
                 <AdvancedFiltersProvider>
-                  <AuthProvider>
+                  <CustomFormsContext>
+                    <AuthProvider>
                   <SecurityProvider>
                     <CustomerSettingsProvider>
                       <MessagingProvider>
@@ -316,7 +330,8 @@ export default function RootLayout() {
                       </MessagingProvider>
                     </CustomerSettingsProvider>
                   </SecurityProvider>
-                  </AuthProvider>
+                    </AuthProvider>
+                  </CustomFormsContext>
                 </AdvancedFiltersProvider>
               </IntegrationProvider>
             </SettingsProvider>

@@ -128,6 +128,20 @@ import {
   allDebtsByDateProcedure,
   allPaymentsByDateProcedure
 } from "./routes/financial/advanced-reports/route";
+import {
+  getFormsProcedure,
+  getFormByIdProcedure,
+  createFormProcedure,
+  updateFormProcedure,
+  deleteFormProcedure,
+  addFieldProcedure,
+  removeFieldProcedure,
+  updateFieldProcedure,
+  submitFormProcedure,
+  getSubmissionsProcedure,
+  getFormAnalyticsProcedure,
+  exportFormDataProcedure
+} from "./routes/forms/management/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -270,6 +284,20 @@ export const appRouter = createTRPCRouter({
     advanced: advancedSearchProcedure,
     quick: quickSearchProcedure,
     autoEmail: autoEmailSearchProcedure,
+  }),
+  forms: createTRPCRouter({
+    getAll: getFormsProcedure,
+    getById: getFormByIdProcedure,
+    create: createFormProcedure,
+    update: updateFormProcedure,
+    delete: deleteFormProcedure,
+    addField: addFieldProcedure,
+    removeField: removeFieldProcedure,
+    updateField: updateFieldProcedure,
+    submit: submitFormProcedure,
+    getSubmissions: getSubmissionsProcedure,
+    getAnalytics: getFormAnalyticsProcedure,
+    export: exportFormDataProcedure,
   }),
 });
 
