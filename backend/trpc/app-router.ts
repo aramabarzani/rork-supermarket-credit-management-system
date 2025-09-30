@@ -69,6 +69,21 @@ import {
   getMonthlyIssueReportProcedure,
   getYearlyIssueReportProcedure
 } from "./routes/support/issues/route";
+import {
+  runSystemValidationProcedure,
+  validateDebtsProcedure,
+  validatePaymentsProcedure,
+  validateCustomersProcedure,
+  validateEmployeesProcedure,
+  validateAuthProcedure,
+  validateBackupProcedure,
+  validateSettingsProcedure,
+  validateReportsProcedure,
+  getValidationStatsProcedure,
+  getAutoValidationSettingsProcedure,
+  updateAutoValidationSettingsProcedure,
+  exportValidationReportProcedure
+} from "./routes/validation/system/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -148,6 +163,21 @@ export const appRouter = createTRPCRouter({
       getMonthlyReport: getMonthlyIssueReportProcedure,
       getYearlyReport: getYearlyIssueReportProcedure,
     }),
+  }),
+  validation: createTRPCRouter({
+    runSystemValidation: runSystemValidationProcedure,
+    validateDebts: validateDebtsProcedure,
+    validatePayments: validatePaymentsProcedure,
+    validateCustomers: validateCustomersProcedure,
+    validateEmployees: validateEmployeesProcedure,
+    validateAuth: validateAuthProcedure,
+    validateBackup: validateBackupProcedure,
+    validateSettings: validateSettingsProcedure,
+    validateReports: validateReportsProcedure,
+    getStats: getValidationStatsProcedure,
+    getAutoSettings: getAutoValidationSettingsProcedure,
+    updateAutoSettings: updateAutoValidationSettingsProcedure,
+    exportReport: exportValidationReportProcedure,
   }),
 });
 
