@@ -1,14 +1,14 @@
 export interface Notification {
   id: string;
-  type: 'debt_added' | 'payment_received' | 'debt_overdue' | 'high_debt_warning' | 'payment_incomplete' | 'system_error' | 'debt_reminder' | 'payment_reminder' | 'receipt' | 'direct_message' | 'report';
+  type: 'debt_added' | 'payment_received' | 'debt_overdue' | 'high_debt_warning' | 'payment_incomplete' | 'system_error' | 'debt_reminder' | 'payment_reminder' | 'receipt' | 'direct_message' | 'report' | 'new_customer' | 'new_employee' | 'debt_50_days' | 'debt_100_days' | 'high_payment' | 'user_inactivity' | 'backup_issue' | 'data_overflow' | 'account_locked' | 'system_update';
   title: string;
   message: string;
-  userId: string; // کێ دەبێت ئەم ئاگاداریە ببینێت
+  userId: string;
   customerId?: string;
   isRead: boolean;
   createdAt: string;
   priority: 'low' | 'medium' | 'high';
-  relatedId?: string; // ID ی قەرز یان پارەدان
+  relatedId?: string;
   actionRequired?: boolean;
   channels: NotificationChannel[];
   metadata?: Record<string, any>;

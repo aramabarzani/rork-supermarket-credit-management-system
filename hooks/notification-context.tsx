@@ -434,6 +434,76 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     await sendNotification(notification, channels);
   }, [settings, templates, sendNotification]);
 
+  const sendManagerAlert = useCallback(async (
+    type: Notification['type'],
+    title: string,
+    message: string,
+    priority: 'low' | 'medium' | 'high',
+    relatedId?: string,
+    metadata?: Record<string, any>
+  ) => {
+    const notification: Omit<Notification, 'id' | 'createdAt'> = {
+      type,
+      title,
+      message,
+      userId: 'manager',
+      isRead: false,
+      priority,
+      relatedId,
+      channels: ['in_app', 'email'],
+      metadata,
+    };
+
+    await sendNotification(notification, ['in_app', 'email']);
+  }, [sendNotification]);
+
+  const sendCustomerAlert = useCallback(async (
+    customerId: string,
+    customerName: string,
+    type: 'debt_50_days' | 'debt_100_days' | 'debt_reminder',
+    debtAmount: number,
+    daysOverdue: number,
+    phoneNumber?: string,
+    email?: string,
+    whatsappNumber?: string
+  ) => {
+    let title = '';
+    let message = '';
+    let priority: 'low' | 'medium' | 'high' = 'medium';
+
+    if (type === 'debt_50_days') {
+      title = 'ئاگاداری: قەرز ٥٠ ڕۆژە سەردەشتی';
+      message = `بەڕێز ${customerName}، قەرزتان بە بڕی ${debtAmount.toLocaleString()} دینار ${daysOverdue} ڕۆژە سەردەشتی. تکایە پارەدان بکەن.`;
+      priority = 'high';
+    } else if (type === 'debt_100_days') {
+      title = 'ئاگاداری گرنگ: قەرز ١٠٠ ڕۆژە سەردەشتی';
+      message = `بەڕێز ${customerName}، قەرزتان بە بڕی ${debtAmount.toLocaleString()} دینار ${daysOverdue} ڕۆژە سەردەشتی. تکایە بە پەلە پارەدان بکەن.`;
+      priority = 'high';
+    } else {
+      title = 'بیرخستنەوەی قەرز';
+      message = `بەڕێز ${customerName}، قەرزتان بە بڕی ${debtAmount.toLocaleString()} دینار هەیە. تکایە پارەدان بکەن.`;
+    }
+
+    const notification: Omit<Notification, 'id' | 'createdAt'> = {
+      type,
+      title,
+      message,
+      userId: customerId,
+      customerId,
+      isRead: false,
+      priority,
+      channels: ['sms', 'whatsapp', 'in_app'],
+      metadata: { debtAmount, daysOverdue, customerName },
+    };
+
+    const channels: NotificationChannel[] = [];
+    if (settings.smsEnabled && phoneNumber) channels.push('sms');
+    if (settings.whatsappEnabled && whatsappNumber) channels.push('whatsapp');
+    if (settings.inAppEnabled) channels.push('in_app');
+
+    await sendNotification(notification, channels);
+  }, [settings, sendNotification]);
+
   const markAsRead = useCallback(async (id: string) => {
     const updatedNotifications = notifications.map(n =>
       n.id === id ? { ...n, isRead: true } : n
@@ -482,6 +552,8 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     sendPaymentNotification,
     sendHighDebtWarning,
     sendReceiptNotification,
+    sendManagerAlert,
+    sendCustomerAlert,
   }), [
     notifications,
     isLoading,
@@ -500,5 +572,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     sendPaymentNotification,
     sendHighDebtWarning,
     sendReceiptNotification,
+    sendManagerAlert,
+    sendCustomerAlert,
   ]);
 });

@@ -308,7 +308,7 @@ export const triggerHighDebtWarningProcedure = protectedProcedure
 
 export const triggerManagerNotificationProcedure = protectedProcedure
   .input(z.object({
-    type: z.enum(['high_debt_alert', 'system_error', 'daily_summary', 'employee_activity']),
+    type: z.enum(['new_debt', 'new_payment', 'new_customer', 'new_employee', 'debt_50_days', 'debt_100_days', 'high_debt_alert', 'high_payment_alert', 'system_error', 'user_inactivity', 'backup_issue', 'data_overflow', 'account_locked', 'daily_summary', 'employee_activity']),
     title: z.string(),
     message: z.string(),
     priority: z.enum(['low', 'medium', 'high']),
@@ -317,8 +317,7 @@ export const triggerManagerNotificationProcedure = protectedProcedure
   }))
   .mutation(async ({ input }) => {
     try {
-      // In a real implementation, this would send to all managers
-      const managerId = 'manager_1'; // Get from context or settings
+      const managerId = 'manager_1';
       
       const notificationId = `mgr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
@@ -349,29 +348,29 @@ export const triggerManagerNotificationProcedure = protectedProcedure
 
 export const getAutomationSettingsProcedure = protectedProcedure
   .query(async () => {
-    // Mock automation settings - in real implementation, get from database
     return {
       debtNotifications: {
         enabled: true,
-        triggerAmount: 50000, // Trigger when debt exceeds this amount
-        channels: ['sms', 'whatsapp'],
-        delay: 0 // Send immediately
+        triggerAmount: 50000,
+        channels: ['sms', 'whatsapp'] as const,
+        delay: 0
       },
       paymentNotifications: {
         enabled: true,
-        channels: ['sms', 'email'],
-        delay: 300 // 5 minutes delay
+        channels: ['sms', 'email'] as const,
+        delay: 300
       },
       highDebtWarnings: {
         enabled: true,
-        threshold: 500000, // 500,000 dinars
-        channels: ['sms', 'email', 'whatsapp'],
-        frequency: 'weekly' // daily, weekly, monthly
+        threshold: 500000,
+        channels: ['sms', 'email', 'whatsapp'] as const,
+        frequency: 'weekly' as const
       },
       managerAlerts: {
         enabled: true,
-        highDebtThreshold: 1000000, // 1,000,000 dinars
-        channels: ['in_app', 'email'],
+        highDebtThreshold: 1000000,
+        highPaymentThreshold: 500000,
+        channels: ['in_app', 'email'] as const,
         workingHours: {
           start: '08:00',
           end: '18:00'
@@ -379,9 +378,30 @@ export const getAutomationSettingsProcedure = protectedProcedure
       },
       reminderSchedule: {
         enabled: true,
-        frequency: 'daily', // daily, weekly, monthly
+        frequency: 'daily' as const,
         time: '10:00',
-        channels: ['sms', 'whatsapp']
+        channels: ['sms', 'whatsapp'] as const
+      },
+      overdueAlerts: {
+        enabled: true,
+        days50Enabled: true,
+        days100Enabled: true,
+        channels: ['sms', 'whatsapp', 'in_app'] as const
+      },
+      customerAlerts: {
+        enabled: true,
+        newCustomerAlert: true,
+        newEmployeeAlert: true,
+        channels: ['in_app', 'email'] as const
+      },
+      systemAlerts: {
+        enabled: true,
+        errorAlerts: true,
+        inactivityAlerts: true,
+        backupAlerts: true,
+        dataOverflowAlerts: true,
+        accountLockAlerts: true,
+        channels: ['in_app', 'email', 'sms'] as const
       }
     };
   });
@@ -408,6 +428,7 @@ export const updateAutomationSettingsProcedure = protectedProcedure
     managerAlerts: z.object({
       enabled: z.boolean(),
       highDebtThreshold: z.number(),
+      highPaymentThreshold: z.number().optional(),
       channels: z.array(z.enum(['sms', 'email', 'whatsapp', 'viber', 'push', 'in_app'])),
       workingHours: z.object({
         start: z.string(),
@@ -419,11 +440,31 @@ export const updateAutomationSettingsProcedure = protectedProcedure
       frequency: z.enum(['daily', 'weekly', 'monthly']),
       time: z.string(),
       channels: z.array(z.enum(['sms', 'email', 'whatsapp', 'viber', 'push', 'in_app']))
+    }).optional(),
+    overdueAlerts: z.object({
+      enabled: z.boolean(),
+      days50Enabled: z.boolean(),
+      days100Enabled: z.boolean(),
+      channels: z.array(z.enum(['sms', 'email', 'whatsapp', 'viber', 'push', 'in_app']))
+    }).optional(),
+    customerAlerts: z.object({
+      enabled: z.boolean(),
+      newCustomerAlert: z.boolean(),
+      newEmployeeAlert: z.boolean(),
+      channels: z.array(z.enum(['sms', 'email', 'whatsapp', 'viber', 'push', 'in_app']))
+    }).optional(),
+    systemAlerts: z.object({
+      enabled: z.boolean(),
+      errorAlerts: z.boolean(),
+      inactivityAlerts: z.boolean(),
+      backupAlerts: z.boolean(),
+      dataOverflowAlerts: z.boolean(),
+      accountLockAlerts: z.boolean(),
+      channels: z.array(z.enum(['sms', 'email', 'whatsapp', 'viber', 'push', 'in_app']))
     }).optional()
   }))
   .mutation(async ({ input }) => {
     try {
-      // In real implementation, save to database
       console.log('Automation settings updated:', {
         settings: input,
         timestamp: new Date().toISOString()
