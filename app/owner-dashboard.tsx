@@ -213,16 +213,36 @@ export default function OwnerDashboardScreen() {
   }
 
   if (error) {
+    const isNetworkError = error.message.includes('Network request failed') || error.message.includes('fetch');
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
-        <View style={styles.loadingContainer}>
+        <ScrollView contentContainerStyle={styles.errorContainer}>
+          <AlertCircle size={64} color="#ef4444" />
           <Text style={styles.errorText}>هەڵەیەک ڕوویدا</Text>
           <Text style={styles.errorSubtext}>{error.message}</Text>
+          
+          {isNetworkError && (
+            <View style={styles.errorDetailsCard}>
+              <Text style={styles.errorDetailsTitle}>زانیاری تەکنیکی:</Text>
+              <Text style={styles.errorDetailsText}>• سێرڤەری باکێند کارناکات</Text>
+              <Text style={styles.errorDetailsText}>• دڵنیابە لەوەی سێرڤەر داگیرساوە</Text>
+              <Text style={styles.errorDetailsText}>• بەستەری API: {typeof window !== 'undefined' ? window.location.origin : 'localhost'}/api/trpc</Text>
+              <Text style={styles.errorDetailsText}>• تکایە کۆنسۆڵی گەشەپێدەر بپشکنە بۆ زانیاری زیاتر</Text>
+            </View>
+          )}
+          
           <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
             <Text style={styles.retryButtonText}>هەوڵدانەوە</Text>
           </TouchableOpacity>
-        </View>
+          
+          <TouchableOpacity 
+            style={[styles.retryButton, styles.backButton]} 
+            onPress={() => router.back()}
+          >
+            <Text style={styles.retryButtonText}>گەڕانەوە</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
     );
   }
@@ -484,6 +504,39 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginBottom: 16,
     textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  errorContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorDetailsCard: {
+    backgroundColor: '#fef2f2',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 16,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    width: '100%',
+    maxWidth: 500,
+  },
+  errorDetailsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#991b1b',
+    marginBottom: 12,
+  },
+  errorDetailsText: {
+    fontSize: 13,
+    color: '#7f1d1d',
+    marginBottom: 6,
+    lineHeight: 20,
+  },
+  backButton: {
+    backgroundColor: '#6b7280',
+    marginTop: 8,
   },
   retryButton: {
     backgroundColor: '#3b82f6',
