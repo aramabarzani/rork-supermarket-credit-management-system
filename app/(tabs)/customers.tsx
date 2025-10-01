@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -40,18 +42,41 @@ export default function CustomersScreen() {
   const [selectedRating, setSelectedRating] = useState<CustomerRatingId | 'all'>('all');
   const [showGroupFilter, setShowGroupFilter] = useState(false);
   const [showRatingFilter, setShowRatingFilter] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   
   const usersContext = useUsers();
   const debtsContext = useDebts();
   const authContext = useAuth();
   
   if (!usersContext || !debtsContext || !authContext) {
-    return null;
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#1E3A8A" />
+        <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16 }}>
+          چاوەڕوان بە...
+        </KurdishText>
+      </View>
+    );
   }
   
-  const { getCustomers, deleteUser } = usersContext;
-  const { getCustomerDebts } = debtsContext;
+  const { getCustomers, deleteUser, refetchUsers, isLoading: usersLoading } = usersContext;
+  const { getCustomerDebts, isLoading: debtsLoading } = debtsContext;
   const { hasPermission } = authContext;
+
+  const isLoading = usersLoading || debtsLoading;
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (refetchUsers) {
+        await refetchUsers();
+      }
+    } catch (error) {
+      console.error('Error refreshing customers:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const customers = getCustomers();
   const filteredCustomers = customers.filter(customer => {
@@ -218,6 +243,19 @@ export default function CustomersScreen() {
     );
   };
 
+  if (isLoading && !refreshing) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1E3A8A" />
+          <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16 }}>
+            بارکردنی کڕیاران...
+          </KurdishText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
@@ -368,6 +406,14 @@ export default function CustomersScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={['#1E3A8A']}
+            tintColor="#1E3A8A"
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <User size={48} color="#9CA3AF" />
@@ -501,5 +547,14 @@ const styles = StyleSheet.create({
   groupFilterButtonActive: {
     backgroundColor: '#1E3A8A',
     borderColor: '#1E3A8A',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

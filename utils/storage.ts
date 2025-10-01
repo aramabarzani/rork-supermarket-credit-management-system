@@ -1,21 +1,23 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { encryptData, decryptData } from './encryption';
 
 /**
- * Cross-platform storage utilities with error handling
+ * Cross-platform storage utilities with error handling and encryption
  * Works with AsyncStorage on mobile and localStorage on web
  */
 
+const SENSITIVE_KEYS = ['user', 'users', 'password', 'auth'];
+
 export const safeStorage = {
   /**
-   * Safely get and parse JSON from storage
+   * Safely get and parse JSON from storage with optional decryption
    */
   getItem: async <T>(key: string, defaultValue: T | null = null): Promise<T | null> => {
     try {
       let item: string | null = null;
       
       if (Platform.OS === 'web') {
-        // Check if we're in a browser environment
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
           console.warn('localStorage not available, returning default value');
           return defaultValue;
@@ -35,6 +37,17 @@ export const safeStorage = {
       }
       
       try {
+        const isSensitive = SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k.toLowerCase()));
+        
+        if (isSensitive) {
+          try {
+            const decrypted = decryptData(item);
+            return JSON.parse(decrypted) as T;
+          } catch (decryptError) {
+            return JSON.parse(item) as T;
+          }
+        }
+        
         return JSON.parse(item) as T;
       } catch (parseError) {
         console.warn(`Invalid JSON for key ${key}:`, parseError);
@@ -43,27 +56,28 @@ export const safeStorage = {
       }
     } catch (error) {
       console.error(`Error parsing storage item ${key}:`, error);
-      // Clear corrupted data
       await safeStorage.removeItem(key);
       return defaultValue;
     }
   },
   
   /**
-   * Safely set JSON to storage
+   * Safely set JSON to storage with optional encryption
    */
   setItem: async <T>(key: string, value: T): Promise<boolean> => {
     try {
       const jsonValue = JSON.stringify(value);
+      const isSensitive = SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k.toLowerCase()));
+      
+      const dataToStore = isSensitive ? encryptData(jsonValue) : jsonValue;
       
       if (Platform.OS === 'web') {
-        // Check if we're in a browser environment
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
           return false;
         }
-        localStorage.setItem(key, jsonValue);
+        localStorage.setItem(key, dataToStore);
       } else {
-        await AsyncStorage.setItem(key, jsonValue);
+        await AsyncStorage.setItem(key, dataToStore);
       }
       
       return true;

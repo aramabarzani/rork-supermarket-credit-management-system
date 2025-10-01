@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeStorage } from '@/utils/storage';
 import type { BackupConfig, BackupRecord, BackupDestination, BackupFrequency } from '@/types/backup';
 
 export const [BackupContext, useBackup] = createContextHook(() => {
@@ -37,29 +38,94 @@ export const [BackupContext, useBackup] = createContextHook(() => {
   }, [config]);
 
   const createBackup = useCallback(async (destination: BackupDestination, type: BackupFrequency = 'manual') => {
-    setIsCreatingBackup(true);
-    const newRecord: BackupRecord = {
-      id: Date.now().toString(),
-      destination,
-      type,
-      status: 'completed',
-      startTime: new Date().toISOString(),
-      endTime: new Date().toISOString(),
-      size: Math.floor(Math.random() * 10000000),
-      createdBy: 'system',
-    };
-    const updated = [...records, newRecord];
-    await AsyncStorage.setItem('backup_records', JSON.stringify(updated));
-    setRecords(updated);
-    setIsCreatingBackup(false);
+    try {
+      setIsCreatingBackup(true);
+      const startTime = new Date().toISOString();
+      
+      const allKeys = await AsyncStorage.getAllKeys();
+      const allData = await AsyncStorage.multiGet(allKeys);
+      
+      const backupData: Record<string, any> = {};
+      for (const [key, value] of allData) {
+        if (value) {
+          try {
+            backupData[key] = JSON.parse(value);
+          } catch {
+            backupData[key] = value;
+          }
+        }
+      }
+      
+      const backupString = JSON.stringify(backupData);
+      const backupSize = new Blob([backupString]).size;
+      
+      await safeStorage.setItem(`backup_${Date.now()}`, backupData);
+      
+      const newRecord: BackupRecord = {
+        id: Date.now().toString(),
+        destination,
+        type,
+        status: 'completed',
+        startTime,
+        endTime: new Date().toISOString(),
+        size: backupSize,
+        createdBy: 'system',
+      };
+      
+      const updated = [...records, newRecord];
+      await AsyncStorage.setItem('backup_records', JSON.stringify(updated));
+      setRecords(updated);
+      
+      console.log('Backup created successfully:', newRecord.id);
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      throw error;
+    } finally {
+      setIsCreatingBackup(false);
+    }
   }, [records]);
 
   const restoreBackup = useCallback(async (backupId: string, options: any) => {
-    console.log('Restoring backup:', backupId, options);
+    try {
+      console.log('Restoring backup:', backupId, options);
+      
+      const backupData = await safeStorage.getItem<Record<string, any>>(`backup_${backupId}`, null);
+      
+      if (!backupData) {
+        throw new Error('Backup not found');
+      }
+      
+      for (const [key, value] of Object.entries(backupData)) {
+        await AsyncStorage.setItem(key, JSON.stringify(value));
+      }
+      
+      console.log('Backup restored successfully');
+    } catch (error) {
+      console.error('Error restoring backup:', error);
+      throw error;
+    }
   }, []);
 
   const verifyBackup = useCallback(async (backupId: string) => {
-    console.log('Verifying backup:', backupId);
+    try {
+      console.log('Verifying backup:', backupId);
+      
+      const backupData = await safeStorage.getItem<Record<string, any>>(`backup_${backupId}`, null);
+      
+      if (!backupData) {
+        return { isValid: false, error: 'Backup not found' };
+      }
+      
+      const hasRequiredKeys = ['users', 'debts', 'payments'].every(key => key in backupData);
+      
+      return {
+        isValid: hasRequiredKeys,
+        error: hasRequiredKeys ? null : 'Backup is missing required data',
+      };
+    } catch (error) {
+      console.error('Error verifying backup:', error);
+      return { isValid: false, error: 'Verification failed' };
+    }
   }, []);
 
   const deleteBackup = useCallback(async (backupId: string) => {

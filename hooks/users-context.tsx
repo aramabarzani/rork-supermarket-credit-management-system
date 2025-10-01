@@ -201,6 +201,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
 
   const loadUsers = async () => {
     try {
+      setIsLoading(true);
       const stored = await AsyncStorage.getItem('users');
       if (stored) {
         setUsers(JSON.parse(stored));
@@ -211,6 +212,10 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       setIsLoading(false);
     }
   };
+
+  const refetchUsers = useCallback(async () => {
+    await loadUsers();
+  }, []);
 
   const loadActivityLogs = async () => {
     try {
@@ -891,6 +896,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     getEmployeePermissions,
     getCustomerPermissions,
     updatePermissions,
+    refetchUsers,
   }), [
     users,
     isLoading,
@@ -931,5 +937,6 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     getEmployeePermissions,
     getCustomerPermissions,
     updatePermissions,
+    refetchUsers,
   ]);
 });
