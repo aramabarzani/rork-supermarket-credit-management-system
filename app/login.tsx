@@ -151,9 +151,14 @@ export default function LoginScreen() {
               </Text>
             </View>
 
-            <View style={styles.roleGrid}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.roleScrollContent}
+              style={styles.roleScroll}
+            >
               <TouchableOpacity
-                style={styles.roleCard}
+                style={styles.roleCardHorizontal}
                 onPress={() => handleRoleSelect('owner')}
                 activeOpacity={0.8}
               >
@@ -170,7 +175,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.roleCard}
+                style={styles.roleCardHorizontal}
                 onPress={() => handleRoleSelect('admin')}
                 activeOpacity={0.8}
               >
@@ -187,7 +192,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.roleCard}
+                style={styles.roleCardHorizontal}
                 onPress={() => handleRoleSelect('employee')}
                 activeOpacity={0.8}
               >
@@ -204,7 +209,7 @@ export default function LoginScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.roleCard}
+                style={styles.roleCardHorizontal}
                 onPress={() => handleRoleSelect('customer')}
                 activeOpacity={0.8}
               >
@@ -219,7 +224,7 @@ export default function LoginScreen() {
                   <Text style={styles.roleSubtitle}>بینینی قەرزەکان</Text>
                 </LinearGradient>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
 
             <TouchableOpacity
               style={styles.registerButtonMain}
@@ -382,23 +387,24 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textAlign: 'center',
   },
-  roleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 16,
+  roleScroll: {
     marginBottom: 32,
   },
-  roleCard: {
-    width: '48%',
-    aspectRatio: 1,
-    borderRadius: 20,
+  roleScrollContent: {
+    paddingHorizontal: 4,
+    gap: 16,
+  },
+  roleCardHorizontal: {
+    width: 280,
+    height: 320,
+    borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 8,
+    marginHorizontal: 8,
   },
   roleCardGradient: {
     flex: 1,
