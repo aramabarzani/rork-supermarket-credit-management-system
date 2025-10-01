@@ -13,12 +13,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Store, MapPin, Phone, Mail, User, Lock, CreditCard } from 'lucide-react-native';
-import { useTenant } from '@/hooks/tenant-context';
+import { useStoreRequests } from '@/hooks/store-request-context';
 import { useNotifications } from '@/hooks/notification-context';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 
 export default function StoreRegistrationScreen() {
-  const { createTenant } = useTenant();
+  const { createRequest } = useStoreRequests();
   const { addNotification } = useNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -110,10 +110,7 @@ export default function StoreRegistrationScreen() {
 
     setIsSubmitting(true);
     try {
-      const plan = SUBSCRIPTION_PLANS[formData.plan];
-      const duration = plan.duration === -1 ? 365 : plan.duration;
-      
-      const newTenant = await createTenant({
+      const newRequest = await createRequest({
         storeName: formData.storeName,
         storeNameKurdish: formData.storeNameKurdish,
         ownerName: formData.ownerName,
@@ -122,16 +119,13 @@ export default function StoreRegistrationScreen() {
         address: formData.address,
         city: formData.city,
         plan: formData.plan,
-        status: 'trial',
-        startDate: new Date().toISOString(),
-        expiryDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
       });
 
       await addNotification({
-        title: 'فرۆشگایەکی نوێ تۆمارکرا',
-        titleKurdish: 'فرۆشگایەکی نوێ تۆمارکرا',
-        message: `${formData.storeNameKurdish} (${formData.storeName}) تۆمارکرا. خاوەن: ${formData.ownerName} - ${formData.ownerPhone}`,
-        messageKurdish: `${formData.storeNameKurdish} (${formData.storeName}) تۆمارکرا. خاوەن: ${formData.ownerName} - ${formData.ownerPhone}`,
+        title: 'داواکاریەکی نوێ بۆ تۆمارکردنی فرۆشگا',
+        titleKurdish: 'داواکاریەکی نوێ بۆ تۆمارکردنی فرۆشگا',
+        message: `${formData.storeNameKurdish} (${formData.storeName}) داواکاری کردووە. خاوەن: ${formData.ownerName} - ${formData.ownerPhone}`,
+        messageKurdish: `${formData.storeNameKurdish} (${formData.storeName}) داواکاری کردووە. خاوەن: ${formData.ownerName} - ${formData.ownerPhone}`,
         type: 'new_store_registration',
         priority: 'high',
         recipientId: 'admin',
@@ -139,7 +133,7 @@ export default function StoreRegistrationScreen() {
         isRead: false,
         channels: ['in_app'],
         metadata: {
-          tenantId: newTenant.id,
+          requestId: newRequest.id,
           storeName: formData.storeName,
           ownerName: formData.ownerName,
           ownerPhone: formData.ownerPhone,
@@ -149,7 +143,7 @@ export default function StoreRegistrationScreen() {
 
       Alert.alert(
         'سەرکەوتوو بوو!',
-        'فرۆشگاکەت بە سەرکەوتوویی تۆمارکرا. ئێستا دەتوانیت بچیتە ژوورەوە.',
+        'داواکاریەکەت بە سەرکەوتوویی نێردرا. دوای پێداچوونەوە لە لایەن ئادمینەوە، ئاگادارت دەکەینەوە.',
         [
           {
             text: 'باشە',

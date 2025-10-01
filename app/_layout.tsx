@@ -21,6 +21,7 @@ import { UICustomizationProvider } from "@/hooks/ui-customization-context";
 import { NotesProvider } from "@/hooks/notes-context";
 import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
 import { TenantProvider } from "@/hooks/tenant-context";
+import { StoreRequestProvider } from "@/hooks/store-request-context";
 
 import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
 import { BackupContext as BackupProvider } from "@/hooks/backup-context";
@@ -328,6 +329,18 @@ function RootLayoutNav() {
           title: "تۆمارکردنی فرۆشگا",
         }} 
       />
+      <Stack.Screen 
+        name="store-requests" 
+        options={{ 
+          title: "داواکاریەکانی فرۆشگا",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin-stores" 
+        options={{ 
+          title: "بەڕێوەبردنی فرۆشگاکان",
+        }} 
+      />
 
     </Stack>
   );
@@ -408,7 +421,8 @@ export default function RootLayout() {
                                   <SystemConfigProvider>
                                     <UsabilityProvider>
                                       <TenantProvider>
-                                        <AuthProvider>
+                                        <StoreRequestProvider>
+                                          <AuthProvider>
                                 <SecurityProvider>
                                   <CustomerSettingsProvider>
                                     <MessagingProvider>
@@ -425,7 +439,8 @@ export default function RootLayout() {
                                     </MessagingProvider>
                                   </CustomerSettingsProvider>
                                 </SecurityProvider>
-                                        </AuthProvider>
+                                          </AuthProvider>
+                                        </StoreRequestProvider>
                                       </TenantProvider>
                                     </UsabilityProvider>
                                   </SystemConfigProvider>
