@@ -11,10 +11,11 @@ import {
   Platform,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
-import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle, LogOut } from 'lucide-react-native';
+import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle, LogOut, Store, Clock } from 'lucide-react-native';
 import type { SubscriptionPlan } from '@/types/subscription';
 import { SUBSCRIPTION_PLANS } from '@/types/subscription';
 import { useAuth } from '@/hooks/auth-context';
+import { useStoreRequests } from '@/hooks/store-request-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface TenantSubscription {
@@ -33,6 +34,7 @@ interface TenantSubscription {
 
 export default function OwnerDashboardScreen() {
   const { user, logout } = useAuth();
+  const { requests, getStats } = useStoreRequests();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [tenants, setTenants] = useState<TenantSubscription[]>([]);
@@ -248,6 +250,7 @@ export default function OwnerDashboardScreen() {
   const activeTenants = tenants.filter(t => t.status === 'active');
   const expiredTenants = tenants.filter(t => t.status === 'expired');
   const totalRevenue = tenants.reduce((sum, t) => sum + SUBSCRIPTION_PLANS[t.plan].price, 0);
+  const requestStats = getStats();
 
   const displayData = {
     getAllTenants: tenants,
@@ -326,6 +329,64 @@ export default function OwnerDashboardScreen() {
             <Text style={styles.statLabel}>کۆی داهات</Text>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.requestsCard}
+          onPress={() => router.push('/store-requests')}
+        >
+          <View style={styles.requestsHeader}>
+            <View style={styles.requestsHeaderLeft}>
+              <Store size={28} color="#3b82f6" />
+              <View>
+                <Text style={styles.requestsTitle}>داواکاریەکانی فرۆشگا</Text>
+                <Text style={styles.requestsSubtitle}>بینین و بەڕێوەبردنی داواکاریەکان</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.requestsStats}>
+            <View style={styles.requestStatItem}>
+              <View style={styles.requestStatBadge}>
+                <Store size={20} color="#3b82f6" />
+                <Text style={styles.requestStatValue}>{requestStats.total}</Text>
+              </View>
+              <Text style={styles.requestStatLabel}>کۆی گشتی</Text>
+            </View>
+
+            <View style={styles.requestStatItem}>
+              <View style={[styles.requestStatBadge, { backgroundColor: '#fef3c7' }]}>
+                <Clock size={20} color="#f59e0b" />
+                <Text style={[styles.requestStatValue, { color: '#f59e0b' }]}>{requestStats.pending}</Text>
+              </View>
+              <Text style={styles.requestStatLabel}>چاوەڕوانە</Text>
+            </View>
+
+            <View style={styles.requestStatItem}>
+              <View style={[styles.requestStatBadge, { backgroundColor: '#d1fae5' }]}>
+                <CheckCircle size={20} color="#10b981" />
+                <Text style={[styles.requestStatValue, { color: '#10b981' }]}>{requestStats.approved}</Text>
+              </View>
+              <Text style={styles.requestStatLabel}>پەسەندکراوە</Text>
+            </View>
+
+            <View style={styles.requestStatItem}>
+              <View style={[styles.requestStatBadge, { backgroundColor: '#fee2e2' }]}>
+                <XCircle size={20} color="#ef4444" />
+                <Text style={[styles.requestStatValue, { color: '#ef4444' }]}>{requestStats.rejected}</Text>
+              </View>
+              <Text style={styles.requestStatLabel}>ڕەتکراوەتەوە</Text>
+            </View>
+          </View>
+
+          {requestStats.pending > 0 && (
+            <View style={styles.pendingAlert}>
+              <AlertCircle size={18} color="#f59e0b" />
+              <Text style={styles.pendingAlertText}>
+                {requestStats.pending} داواکاری چاوەڕوانی پێداچوونەوەن
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.tenantsContainer}>
           <Text style={styles.sectionTitle}>بەڕێوەبەران</Text>
@@ -998,6 +1059,89 @@ const styles = StyleSheet.create({
   emptyStateButtonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  requestsCard: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  requestsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  requestsHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  requestsTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  requestsSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  requestsStats: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 16,
+  },
+  requestStatItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+  },
+  requestStatBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  requestStatValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#3b82f6',
+  },
+  requestStatLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  pendingAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fef3c7',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+  },
+  pendingAlertText: {
+    fontSize: 14,
+    color: '#92400e',
     fontWeight: '600',
   },
 });
