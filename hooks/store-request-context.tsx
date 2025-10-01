@@ -24,7 +24,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     }
   };
 
-  const saveRequests = async (updatedRequests: StoreRequest[]) => {
+  const saveRequests = useCallback(async (updatedRequests: StoreRequest[]) => {
     try {
       await AsyncStorage.setItem('store_requests', JSON.stringify(updatedRequests));
       setRequests(updatedRequests);
@@ -32,7 +32,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
       console.error('Failed to save store requests:', error);
       throw error;
     }
-  };
+  }, []);
 
   const createRequest = useCallback(async (request: Omit<StoreRequest, 'id' | 'createdAt' | 'status'>) => {
     const newRequest: StoreRequest = {
@@ -60,7 +60,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     );
     await saveRequests(updated);
     return updated.find(r => r.id === id);
-  }, [requests]);
+  }, [requests, saveRequests]);
 
   const rejectRequest = useCallback(async (id: string, reviewedBy: string, rejectionReason: string) => {
     const updated = requests.map(r =>
@@ -75,7 +75,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
         : r
     );
     await saveRequests(updated);
-  }, [requests]);
+  }, [requests, saveRequests]);
 
   const cancelRequest = useCallback(async (id: string) => {
     const updated = requests.map(r =>
@@ -87,7 +87,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
         : r
     );
     await saveRequests(updated);
-  }, [requests]);
+  }, [requests, saveRequests]);
 
   const linkTenant = useCallback(async (requestId: string, tenantId: string) => {
     const updated = requests.map(r =>
@@ -99,12 +99,12 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
         : r
     );
     await saveRequests(updated);
-  }, [requests]);
+  }, [requests, saveRequests]);
 
   const deleteRequest = useCallback(async (id: string) => {
     const updated = requests.filter(r => r.id !== id);
     await saveRequests(updated);
-  }, [requests]);
+  }, [requests, saveRequests]);
 
   const getRequestById = useCallback((id: string) => {
     return requests.find(r => r.id === id);
