@@ -54,6 +54,7 @@ export default function OwnerDashboardScreen() {
     warningDays: [30, 15, 7, 3, 1],
     channels: ['sms', 'in_app'] as ('sms' | 'email' | 'in_app')[],
     autoSuspendOnExpiry: false,
+    lastCheckDate: undefined as string | undefined,
   });
 
   React.useEffect(() => {
@@ -61,6 +62,97 @@ export default function OwnerDashboardScreen() {
     loadSubscriptionNotifications();
     loadNotificationSettings();
   }, []);
+
+  React.useEffect(() => {
+    if (notificationSettings.enabled && tenants.length > 0) {
+      checkSubscriptionExpiry();
+    }
+  }, [tenants, notificationSettings]);
+
+  const checkSubscriptionExpiry = async () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    if (notificationSettings.lastCheckDate === today) {
+      return;
+    }
+
+    const newNotifications: any[] = [];
+
+    for (const tenant of tenants) {
+      if (tenant.status !== 'active') continue;
+
+      const expiryDate = new Date(tenant.expiryDate);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (notificationSettings.warningDays.includes(daysUntilExpiry)) {
+        const notification = {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          tenantId: tenant.id,
+          adminId: tenant.id,
+          adminName: tenant.adminName,
+          adminPhone: tenant.adminPhone,
+          type: 'expiry_warning' as const,
+          title: 'ئاگاداری بەسەرچوونی ئابوونە',
+          message: `ئابوونەی ${tenant.adminName} ${daysUntilExpiry} ڕۆژی ماوە بۆ بەسەرچوون. تکایە نوێی بکەرەوە.`,
+          sentAt: new Date().toISOString(),
+          read: false,
+          daysUntilExpiry,
+          channels: notificationSettings.channels,
+          status: 'sent' as const,
+        };
+        newNotifications.push(notification);
+
+        console.log(`[Subscription Alert] ${tenant.adminName} - ${daysUntilExpiry} days until expiry`);
+      }
+
+      if (daysUntilExpiry <= 0 && tenant.status === 'active') {
+        const notification = {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          tenantId: tenant.id,
+          adminId: tenant.id,
+          adminName: tenant.adminName,
+          adminPhone: tenant.adminPhone,
+          type: 'expired' as const,
+          title: 'ئابوونە بەسەرچووە',
+          message: `ئابوونەی ${tenant.adminName} بەسەرچووە. تکایە نوێی بکەرەوە یان ڕایبگرە.`,
+          sentAt: new Date().toISOString(),
+          read: false,
+          daysUntilExpiry: 0,
+          channels: notificationSettings.channels,
+          status: 'sent' as const,
+        };
+        newNotifications.push(notification);
+
+        if (notificationSettings.autoSuspendOnExpiry) {
+          const updated = tenants.map(t => 
+            t.id === tenant.id 
+              ? { ...t, status: 'expired' as const, suspensionReason: 'ئابوونە بەسەرچووە' }
+              : t
+          );
+          await saveTenants(updated);
+          console.log(`[Auto-Suspend] ${tenant.adminName} suspended due to expiry`);
+        }
+
+        console.log(`[Subscription Alert] ${tenant.adminName} - Subscription expired`);
+      }
+    }
+
+    if (newNotifications.length > 0) {
+      const allNotifications = [...subscriptionNotifications, ...newNotifications];
+      await AsyncStorage.setItem('subscription_notifications', JSON.stringify(allNotifications));
+      setSubscriptionNotifications(allNotifications);
+
+      await AsyncStorage.setItem('subscription_notification_settings', JSON.stringify({
+        ...notificationSettings,
+        lastCheckDate: today,
+      }));
+      setNotificationSettings({
+        ...notificationSettings,
+        lastCheckDate: today,
+      });
+    }
+  };
 
   const loadSubscriptionNotifications = async () => {
     try {
@@ -84,10 +176,16 @@ export default function OwnerDashboardScreen() {
     }
   };
 
-  const saveNotificationSettings = async (settings: typeof notificationSettings) => {
+  const saveNotificationSettings = async (settings: {
+    enabled: boolean;
+    warningDays: number[];
+    channels: ('sms' | 'email' | 'in_app')[];
+    autoSuspendOnExpiry: boolean;
+    lastCheckDate?: string;
+  }) => {
     try {
       await AsyncStorage.setItem('subscription_notification_settings', JSON.stringify(settings));
-      setNotificationSettings(settings);
+      setNotificationSettings({ ...settings, lastCheckDate: settings.lastCheckDate || undefined });
     } catch (error) {
       console.error('Failed to save notification settings:', error);
     }
