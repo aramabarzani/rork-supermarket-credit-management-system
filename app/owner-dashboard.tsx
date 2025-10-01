@@ -27,9 +27,8 @@ export default function OwnerDashboardScreen() {
     duration: 30,
   });
 
-  const queryResult = trpc.subscription.owner.getAll.useQuery(void 0, {
-    retry: 2,
-    retryDelay: 1000,
+  const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
+    retry: false,
     staleTime: 30000,
     refetchOnMount: true,
     refetchOnWindowFocus: false,
@@ -200,7 +199,7 @@ export default function OwnerDashboardScreen() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading) {
+  if (isLoading && !error) {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
