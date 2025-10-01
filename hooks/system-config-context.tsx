@@ -14,42 +14,37 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const [error, setError] = useState<string | null>(null);
 
   const configQuery = trpc.system.config.get.useQuery(undefined, {
-    retry: 1,
+    retry: 0,
     retryDelay: 1000,
-    enabled: false,
   });
   const updateConfigMutation = trpc.system.config.update.useMutation();
   const resetConfigMutation = trpc.system.config.reset.useMutation();
 
   const passwordPolicyQuery = trpc.system.config.passwordPolicy.get.useQuery(undefined, {
-    retry: 1,
+    retry: 0,
     retryDelay: 1000,
-    enabled: false,
   });
   const updatePasswordPolicyMutation =
     trpc.system.config.passwordPolicy.update.useMutation();
 
   const notificationSettingsQuery =
     trpc.system.config.notifications.get.useQuery(undefined, {
-      retry: 1,
+      retry: 0,
       retryDelay: 1000,
-      enabled: false,
     });
   const updateNotificationSettingsMutation =
     trpc.system.config.notifications.update.useMutation();
 
   const backupSettingsQuery = trpc.system.config.backup.get.useQuery(undefined, {
-    retry: 1,
+    retry: 0,
     retryDelay: 1000,
-    enabled: false,
   });
   const updateBackupSettingsMutation =
     trpc.system.config.backup.update.useMutation();
 
   const limitSettingsQuery = trpc.system.config.limits.get.useQuery(undefined, {
-    retry: 1,
+    retry: 0,
     retryDelay: 1000,
-    enabled: false,
   });
   const updateLimitSettingsMutation =
     trpc.system.config.limits.update.useMutation();
