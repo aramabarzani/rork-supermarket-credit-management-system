@@ -28,24 +28,20 @@ export default function OwnerDashboardScreen() {
   });
 
   const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
-    retry: 1,
-    retryDelay: 500,
+    retry: false,
     staleTime: 30000,
-    refetchOnMount: true,
+    refetchOnMount: false,
     refetchOnWindowFocus: false,
   });
 
-  const { data, isLoading, error, refetch, isFetching } = queryResult;
+  const { data, isLoading, error, refetch } = queryResult;
 
-  console.log('OwnerDashboard: Full query result:', JSON.stringify({
+  console.log('OwnerDashboard: Query status:', {
     isLoading,
-    isFetching,
-    status: queryResult.status,
-    fetchStatus: queryResult.fetchStatus,
-    dataExists: !!data,
-    errorExists: !!error,
+    hasData: !!data,
+    hasError: !!error,
     errorMessage: error?.message,
-  }));
+  });
   const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();
   const activateMutation = trpc.subscription.owner.activate.useMutation();
@@ -198,58 +194,24 @@ export default function OwnerDashboardScreen() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading || isFetching) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>چاوەڕوان بە...</Text>
           <Text style={styles.loadingSubtext}>داتاکان بارکراوە...</Text>
-          <Text style={styles.debugText}>Status: {queryResult.status}</Text>
-          <Text style={styles.debugText}>Fetch: {queryResult.fetchStatus}</Text>
         </View>
       </View>
     );
   }
 
-  if (error) {
-    const isNetworkError = error.message.includes('Network request failed') || 
-                          error.message.includes('fetch') || 
-                          error.message.includes('Cannot connect');
-    const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'localhost';
-    
-    return (
-      <View style={styles.container}>
-        <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
-        <ScrollView contentContainerStyle={styles.errorContainer}>
-          <AlertCircle size={64} color="#ef4444" />
-          <Text style={styles.errorText}>هەڵەیەک ڕوویدا</Text>
-          <Text style={styles.errorSubtext}>{error.message}</Text>
-          
-          {isNetworkError && (
-            <View style={styles.errorDetailsCard}>
-              <Text style={styles.errorDetailsTitle}>چارەسەری کێشە:</Text>
-              <Text style={styles.errorDetailsText}>• دڵنیابە لەوەی سێرڤەری گەشەپێدان کاردەکات</Text>
-              <Text style={styles.errorDetailsText}>• بەستەری ئێستا: {currentUrl}/api/trpc</Text>
-              <Text style={styles.errorDetailsText}>• تکایە کۆنسۆڵی گەشەپێدەر بپشکنە بۆ زانیاری زیاتر</Text>
-              <Text style={styles.errorDetailsText}>• ئەگەر کێشەکە بەردەوام بوو، سێرڤەر دووبارە دەستپێبکەرەوە</Text>
-            </View>
-          )}
-          
-          <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-            <Text style={styles.retryButtonText}>هەوڵدانەوە</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.retryButton, styles.backButton]} 
-            onPress={() => router.back()}
-          >
-            <Text style={styles.retryButtonText}>گەڕانەوە</Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-    );
-  }
+  const displayData = data || {
+    getAllTenants: [],
+    getActiveTenants: [],
+    getExpiredTenants: [],
+    getTotalRevenue: 0,
+  };
 
   return (
     <View style={styles.container}>
@@ -270,6 +232,18 @@ export default function OwnerDashboardScreen() {
       />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        {error && (
+          <View style={styles.errorBanner}>
+            <AlertCircle size={20} color="#dc2626" />
+            <View style={styles.errorBannerContent}>
+              <Text style={styles.errorBannerTitle}>کێشەی پەیوەندی</Text>
+              <Text style={styles.errorBannerText}>ناتوانرێت پەیوەندی بە سێرڤەرەوە بکرێت</Text>
+            </View>
+            <TouchableOpacity onPress={() => refetch()} style={styles.errorBannerButton}>
+              <Text style={styles.errorBannerButtonText}>هەوڵدانەوە</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeHeader}>
             <Users size={48} color="#1E3A8A" />
@@ -299,32 +273,46 @@ export default function OwnerDashboardScreen() {
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
             <Users size={32} color="#3b82f6" />
-            <Text style={styles.statValue}>{data?.getAllTenants.length || 0}</Text>
+            <Text style={styles.statValue}>{displayData.getAllTenants.length}</Text>
             <Text style={styles.statLabel}>کۆی بەڕێوەبەران</Text>
           </View>
 
           <View style={styles.statCard}>
             <CheckCircle size={32} color="#10b981" />
-            <Text style={styles.statValue}>{data?.getActiveTenants.length || 0}</Text>
+            <Text style={styles.statValue}>{displayData.getActiveTenants.length}</Text>
             <Text style={styles.statLabel}>چالاک</Text>
           </View>
 
           <View style={styles.statCard}>
             <XCircle size={32} color="#ef4444" />
-            <Text style={styles.statValue}>{data?.getExpiredTenants.length || 0}</Text>
+            <Text style={styles.statValue}>{displayData.getExpiredTenants.length}</Text>
             <Text style={styles.statLabel}>بەسەرچووە</Text>
           </View>
 
           <View style={styles.statCard}>
             <DollarSign size={32} color="#10b981" />
-            <Text style={styles.statValue}>{(data?.getTotalRevenue || 0).toLocaleString()}</Text>
+            <Text style={styles.statValue}>{displayData.getTotalRevenue.toLocaleString()}</Text>
             <Text style={styles.statLabel}>کۆی داهات</Text>
           </View>
         </View>
 
         <View style={styles.tenantsContainer}>
           <Text style={styles.sectionTitle}>بەڕێوەبەران</Text>
-          {data?.getAllTenants.map((tenant: TenantSubscription) => {
+          {displayData.getAllTenants.length === 0 && !error && (
+            <View style={styles.emptyState}>
+              <Users size={64} color="#9ca3af" />
+              <Text style={styles.emptyStateTitle}>هیچ بەڕێوەبەرێک نییە</Text>
+              <Text style={styles.emptyStateText}>دەستپێبکە بە دروستکردنی یەکەمین بەڕێوەبەر</Text>
+              <TouchableOpacity 
+                style={styles.emptyStateButton}
+                onPress={() => setShowCreateModal(true)}
+              >
+                <Plus size={20} color="#fff" />
+                <Text style={styles.emptyStateButtonText}>دروستکردنی بەڕێوەبەر</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {displayData.getAllTenants.map((tenant: TenantSubscription) => {
             const StatusIcon = getStatusIcon(tenant.status);
             const daysUntilExpiry = getDaysUntilExpiry(tenant.expiryDate);
             const isExpiringSoon = daysUntilExpiry <= 7 && daysUntilExpiry > 0;
@@ -897,5 +885,73 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6b7280',
     marginTop: 4,
+  },
+  errorBanner: {
+    backgroundColor: '#fef2f2',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  errorBannerContent: {
+    flex: 1,
+  },
+  errorBannerTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#991b1b',
+    marginBottom: 4,
+  },
+  errorBannerText: {
+    fontSize: 13,
+    color: '#7f1d1d',
+  },
+  errorBannerButton: {
+    backgroundColor: '#dc2626',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  errorBannerButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#374151',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 15,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  emptyStateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  emptyStateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
