@@ -28,6 +28,8 @@ import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
 import { BackupContext as BackupProvider } from "@/hooks/backup-context";
 import { SystemConfigContext as SystemConfigProvider } from "@/hooks/system-config-context";
 import { UsabilityProvider } from "@/hooks/usability-context";
+import { VoiceInputContext as VoiceInputProvider } from "@/hooks/voice-input-context";
+import { FAQProvider } from "@/hooks/faq-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";

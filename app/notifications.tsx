@@ -116,7 +116,9 @@ export default function NotificationsScreen() {
             </View>
             <Switch
               value={settings.enableDebtNotifications}
-              onValueChange={(value) => updateSettings({ enableDebtNotifications: value })}
+              onValueChange={(value) => {
+                updateSettings({ enableDebtNotifications: value }).catch(console.error);
+              }}
               trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
               thumbColor={settings.enableDebtNotifications ? '#FFFFFF' : '#9CA3AF'}
             />
@@ -133,7 +135,9 @@ export default function NotificationsScreen() {
             </View>
             <Switch
               value={settings.enablePaymentNotifications}
-              onValueChange={(value) => updateSettings({ enablePaymentNotifications: value })}
+              onValueChange={(value) => {
+                updateSettings({ enablePaymentNotifications: value }).catch(console.error);
+              }}
               trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
               thumbColor={settings.enablePaymentNotifications ? '#FFFFFF' : '#9CA3AF'}
             />
@@ -150,7 +154,9 @@ export default function NotificationsScreen() {
             </View>
             <Switch
               value={settings.enableOverdueReminders}
-              onValueChange={(value) => updateSettings({ enableOverdueReminders: value })}
+              onValueChange={(value) => {
+                updateSettings({ enableOverdueReminders: value }).catch(console.error);
+              }}
               trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
               thumbColor={settings.enableOverdueReminders ? '#FFFFFF' : '#9CA3AF'}
             />
@@ -167,7 +173,9 @@ export default function NotificationsScreen() {
             </View>
             <Switch
               value={settings.enableHighDebtWarnings}
-              onValueChange={(value) => updateSettings({ enableHighDebtWarnings: value })}
+              onValueChange={(value) => {
+                updateSettings({ enableHighDebtWarnings: value }).catch(console.error);
+              }}
               trackColor={{ false: '#E5E7EB', true: '#3B82F6' }}
               thumbColor={settings.enableHighDebtWarnings ? '#FFFFFF' : '#9CA3AF'}
             />
