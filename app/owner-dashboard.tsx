@@ -28,9 +28,10 @@ export default function OwnerDashboardScreen() {
   });
 
   const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
-    retry: false,
+    retry: 1,
+    retryDelay: 1000,
     staleTime: 30000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
   });
 
@@ -41,6 +42,7 @@ export default function OwnerDashboardScreen() {
     hasData: !!data,
     hasError: !!error,
     errorMessage: error?.message,
+    errorDetails: error,
   });
   const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();

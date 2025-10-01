@@ -70,19 +70,10 @@ export const trpcClient = trpc.createClient({
             'Authorization': `Bearer ${token}`,
             ...options?.headers,
           },
-          signal: options?.signal,
         };
         
         try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 10000);
-          
-          const response = await fetch(url, {
-            ...fetchOptions,
-            signal: controller.signal,
-          });
-          
-          clearTimeout(timeoutId);
+          const response = await fetch(url, fetchOptions);
           
           if (!response.ok) {
             const text = await response.text();
@@ -92,14 +83,7 @@ export const trpcClient = trpc.createClient({
           
           return response;
         } catch (error) {
-          if (error instanceof Error && 
-              (error.message.includes('Network request failed') || 
-               error.message.includes('Failed to fetch') ||
-               error.message.includes('fetch failed') ||
-               error.name === 'AbortError')) {
-            console.warn('[tRPC] Backend unavailable, using offline mode');
-          }
-          
+          console.error('[tRPC] Fetch error:', error);
           throw error;
         }
       },
