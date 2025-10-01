@@ -1,13 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
-import { encryptData, decryptData } from './encryption';
 
 /**
- * Cross-platform storage utilities with error handling and encryption
+ * Cross-platform storage utilities with error handling
  * Works with AsyncStorage on mobile and localStorage on web
  */
-
-const SENSITIVE_KEYS = ['user', 'users', 'password', 'auth'];
 
 export const safeStorage = {
   /**
@@ -36,21 +33,16 @@ export const safeStorage = {
         return defaultValue;
       }
       
+      const trimmedItem = item.trim();
+      
+      if (!trimmedItem.startsWith('[') && !trimmedItem.startsWith('{') && !trimmedItem.startsWith('"')) {
+        console.warn(`Invalid JSON format for key ${key}, removing corrupted data`);
+        await safeStorage.removeItem(key);
+        return defaultValue;
+      }
+      
       try {
-        const isSensitive = SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k.toLowerCase()));
-        
-        if (isSensitive) {
-          try {
-            const decrypted = decryptData(item);
-            if (decrypted && decrypted !== item) {
-              return JSON.parse(decrypted) as T;
-            }
-          } catch {
-            console.log(`Decryption failed for ${key}, trying direct parse`);
-          }
-        }
-        
-        return JSON.parse(item) as T;
+        return JSON.parse(trimmedItem) as T;
       } catch (parseError) {
         console.warn(`Invalid JSON for key ${key}:`, parseError);
         await safeStorage.removeItem(key);
@@ -68,18 +60,25 @@ export const safeStorage = {
    */
   setItem: async <T>(key: string, value: T): Promise<boolean> => {
     try {
-      const jsonValue = JSON.stringify(value);
-      const isSensitive = SENSITIVE_KEYS.some(k => key.toLowerCase().includes(k.toLowerCase()));
+      if (value === null || value === undefined) {
+        console.warn(`Attempting to store null/undefined for key ${key}`);
+        return false;
+      }
       
-      const dataToStore = isSensitive ? encryptData(jsonValue) : jsonValue;
+      const jsonValue = JSON.stringify(value);
+      
+      if (!jsonValue || jsonValue === 'undefined' || jsonValue === 'null') {
+        console.warn(`Invalid JSON serialization for key ${key}`);
+        return false;
+      }
       
       if (Platform.OS === 'web') {
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
           return false;
         }
-        localStorage.setItem(key, dataToStore);
+        localStorage.setItem(key, jsonValue);
       } else {
-        await AsyncStorage.setItem(key, dataToStore);
+        await AsyncStorage.setItem(key, jsonValue);
       }
       
       return true;
