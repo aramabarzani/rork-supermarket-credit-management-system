@@ -184,30 +184,18 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             }
           } catch (parseError) {
             console.error('UsersContext: Error parsing users, resetting:', parseError);
-            try {
-              await AsyncStorage.removeItem('users');
-              await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
-            } catch (storageError) {
-              console.error('UsersContext: Error clearing storage:', storageError);
-            }
+            await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
+            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
             setUsers(sampleUsers);
           }
         } else {
           console.log('UsersContext: No stored users, initializing with sample data');
-          try {
-            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
-          } catch (storageError) {
-            console.error('UsersContext: Error saving initial users:', storageError);
-          }
+          await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
           setUsers(sampleUsers);
         }
       } catch (error) {
         console.error('UsersContext: Error loading users:', error);
-        try {
-          await AsyncStorage.removeItem('users');
-        } catch (storageError) {
-          console.error('UsersContext: Error removing corrupted data:', storageError);
-        }
+        await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
         setUsers(sampleUsers);
       }
       
