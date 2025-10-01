@@ -175,27 +175,47 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
         const stored = await AsyncStorage.getItem('users');
         if (stored && stored.trim()) {
           try {
+            if (!stored.startsWith('[') && !stored.startsWith('{')) {
+              throw new Error('Invalid JSON format - data is corrupted');
+            }
             const parsedUsers = JSON.parse(stored);
             if (Array.isArray(parsedUsers) && parsedUsers.length > 0) {
-              setUsers(parsedUsers);
-              console.log('UsersContext: Loaded users from storage:', parsedUsers.length);
+              const validUsers = parsedUsers.every(u => u && typeof u === 'object' && u.id && u.name && u.role);
+              if (validUsers) {
+                setUsers(parsedUsers);
+                console.log('UsersContext: Loaded users from storage:', parsedUsers.length);
+              } else {
+                throw new Error('Invalid users data structure');
+              }
             } else {
               throw new Error('Invalid users data structure');
             }
           } catch (parseError) {
             console.error('UsersContext: Error parsing users, resetting:', parseError);
-            await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
-            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+            try {
+              await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
+              await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+            } catch (clearError) {
+              console.error('UsersContext: Error clearing storage:', clearError);
+            }
             setUsers(sampleUsers);
           }
         } else {
           console.log('UsersContext: No stored users, initializing with sample data');
-          await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+          try {
+            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+          } catch (saveError) {
+            console.error('UsersContext: Error saving initial users:', saveError);
+          }
           setUsers(sampleUsers);
         }
       } catch (error) {
         console.error('UsersContext: Error loading users:', error);
-        await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
+        try {
+          await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
+        } catch (clearError) {
+          console.error('UsersContext: Error clearing storage:', clearError);
+        }
         setUsers(sampleUsers);
       }
       
@@ -361,10 +381,19 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
 
   const saveUsers = async (updatedUsers: User[]) => {
     try {
-      await AsyncStorage.setItem('users', JSON.stringify(updatedUsers));
+      if (!Array.isArray(updatedUsers)) {
+        throw new Error('Invalid users data: must be an array');
+      }
+      const jsonString = JSON.stringify(updatedUsers);
+      if (!jsonString || jsonString === 'undefined' || jsonString === 'null') {
+        throw new Error('Invalid JSON serialization');
+      }
+      await AsyncStorage.setItem('users', jsonString);
       setUsers(updatedUsers);
+      console.log('UsersContext: Saved users successfully:', updatedUsers.length);
     } catch (error) {
       console.error('Error saving users:', error);
+      throw error;
     }
   };
 
