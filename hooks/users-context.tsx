@@ -184,18 +184,30 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             }
           } catch (parseError) {
             console.error('UsersContext: Error parsing users, resetting:', parseError);
-            await AsyncStorage.removeItem('users');
-            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+            try {
+              await AsyncStorage.removeItem('users');
+              await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+            } catch (storageError) {
+              console.error('UsersContext: Error clearing storage:', storageError);
+            }
             setUsers(sampleUsers);
           }
         } else {
           console.log('UsersContext: No stored users, initializing with sample data');
-          await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+          try {
+            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+          } catch (storageError) {
+            console.error('UsersContext: Error saving initial users:', storageError);
+          }
           setUsers(sampleUsers);
         }
       } catch (error) {
         console.error('UsersContext: Error loading users:', error);
-        await AsyncStorage.removeItem('users');
+        try {
+          await AsyncStorage.removeItem('users');
+        } catch (storageError) {
+          console.error('UsersContext: Error removing corrupted data:', storageError);
+        }
         setUsers(sampleUsers);
       }
       
@@ -220,10 +232,17 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
           const parsedUsers = JSON.parse(stored);
           if (Array.isArray(parsedUsers)) {
             setUsers(parsedUsers);
+          } else {
+            throw new Error('Invalid data structure');
           }
         } catch (parseError) {
           console.error('Error parsing users:', parseError);
-          await AsyncStorage.removeItem('users');
+          try {
+            await AsyncStorage.removeItem('users');
+            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+          } catch (storageError) {
+            console.error('Error resetting users storage:', storageError);
+          }
           setUsers(sampleUsers);
         }
       }
