@@ -61,7 +61,7 @@ export const trpcClient = trpc.createClient({
             token = 'demo-token';
           }
           
-          const response = await fetch(url, {
+          const fetchOptions = {
             ...options,
             headers: {
               'Content-Type': 'application/json',
@@ -69,7 +69,13 @@ export const trpcClient = trpc.createClient({
               ...options?.headers,
             },
             signal: options?.signal,
-          });
+          };
+
+          console.log('[tRPC] Making request to:', url);
+          
+          const response = await fetch(url, fetchOptions);
+          
+          console.log('[tRPC] Response status:', response.status);
           
           if (!response.ok) {
             const text = await response.text();
@@ -81,8 +87,15 @@ export const trpcClient = trpc.createClient({
         } catch (error) {
           console.error('[tRPC] Request failed:', error);
           if (error instanceof Error) {
-            if (error.message.includes('Network request failed')) {
-              throw new Error('لا يمكن الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت أو إعادة تشغيل التطبيق.');
+            console.error('[tRPC] Error details:', {
+              message: error.message,
+              name: error.name,
+              stack: error.stack,
+            });
+            
+            if (error.message.includes('Network request failed') || error.message.includes('Failed to fetch')) {
+              console.error('[tRPC] Network error - Backend may not be running or CORS issue');
+              throw new Error('نەتوانرا پەیوەندی بە سێرڤەر بکرێت. تکایە پشکنینی هێڵی ئینتەرنێت بکە یان ئەپەکە دووبارە بکەرەوە.');
             }
           }
           throw error;
