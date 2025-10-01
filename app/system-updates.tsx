@@ -1,207 +1,301 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   Switch,
-  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Download,
   CheckCircle,
   AlertCircle,
   Settings,
   RefreshCw,
+  Bell,
+  Calendar,
+  Clock,
+  AlertTriangle,
+  XCircle,
+  ChevronRight,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
+import { useTenant } from '@/hooks/tenant-context';
+import { SubscriptionNotification } from '@/types/subscription';
 
 export default function SystemUpdatesScreen() {
   const insets = useSafeAreaInsets();
   const [showSettings, setShowSettings] = useState<boolean>(false);
-  const [updates] = useState<any[]>([]);
-  const [settings, setSettings] = useState({
-    autoCheck: false,
-    autoDownload: false,
-    autoInstall: false,
-    notifyAdmin: false,
-  });
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const {
+    subscriptionNotifications,
+    notificationSettings,
+    updateNotificationSettings,
+    checkExpiringSubscriptions,
+    markNotificationAsRead,
+    getUnreadNotifications,
+  } = useTenant();
+
+  const unreadCount = getUnreadNotifications().length;
+
+  useEffect(() => {
+    checkExpiringSubscriptions();
+  }, [checkExpiringSubscriptions]);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await checkExpiringSubscriptions();
+    setRefreshing(false);
+  };
 
   const handleToggleSetting = async (
-    key: 'autoCheck' | 'autoDownload' | 'autoInstall' | 'notifyAdmin',
+    key: keyof typeof notificationSettings,
     value: boolean
   ) => {
-    setSettings({ ...settings, [key]: value });
+    await updateNotificationSettings({ [key]: value });
   };
 
-  const handleDownload = async (updateId: string) => {
-    console.log('Download update:', updateId);
+  const handleNotificationPress = async (notification: SubscriptionNotification) => {
+    if (!notification.read) {
+      await markNotificationAsRead(notification.id);
+    }
+    router.push({ pathname: '/subscription-details', params: { id: notification.tenantId } });
   };
 
-  const handleInstall = async (updateId: string) => {
-    console.log('Install update:', updateId);
+  const getNotificationIcon = (type: SubscriptionNotification['type']) => {
+    switch (type) {
+      case 'expired':
+        return XCircle;
+      case 'expiry_warning':
+        return AlertTriangle;
+      case 'suspended':
+        return AlertCircle;
+      case 'renewed':
+        return CheckCircle;
+      default:
+        return Bell;
+    }
   };
+
+  const getNotificationColor = (type: SubscriptionNotification['type']) => {
+    switch (type) {
+      case 'expired':
+        return '#ef4444';
+      case 'expiry_warning':
+        return '#f59e0b';
+      case 'suspended':
+        return '#f97316';
+      case 'renewed':
+        return '#10b981';
+      default:
+        return '#6b7280';
+    }
+  };
+
+  const sortedNotifications = [...subscriptionNotifications].sort((a, b) => {
+    if (a.read !== b.read) return a.read ? 1 : -1;
+    return new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime();
+  });
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <Stack.Screen
         options={{
-          title: 'نوێکردنەوەی سیستەم',
-          headerStyle: { backgroundColor: '#007AFF' },
+          title: 'ئاگادارکردنەوەکانی ئابوونە',
+          headerStyle: { backgroundColor: '#3b82f6' },
           headerTintColor: '#FFF',
           headerRight: () => (
-            <TouchableOpacity onPress={() => setShowSettings(!showSettings)}>
-              <Settings size={24} color="#FFF" style={{ marginRight: 16 }} />
+            <TouchableOpacity onPress={() => setShowSettings(!showSettings)} style={styles.headerButton}>
+              <Settings size={24} color="#FFF" />
             </TouchableOpacity>
           ),
         }}
       />
 
-      <ScrollView style={styles.scrollView}>
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
         <View style={styles.content}>
+          {unreadCount > 0 && (
+            <View style={styles.unreadBanner}>
+              <Bell size={24} color="#3b82f6" />
+              <KurdishText style={styles.unreadBannerText}>
+                {unreadCount} ئاگادارکردنەوەی نەخوێنراوە
+              </KurdishText>
+            </View>
+          )}
 
 
           {showSettings && (
             <View style={styles.settingsCard}>
               <KurdishText style={styles.cardTitle}>
-                ڕێکخستنەکانی نوێکردنەوە
+                ڕێکخستنەکانی ئاگادارکردنەوە
               </KurdishText>
 
               <View style={styles.settingRow}>
                 <KurdishText style={styles.settingLabel}>
-                  پشکنینی خۆکار
+                  چالاککردنی ئاگادارکردنەوە
                 </KurdishText>
                 <Switch
-                  value={settings.autoCheck}
-                  onValueChange={(value) => handleToggleSetting('autoCheck', value)}
+                  value={notificationSettings.enabled}
+                  onValueChange={(value) => handleToggleSetting('enabled', value)}
                 />
               </View>
 
               <View style={styles.settingRow}>
                 <KurdishText style={styles.settingLabel}>
-                  داگرتنی خۆکار
+                  ڕاگرتنی خۆکار لە کاتی بەسەرچوون
                 </KurdishText>
                 <Switch
-                  value={settings.autoDownload}
+                  value={notificationSettings.autoSuspendOnExpiry}
                   onValueChange={(value) =>
-                    handleToggleSetting('autoDownload', value)
+                    handleToggleSetting('autoSuspendOnExpiry', value)
                   }
                 />
               </View>
 
-              <View style={styles.settingRow}>
+              <View style={styles.warningDaysSection}>
                 <KurdishText style={styles.settingLabel}>
-                  دامەزراندنی خۆکار
+                  ئاگادارکردنەوە پێش بەسەرچوون:
                 </KurdishText>
-                <Switch
-                  value={settings.autoInstall}
-                  onValueChange={(value) =>
-                    handleToggleSetting('autoInstall', value)
-                  }
-                />
+                <View style={styles.warningDaysContainer}>
+                  {notificationSettings.warningDays.map((days) => (
+                    <View key={days} style={styles.warningDayChip}>
+                      <KurdishText style={styles.warningDayText}>{days} ڕۆژ</KurdishText>
+                    </View>
+                  ))}
+                </View>
               </View>
 
-              <View style={styles.settingRow}>
+              <View style={styles.channelsSection}>
                 <KurdishText style={styles.settingLabel}>
-                  ئاگاداری بەڕێوەبەر
+                  کەناڵەکانی ئاگادارکردنەوە:
                 </KurdishText>
-                <Switch
-                  value={settings.notifyAdmin}
-                  onValueChange={(value) =>
-                    handleToggleSetting('notifyAdmin', value)
-                  }
-                />
+                <View style={styles.channelsContainer}>
+                  {notificationSettings.channels.map((channel) => (
+                    <View key={channel} style={styles.channelChip}>
+                      <KurdishText style={styles.channelText}>
+                        {channel === 'sms' ? 'SMS' : channel === 'email' ? 'ئیمەیڵ' : 'ناو ئەپ'}
+                      </KurdishText>
+                    </View>
+                  ))}
+                </View>
               </View>
             </View>
           )}
 
-          <View style={styles.updatesSection}>
-            <KurdishText style={styles.sectionTitle}>
-              نوێکردنەوەکان
-            </KurdishText>
+          <View style={styles.notificationsSection}>
+            <View style={styles.sectionHeader}>
+              <KurdishText style={styles.sectionTitle}>
+                ئاگادارکردنەوەکان
+              </KurdishText>
+              <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+                <RefreshCw size={20} color="#3b82f6" />
+              </TouchableOpacity>
+            </View>
 
-            {updates.length === 0 ? (
-              <View style={styles.loadingContainer}>
-                <KurdishText style={styles.emptyText}>هیچ نوێکردنەوەیەک نییە</KurdishText>
+            {sortedNotifications.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Bell size={64} color="#d1d5db" />
+                <KurdishText style={styles.emptyText}>هیچ ئاگادارکردنەوەیەک نییە</KurdishText>
+                <KurdishText style={styles.emptySubtext}>
+                  کاتێک ئابوونەیەک نزیک دەبێتەوە لە بەسەرچوون، ئاگادارکردنەوە لێرە دەردەکەوێت
+                </KurdishText>
               </View>
             ) : (
-              updates.map((update: any) => (
-                <View key={update.id} style={styles.updateCard}>
-                  <View style={styles.updateHeader}>
-                    <View style={styles.updateInfo}>
-                      <KurdishText style={styles.updateVersion}>
-                        وەشانی {update.version}
-                      </KurdishText>
-                      <KurdishText style={styles.updateDate}>
-                        {new Date(update.releaseDate).toLocaleDateString('ar-IQ')}
-                      </KurdishText>
+              sortedNotifications.map((notification) => {
+                const NotificationIcon = getNotificationIcon(notification.type);
+                const iconColor = getNotificationColor(notification.type);
+                const timeDiff = Date.now() - new Date(notification.sentAt).getTime();
+                const hoursAgo = Math.floor(timeDiff / (1000 * 60 * 60));
+                const daysAgo = Math.floor(hoursAgo / 24);
+                const timeText = daysAgo > 0 
+                  ? `${daysAgo} ڕۆژ لەمەوبەر` 
+                  : hoursAgo > 0 
+                  ? `${hoursAgo} کاتژمێر لەمەوبەر`
+                  : 'ئێستا';
+
+                return (
+                  <TouchableOpacity
+                    key={notification.id}
+                    style={[
+                      styles.notificationCard,
+                      !notification.read && styles.notificationCardUnread,
+                    ]}
+                    onPress={() => handleNotificationPress(notification)}
+                  >
+                    <View style={[styles.notificationIconContainer, { backgroundColor: `${iconColor}15` }]}>
+                      <NotificationIcon size={24} color={iconColor} />
                     </View>
-                    {getStatusIcon(update.status)}
-                  </View>
 
-                  <KurdishText style={styles.updateDescription}>
-                    {update.description}
-                  </KurdishText>
-
-                  {update.features.length > 0 && (
-                    <View style={styles.featuresSection}>
-                      <KurdishText style={styles.featuresTitle}>
-                        تایبەتمەندیە نوێکان:
-                      </KurdishText>
-                      {update.features.map((feature: string, index: number) => (
-                        <KurdishText key={index} style={styles.featureItem}>
-                          • {feature}
+                    <View style={styles.notificationContent}>
+                      <View style={styles.notificationHeader}>
+                        <KurdishText style={styles.notificationTitle}>
+                          {notification.title}
                         </KurdishText>
-                      ))}
-                    </View>
-                  )}
+                        {!notification.read && <View style={styles.unreadDot} />}
+                      </View>
 
-                  {update.bugFixes.length > 0 && (
-                    <View style={styles.featuresSection}>
-                      <KurdishText style={styles.featuresTitle}>
-                        چاککردنەوەکان:
+                      <KurdishText style={styles.notificationMessage} numberOfLines={2}>
+                        {notification.message}
                       </KurdishText>
-                      {update.bugFixes.map((fix: string, index: number) => (
-                        <KurdishText key={index} style={styles.featureItem}>
-                          • {fix}
-                        </KurdishText>
-                      ))}
-                    </View>
-                  )}
 
-                  {update.status === 'available' && (
-                    <TouchableOpacity
-                      style={styles.downloadButton}
-                      onPress={() => handleDownload(update.id)}
-                    >
-                      <Download size={20} color="#FFF" />
-                      <KurdishText style={styles.buttonText}>
-                        داگرتن
-                      </KurdishText>
-                    </TouchableOpacity>
-                  )}
+                      <View style={styles.notificationFooter}>
+                        <View style={styles.notificationMeta}>
+                          <Clock size={14} color="#9ca3af" />
+                          <KurdishText style={styles.notificationTime}>
+                            {timeText}
+                          </KurdishText>
+                        </View>
 
-                  {update.status === 'downloading' && (
-                    <View style={styles.statusContainer}>
-                      <ActivityIndicator size="small" color="#007AFF" />
-                      <KurdishText style={styles.statusText}>
-                        داگرتن...
-                      </KurdishText>
-                    </View>
-                  )}
+                        {notification.daysUntilExpiry !== undefined && (
+                          <View style={[
+                            styles.daysChip,
+                            notification.daysUntilExpiry <= 0 && styles.daysChipExpired,
+                            notification.daysUntilExpiry > 0 && notification.daysUntilExpiry <= 7 && styles.daysChipWarning,
+                          ]}>
+                            <Calendar size={12} color="#fff" />
+                            <KurdishText style={styles.daysChipText}>
+                              {notification.daysUntilExpiry <= 0 
+                                ? 'بەسەرچووە' 
+                                : `${notification.daysUntilExpiry} ڕۆژ`}
+                            </KurdishText>
+                          </View>
+                        )}
+                      </View>
 
-                  {update.status === 'installing' && (
-                    <View style={styles.statusContainer}>
-                      <ActivityIndicator size="small" color="#4CAF50" />
-                      <KurdishText style={styles.statusText}>
-                        دامەزراندن...
-                      </KurdishText>
+                      <View style={styles.notificationChannels}>
+                        {notification.channels.map((channel) => (
+                          <View key={channel} style={styles.channelBadge}>
+                            <KurdishText style={styles.channelBadgeText}>
+                              {channel === 'sms' ? 'SMS' : channel === 'email' ? 'Email' : 'App'}
+                            </KurdishText>
+                          </View>
+                        ))}
+                        {notification.status === 'sent' && (
+                          <View style={styles.statusBadge}>
+                            <CheckCircle size={12} color="#10b981" />
+                            <KurdishText style={styles.statusBadgeText}>نێردراوە</KurdishText>
+                          </View>
+                        )}
+                        {notification.status === 'failed' && (
+                          <View style={[styles.statusBadge, styles.statusBadgeFailed]}>
+                            <XCircle size={12} color="#ef4444" />
+                            <KurdishText style={[styles.statusBadgeText, styles.statusBadgeTextFailed]}>شکستی هێناوە</KurdishText>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  )}
-                </View>
-              ))
+
+                    <ChevronRight size={20} color="#d1d5db" />
+                  </TouchableOpacity>
+                );
+              })
             )}
           </View>
         </View>
@@ -210,24 +304,12 @@ export default function SystemUpdatesScreen() {
   );
 }
 
-function getStatusIcon(status: string) {
-  switch (status) {
-    case 'installed':
-      return <CheckCircle size={24} color="#4CAF50" />;
-    case 'downloading':
-    case 'installing':
-      return <RefreshCw size={24} color="#007AFF" />;
-    case 'failed':
-      return <AlertCircle size={24} color="#F44336" />;
-    default:
-      return <Download size={24} color="#999" />;
-  }
-}
+
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#f9fafb',
   },
   scrollView: {
     flex: 1,
@@ -235,144 +317,261 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
   },
-  updateBanner: {
+  headerButton: {
+    marginRight: 16,
+  },
+  unreadBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#eff6ff',
     padding: 16,
     borderRadius: 12,
     marginBottom: 16,
+    gap: 12,
   },
-  bannerContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  bannerTitle: {
+  unreadBannerText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: '#E65100',
-    marginBottom: 4,
-  },
-  bannerText: {
-    fontSize: 14,
-    color: '#F57C00',
+    color: '#3b82f6',
   },
   settingsCard: {
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: 'bold' as const,
-    color: '#333',
-    marginBottom: 16,
+    fontWeight: '700' as const,
+    color: '#111827',
+    marginBottom: 20,
   },
   settingRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#f3f4f6',
   },
   settingLabel: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#374151',
+    fontWeight: '500' as const,
   },
-  updatesSection: {
+  warningDaysSection: {
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  warningDaysContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  warningDayChip: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  warningDayText: {
+    fontSize: 13,
+    color: '#3b82f6',
+    fontWeight: '600' as const,
+  },
+  channelsSection: {
+    paddingVertical: 14,
+  },
+  channelsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+  },
+  channelChip: {
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#10b981',
+  },
+  channelText: {
+    fontSize: 13,
+    color: '#10b981',
+    fontWeight: '600' as const,
+  },
+  notificationsSection: {
     marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: 'bold' as const,
-    color: '#333',
-    marginBottom: 16,
+    fontWeight: '700' as const,
+    color: '#111827',
   },
-  loadingContainer: {
-    padding: 40,
+  refreshButton: {
+    padding: 8,
+  },
+  emptyContainer: {
+    backgroundColor: '#fff',
+    padding: 48,
+    borderRadius: 16,
     alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#666',
-  },
-  updateCard: {
-    backgroundColor: '#FFF',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  updateHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: '#6b7280',
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#9ca3af',
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  notificationCard: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 16,
     marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  updateInfo: {
+  notificationCardUnread: {
+    backgroundColor: '#fffbeb',
+    borderWidth: 1,
+    borderColor: '#fef3c7',
+  },
+  notificationIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notificationContent: {
+    flex: 1,
+    gap: 8,
+  },
+  notificationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '700' as const,
+    color: '#111827',
     flex: 1,
   },
-  updateVersion: {
-    fontSize: 18,
-    fontWeight: 'bold' as const,
-    color: '#333',
-    marginBottom: 4,
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3b82f6',
   },
-  updateDate: {
+  notificationMessage: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+  notificationFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  notificationMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  notificationTime: {
     fontSize: 12,
-    color: '#999',
+    color: '#9ca3af',
   },
-  updateDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  featuresSection: {
-    marginBottom: 12,
-  },
-  featuresTitle: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#333',
-    marginBottom: 8,
-  },
-  featureItem: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-    paddingLeft: 8,
-  },
-  downloadButton: {
+  daysChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    padding: 12,
+    gap: 4,
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  daysChipWarning: {
+    backgroundColor: '#f59e0b',
+  },
+  daysChipExpired: {
+    backgroundColor: '#ef4444',
+  },
+  daysChipText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#fff',
+  },
+  notificationChannels: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 4,
+  },
+  channelBadge: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 8,
-    marginTop: 8,
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#FFF',
-    marginLeft: 8,
+  channelBadgeText: {
+    fontSize: 11,
+    color: '#6b7280',
+    fontWeight: '500' as const,
   },
-  statusContainer: {
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    marginTop: 8,
+    gap: 4,
+    backgroundColor: '#f0fdf4',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
   },
-  statusText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
+  statusBadgeFailed: {
+    backgroundColor: '#fef2f2',
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    color: '#10b981',
+    fontWeight: '500' as const,
+  },
+  statusBadgeTextFailed: {
+    color: '#ef4444',
   },
 });
