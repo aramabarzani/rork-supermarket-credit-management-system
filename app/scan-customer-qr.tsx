@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -21,6 +21,7 @@ import { GradientCard } from '@/components/GradientCard';
 import { useUsers } from '@/hooks/users-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useAuth } from '@/hooks/auth-context';
+import { PERMISSIONS } from '@/constants/permissions';
 
 export default function ScanCustomerQRScreen() {
   const router = useRouter();
@@ -38,12 +39,31 @@ export default function ScanCustomerQRScreen() {
   
   const { getCustomers, updateUser } = usersContext;
   const { getCustomerDebts } = debtsContext;
+  const { hasPermission } = authContext;
 
-  useEffect(() => {
-    if (!permission?.granted) {
-      requestPermission();
-    }
-  }, [permission]);
+  const canUseQR = hasPermission(PERMISSIONS.USE_CUSTOMER_QR);
+
+  if (!canUseQR) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <ArrowLeft size={24} color="#1E3A8A" />
+          </TouchableOpacity>
+          <KurdishText variant="title" color="#1F2937">
+            دەسەڵات نییە
+          </KurdishText>
+          <View style={{ width: 40 }} />
+        </View>
+        <View style={styles.centerContent}>
+          <Camera size={64} color="#EF4444" />
+          <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16, textAlign: 'center' }}>
+            تۆ دەسەڵاتی بەکارهێنانی QR Code ت نییە
+          </KurdishText>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     if (scanned) return;

@@ -50,6 +50,9 @@ export const PERMISSIONS = {
   VIEW_PERMISSIONS_REPORT: 'view_permissions_report',
   EXPORT_PERMISSIONS_REPORT: 'export_permissions_report',
   
+  // QR Code Management
+  GENERATE_CUSTOMER_QR: 'generate_customer_qr',
+  USE_CUSTOMER_QR: 'use_customer_qr',
 
 } as const;
 
@@ -97,6 +100,8 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.VIEW_PERMISSIONS_REPORT]: 'بینینی ڕاپۆرتی دەسەڵاتەکان',
   [PERMISSIONS.EXPORT_PERMISSIONS_REPORT]: 'دەرهێنانی ڕاپۆرتی دەسەڵاتەکان',
   
+  [PERMISSIONS.GENERATE_CUSTOMER_QR]: 'دروستکردنی QR Code بۆ کڕیار',
+  [PERMISSIONS.USE_CUSTOMER_QR]: 'بەکارهێنانی QR Code',
 
 };
 

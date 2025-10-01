@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
@@ -42,7 +42,10 @@ export default function CustomerQRManagementScreen() {
   const { getCustomers, updateUser } = usersContext;
   const { hasPermission, user } = authContext;
 
-  if (!hasPermission(PERMISSIONS.VIEW_CUSTOMERS)) {
+  const canGenerate = hasPermission(PERMISSIONS.GENERATE_CUSTOMER_QR);
+  const canUse = hasPermission(PERMISSIONS.USE_CUSTOMER_QR);
+
+  if (!canGenerate && !canUse) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -56,7 +59,7 @@ export default function CustomerQRManagementScreen() {
         <View style={styles.centerContent}>
           <XCircle size={64} color="#EF4444" />
           <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16, textAlign: 'center' }}>
-            تۆ دەسەڵاتی بینینی ئەم بەشەت نییە
+            تۆ دەسەڵاتی بەکارهێنانی QR Code ت نییە
           </KurdishText>
         </View>
       </SafeAreaView>
@@ -66,6 +69,11 @@ export default function CustomerQRManagementScreen() {
   const customers = getCustomers();
 
   const generateQRCode = (customerId: string) => {
+    if (!canGenerate) {
+      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی دروستکردنی QR Code ت نییە');
+      return;
+    }
+
     const customer = customers.find(c => c.id === customerId);
     if (!customer) return;
 
@@ -84,6 +92,11 @@ export default function CustomerQRManagementScreen() {
   };
 
   const regenerateQRCode = (customerId: string) => {
+    if (!canGenerate) {
+      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی نوێکردنەوەی QR Code ت نییە');
+      return;
+    }
+
     Alert.alert(
       'دڵنیابوونەوە',
       'دڵنیایت لە دروستکردنەوەی QR Code نوێ؟ کۆدی کۆن ناچالاک دەبێت.',
@@ -98,6 +111,11 @@ export default function CustomerQRManagementScreen() {
   };
 
   const deleteQRCode = (customerId: string) => {
+    if (!canGenerate) {
+      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی سڕینەوەی QR Code ت نییە');
+      return;
+    }
+
     Alert.alert(
       'دڵنیابوونەوە',
       'دڵنیایت لە سڕینەوەی QR Code؟',
@@ -119,6 +137,11 @@ export default function CustomerQRManagementScreen() {
   };
 
   const toggleQRCodeStatus = (customerId: string) => {
+    if (!canGenerate) {
+      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی گۆڕینی دۆخی QR Code ت نییە');
+      return;
+    }
+
     const customer = customers.find(c => c.id === customerId);
     if (!customer || !customer.qrCode) return;
 
@@ -217,49 +240,55 @@ export default function CustomerQRManagementScreen() {
             </View>
 
             <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.primaryButton]}
-                onPress={() => toggleQRCodeStatus(customer.id)}
-              >
-                {customer.qrCode.isActive ? (
-                  <XCircle size={20} color="white" />
-                ) : (
-                  <CheckCircle size={20} color="white" />
-                )}
-                <KurdishText variant="body" color="white">
-                  {customer.qrCode.isActive ? 'ناچالاککردن' : 'چالاککردن'}
-                </KurdishText>
-              </TouchableOpacity>
+              {canUse && (
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.secondaryButton]}
+                  onPress={() => shareQRCode(customer.id)}
+                >
+                  <Share2 size={20} color="#1E3A8A" />
+                  <KurdishText variant="body" color="#1E3A8A">
+                    هاوبەشکردن
+                  </KurdishText>
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                style={[styles.actionButton, styles.secondaryButton]}
-                onPress={() => shareQRCode(customer.id)}
-              >
-                <Share2 size={20} color="#1E3A8A" />
-                <KurdishText variant="body" color="#1E3A8A">
-                  هاوبەشکردن
-                </KurdishText>
-              </TouchableOpacity>
+              {canGenerate && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.primaryButton]}
+                    onPress={() => toggleQRCodeStatus(customer.id)}
+                  >
+                    {customer.qrCode.isActive ? (
+                      <XCircle size={20} color="white" />
+                    ) : (
+                      <CheckCircle size={20} color="white" />
+                    )}
+                    <KurdishText variant="body" color="white">
+                      {customer.qrCode.isActive ? 'ناچالاککردن' : 'چالاککردن'}
+                    </KurdishText>
+                  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.actionButton, styles.warningButton]}
-                onPress={() => regenerateQRCode(customer.id)}
-              >
-                <RefreshCw size={20} color="#F59E0B" />
-                <KurdishText variant="body" color="#F59E0B">
-                  نوێکردنەوە
-                </KurdishText>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.warningButton]}
+                    onPress={() => regenerateQRCode(customer.id)}
+                  >
+                    <RefreshCw size={20} color="#F59E0B" />
+                    <KurdishText variant="body" color="#F59E0B">
+                      نوێکردنەوە
+                    </KurdishText>
+                  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.actionButton, styles.dangerButton]}
-                onPress={() => deleteQRCode(customer.id)}
-              >
-                <Trash2 size={20} color="#EF4444" />
-                <KurdishText variant="body" color="#EF4444">
-                  سڕینەوە
-                </KurdishText>
-              </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.dangerButton]}
+                    onPress={() => deleteQRCode(customer.id)}
+                  >
+                    <Trash2 size={20} color="#EF4444" />
+                    <KurdishText variant="body" color="#EF4444">
+                      سڕینەوە
+                    </KurdishText>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </>
         ) : (
@@ -268,15 +297,17 @@ export default function CustomerQRManagementScreen() {
             <KurdishText variant="body" color="#6B7280" style={{ marginTop: 12 }}>
               QR Code دروست نەکراوە
             </KurdishText>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton, { marginTop: 16 }]}
-              onPress={() => generateQRCode(customer.id)}
-            >
-              <QrCode size={20} color="white" />
-              <KurdishText variant="body" color="white">
-                دروستکردنی QR Code
-              </KurdishText>
-            </TouchableOpacity>
+            {canGenerate && (
+              <TouchableOpacity
+                style={[styles.actionButton, styles.primaryButton, { marginTop: 16 }]}
+                onPress={() => generateQRCode(customer.id)}
+              >
+                <QrCode size={20} color="white" />
+                <KurdishText variant="body" color="white">
+                  دروستکردنی QR Code
+                </KurdishText>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </GradientCard>
