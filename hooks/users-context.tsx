@@ -173,10 +173,21 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       setIsLoading(true);
       try {
         const stored = await AsyncStorage.getItem('users');
-        if (stored) {
-          const parsedUsers = JSON.parse(stored);
-          setUsers(parsedUsers);
-          console.log('UsersContext: Loaded users from storage:', parsedUsers.length);
+        if (stored && stored.trim()) {
+          try {
+            const parsedUsers = JSON.parse(stored);
+            if (Array.isArray(parsedUsers) && parsedUsers.length > 0) {
+              setUsers(parsedUsers);
+              console.log('UsersContext: Loaded users from storage:', parsedUsers.length);
+            } else {
+              throw new Error('Invalid users data structure');
+            }
+          } catch (parseError) {
+            console.error('UsersContext: Error parsing users, resetting:', parseError);
+            await AsyncStorage.removeItem('users');
+            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+            setUsers(sampleUsers);
+          }
         } else {
           console.log('UsersContext: No stored users, initializing with sample data');
           await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
@@ -184,6 +195,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
         }
       } catch (error) {
         console.error('UsersContext: Error loading users:', error);
+        await AsyncStorage.removeItem('users');
         setUsers(sampleUsers);
       }
       
@@ -203,8 +215,17 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     try {
       setIsLoading(true);
       const stored = await AsyncStorage.getItem('users');
-      if (stored) {
-        setUsers(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsedUsers = JSON.parse(stored);
+          if (Array.isArray(parsedUsers)) {
+            setUsers(parsedUsers);
+          }
+        } catch (parseError) {
+          console.error('Error parsing users:', parseError);
+          await AsyncStorage.removeItem('users');
+          setUsers(sampleUsers);
+        }
       }
     } catch (error) {
       console.error('Error loading users:', error);
@@ -220,8 +241,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const loadActivityLogs = async () => {
     try {
       const stored = await AsyncStorage.getItem('activityLogs');
-      if (stored) {
-        setActivityLogs(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setActivityLogs(parsed);
+          }
+        } catch (parseError) {
+          console.error('Error parsing activity logs:', parseError);
+          await AsyncStorage.removeItem('activityLogs');
+        }
       }
     } catch (error) {
       console.error('Error loading activity logs:', error);
@@ -231,8 +260,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const loadUserSessions = async () => {
     try {
       const stored = await AsyncStorage.getItem('userSessions');
-      if (stored) {
-        setUserSessions(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setUserSessions(parsed);
+          }
+        } catch (parseError) {
+          console.error('Error parsing user sessions:', parseError);
+          await AsyncStorage.removeItem('userSessions');
+        }
       }
     } catch (error) {
       console.error('Error loading user sessions:', error);
@@ -242,8 +279,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const loadEmployeeStats = async () => {
     try {
       const stored = await AsyncStorage.getItem('employeeStats');
-      if (stored) {
-        setEmployeeStats(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (typeof parsed === 'object' && parsed !== null) {
+            setEmployeeStats(parsed);
+          }
+        } catch (parseError) {
+          console.error('Error parsing employee stats:', parseError);
+          await AsyncStorage.removeItem('employeeStats');
+        }
       }
     } catch (error) {
       console.error('Error loading employee stats:', error);
@@ -253,8 +298,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const loadEmployeeSchedules = async () => {
     try {
       const stored = await AsyncStorage.getItem('employeeSchedules');
-      if (stored) {
-        setEmployeeSchedules(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (typeof parsed === 'object' && parsed !== null) {
+            setEmployeeSchedules(parsed);
+          }
+        } catch (parseError) {
+          console.error('Error parsing employee schedules:', parseError);
+          await AsyncStorage.removeItem('employeeSchedules');
+        }
       }
     } catch (error) {
       console.error('Error loading employee schedules:', error);
@@ -264,8 +317,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const loadCustomRoles = async () => {
     try {
       const stored = await AsyncStorage.getItem('customRoles');
-      if (stored) {
-        setCustomRoles(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setCustomRoles(parsed);
+          }
+        } catch (parseError) {
+          console.error('Error parsing custom roles:', parseError);
+          await AsyncStorage.removeItem('customRoles');
+        }
       }
     } catch (error) {
       console.error('Error loading custom roles:', error);
@@ -275,8 +336,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const loadRoleAssignments = async () => {
     try {
       const stored = await AsyncStorage.getItem('roleAssignments');
-      if (stored) {
-        setRoleAssignments(JSON.parse(stored));
+      if (stored && stored.trim()) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setRoleAssignments(parsed);
+          }
+        } catch (parseError) {
+          console.error('Error parsing role assignments:', parseError);
+          await AsyncStorage.removeItem('roleAssignments');
+        }
       }
     } catch (error) {
       console.error('Error loading role assignments:', error);
