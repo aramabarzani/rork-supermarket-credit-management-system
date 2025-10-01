@@ -27,12 +27,18 @@ export default function NotificationsScreen() {
     if (!notification.isRead) {
       await markAsRead(notification.id);
     }
-    // Navigate to related screen based on notification type
-    // This would be implemented based on your navigation structure
   };
 
   const handleNotificationDismiss = async (notificationId: string) => {
     await removeNotification(notificationId);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+  };
+
+  const handleClearAll = async () => {
+    await clearAll();
   };
 
   const userNotifications = useMemo(() => {
@@ -192,7 +198,7 @@ export default function NotificationsScreen() {
 
         <TouchableOpacity
           style={styles.clearButton}
-          onPress={clearAll}
+          onPress={handleClearAll}
         >
           <X size={20} color="#EF4444" />
           <Text style={styles.clearButtonText}>
@@ -249,7 +255,7 @@ export default function NotificationsScreen() {
         {userUnreadCount > 0 && (
           <TouchableOpacity
             style={styles.markAllButton}
-            onPress={markAllAsRead}
+            onPress={handleMarkAllAsRead}
           >
             <CheckCircle size={16} color="#10B981" />
             <Text style={styles.markAllText}>نیشانکردنی هەموو وەک خوێندراوە</Text>
