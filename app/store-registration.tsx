@@ -9,19 +9,23 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
-import { Store, MapPin, Phone, Mail, User, Lock, CreditCard } from 'lucide-react-native';
+import { Store, MapPin, Phone, Mail, User, Lock, CreditCard, CheckCircle2, Building2, Globe } from 'lucide-react-native';
 import { useStoreRequests } from '@/hooks/store-request-context';
 import { useNotifications } from '@/hooks/notification-context';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
+
 
 export default function StoreRegistrationScreen() {
   const { createRequest } = useStoreRequests();
   const { addNotification } = useNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
 
   const [formData, setFormData] = useState({
     storeName: '',
@@ -37,6 +41,21 @@ export default function StoreRegistrationScreen() {
   });
 
   const totalSteps = 3;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -95,13 +114,65 @@ export default function StoreRegistrationScreen() {
     if (currentStep === 2 && !validateStep2()) return;
     
     if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -50,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setCurrentStep(currentStep + 1);
+        slideAnim.setValue(50);
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     }
   };
 
   const handleBack = () => {
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 50,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setCurrentStep(currentStep - 1);
+        slideAnim.setValue(-50);
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     }
   };
 
@@ -168,16 +239,21 @@ export default function StoreRegistrationScreen() {
             style={[
               styles.stepCircle,
               currentStep >= step && styles.stepCircleActive,
+              currentStep === step && styles.stepCircleCurrent,
             ]}
           >
-            <Text
-              style={[
-                styles.stepNumber,
-                currentStep >= step && styles.stepNumberActive,
-              ]}
-            >
-              {step}
-            </Text>
+            {currentStep > step ? (
+              <CheckCircle2 size={24} color="#fff" />
+            ) : (
+              <Text
+                style={[
+                  styles.stepNumber,
+                  currentStep >= step && styles.stepNumberActive,
+                ]}
+              >
+                {step}
+              </Text>
+            )}
           </View>
           {step < totalSteps && (
             <View
@@ -193,11 +269,27 @@ export default function StoreRegistrationScreen() {
   );
 
   const renderStep1 = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>زانیاری فرۆشگا</Text>
+    <Animated.View 
+      style={[
+        styles.stepContent,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <View style={styles.stepHeader}>
+        <View style={styles.stepIconContainer}>
+          <Building2 size={32} color="#3b82f6" />
+        </View>
+        <Text style={styles.stepTitle}>زانیاری فرۆشگا</Text>
+        <Text style={styles.stepSubtitle}>زانیاری سەرەکی فرۆشگاکەت بنووسە</Text>
+      </View>
       
       <View style={styles.inputGroup}>
-        <Store size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <Globe size={20} color="#3b82f6" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="ناوی فرۆشگا (English)"
@@ -209,7 +301,9 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Store size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <Store size={20} color="#3b82f6" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="ناوی فرۆشگا (کوردی)"
@@ -221,7 +315,9 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <MapPin size={20} color="#3b82f6" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="ناونیشان"
@@ -229,11 +325,14 @@ export default function StoreRegistrationScreen() {
           value={formData.address}
           onChangeText={(text) => updateField('address', text)}
           textAlign="right"
+          multiline
         />
       </View>
 
       <View style={styles.inputGroup}>
-        <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <MapPin size={20} color="#3b82f6" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="شار"
@@ -243,15 +342,31 @@ export default function StoreRegistrationScreen() {
           textAlign="right"
         />
       </View>
-    </View>
+    </Animated.View>
   );
 
   const renderStep2 = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>زانیاری خاوەن</Text>
+    <Animated.View 
+      style={[
+        styles.stepContent,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <View style={styles.stepHeader}>
+        <View style={styles.stepIconContainer}>
+          <User size={32} color="#10b981" />
+        </View>
+        <Text style={styles.stepTitle}>زانیاری خاوەن</Text>
+        <Text style={styles.stepSubtitle}>زانیاری کەسی و ئەژمێری خاوەن</Text>
+      </View>
       
       <View style={styles.inputGroup}>
-        <User size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <User size={20} color="#10b981" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="ناوی خاوەن"
@@ -263,7 +378,9 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Phone size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <Phone size={20} color="#10b981" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="ژمارەی مۆبایل"
@@ -276,7 +393,9 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Mail size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <Mail size={20} color="#10b981" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="ئیمەیڵ (ئیختیاری)"
@@ -290,7 +409,9 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Lock size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <Lock size={20} color="#10b981" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="وشەی نهێنی"
@@ -303,7 +424,9 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Lock size={20} color="#6b7280" style={styles.inputIcon} />
+        <View style={styles.inputIconContainer}>
+          <Lock size={20} color="#10b981" />
+        </View>
         <TextInput
           style={styles.input}
           placeholder="دووبارەکردنەوەی وشەی نهێنی"
@@ -314,15 +437,29 @@ export default function StoreRegistrationScreen() {
           textAlign="right"
         />
       </View>
-    </View>
+    </Animated.View>
   );
 
   const renderStep3 = () => (
-    <View style={styles.stepContent}>
-      <Text style={styles.stepTitle}>هەڵبژاردنی پلان</Text>
+    <Animated.View 
+      style={[
+        styles.stepContent,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        },
+      ]}
+    >
+      <View style={styles.stepHeader}>
+        <View style={styles.stepIconContainer}>
+          <CreditCard size={32} color="#f59e0b" />
+        </View>
+        <Text style={styles.stepTitle}>هەڵبژاردنی پلان</Text>
+        <Text style={styles.stepSubtitle}>پلانی گونجاو بۆ فرۆشگاکەت هەڵبژێرە</Text>
+      </View>
       
       <View style={styles.plansContainer}>
-        {Object.values(SUBSCRIPTION_PLANS).map((plan) => (
+        {Object.values(SUBSCRIPTION_PLANS).map((plan, index) => (
           <TouchableOpacity
             key={plan.id}
             style={[
@@ -330,35 +467,53 @@ export default function StoreRegistrationScreen() {
               formData.plan === plan.id && styles.planCardActive,
             ]}
             onPress={() => updateField('plan', plan.id)}
+            activeOpacity={0.7}
           >
+            {formData.plan === plan.id && (
+              <View style={styles.planBadge}>
+                <CheckCircle2 size={16} color="#fff" />
+                <Text style={styles.planBadgeText}>هەڵبژێردراوە</Text>
+              </View>
+            )}
+            
             <View style={styles.planHeader}>
-              <CreditCard
-                size={32}
-                color={formData.plan === plan.id ? '#3b82f6' : '#6b7280'}
-              />
-              <Text style={[
-                styles.planName,
-                formData.plan === plan.id && styles.planNameActive,
+              <View style={[
+                styles.planIconContainer,
+                formData.plan === plan.id && styles.planIconContainerActive,
               ]}>
-                {plan.nameKurdish}
-              </Text>
+                <CreditCard
+                  size={28}
+                  color={formData.plan === plan.id ? '#3b82f6' : '#6b7280'}
+                />
+              </View>
+              <View style={styles.planTitleContainer}>
+                <Text style={[
+                  styles.planName,
+                  formData.plan === plan.id && styles.planNameActive,
+                ]}>
+                  {plan.nameKurdish}
+                </Text>
+                <Text style={styles.planPrice}>
+                  {plan.price.toLocaleString()}
+                  <Text style={styles.planCurrency}> IQD</Text>
+                </Text>
+              </View>
             </View>
             
-            <Text style={styles.planPrice}>
-              {plan.price.toLocaleString()} IQD
-            </Text>
+            <View style={styles.planDivider} />
             
             <View style={styles.planFeatures}>
-              {plan.featuresKurdish.map((feature, index) => (
-                <Text key={index} style={styles.planFeature}>
-                  ✓ {feature}
-                </Text>
+              {plan.featuresKurdish.map((feature, idx) => (
+                <View key={idx} style={styles.planFeatureItem}>
+                  <CheckCircle2 size={16} color="#10b981" />
+                  <Text style={styles.planFeature}>{feature}</Text>
+                </View>
               ))}
             </View>
           </TouchableOpacity>
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 
   return (
@@ -423,7 +578,7 @@ export default function StoreRegistrationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f8fafc',
   },
   keyboardView: {
     flex: 1,
@@ -445,15 +600,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#e5e7eb',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#e5e7eb',
   },
   stepCircleActive: {
     backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+  stepCircleCurrent: {
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   stepNumber: {
     fontSize: 16,
@@ -474,83 +639,163 @@ const styles = StyleSheet.create({
   },
   stepContent: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
     marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  stepHeader: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  stepIconContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#f0f9ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   stepTitle: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 24,
+    fontWeight: '800',
     color: '#111827',
-    marginBottom: 24,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  stepSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
     textAlign: 'center',
   },
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#e5e7eb',
   },
-  inputIcon: {
+  inputIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginLeft: 12,
   },
   input: {
     flex: 1,
-    height: 50,
+    minHeight: 56,
     fontSize: 16,
     color: '#111827',
     fontWeight: '500',
+    paddingVertical: 8,
   },
   plansContainer: {
     gap: 16,
   },
   planCard: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 2,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 3,
     borderColor: '#e5e7eb',
+    position: 'relative',
+    overflow: 'hidden',
   },
   planCardActive: {
     borderColor: '#3b82f6',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f0f9ff',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  planBadge: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  planBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
   },
   planHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
+    gap: 16,
+    marginBottom: 20,
+  },
+  planIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  planIconContainerActive: {
+    backgroundColor: '#dbeafe',
+  },
+  planTitleContainer: {
+    flex: 1,
   },
   planName: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 22,
+    fontWeight: '800',
     color: '#1f2937',
+    marginBottom: 4,
   },
   planNameActive: {
     color: '#3b82f6',
   },
   planPrice: {
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 28,
+    fontWeight: '900',
     color: '#10b981',
-    marginBottom: 16,
+  },
+  planCurrency: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  planDivider: {
+    height: 2,
+    backgroundColor: '#e5e7eb',
+    marginBottom: 20,
   },
   planFeatures: {
-    gap: 8,
+    gap: 12,
+  },
+  planFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   planFeature: {
-    fontSize: 14,
-    color: '#4b5563',
-    lineHeight: 20,
+    flex: 1,
+    fontSize: 15,
+    color: '#374151',
+    lineHeight: 22,
+    fontWeight: '500',
   },
   actions: {
     flexDirection: 'row',
@@ -559,25 +804,32 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
-    height: 50,
-    borderRadius: 12,
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   backButton: {
-    backgroundColor: '#e5e7eb',
+    backgroundColor: '#f3f4f6',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
   },
   backButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#1f2937',
   },
   nextButton: {
     backgroundColor: '#3b82f6',
   },
   nextButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#fff',
   },
   submitButton: {
@@ -587,8 +839,8 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 17,
+    fontWeight: '700',
     color: '#fff',
   },
 });
