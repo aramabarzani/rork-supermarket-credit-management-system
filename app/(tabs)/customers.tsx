@@ -25,6 +25,7 @@ import {
   Filter,
   Star,
   Award,
+  QrCode,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -146,8 +147,18 @@ export default function CustomersScreen() {
         <GradientCard style={styles.customerCard}>
           <View style={styles.customerHeader}>
             <View style={styles.customerInfo}>
-              <View style={styles.avatar}>
-                <User size={24} color="#1E3A8A" />
+              <View style={styles.customerInfoRow}>
+                <View style={styles.avatar}>
+                  <User size={24} color="#1E3A8A" />
+                </View>
+                {hasPermission(PERMISSIONS.GENERATE_CUSTOMER_QR) && (
+                  <TouchableOpacity
+                    onPress={() => router.push('/customer-qr-management')}
+                    style={styles.qrButton}
+                  >
+                    <QrCode size={20} color="#1E3A8A" />
+                  </TouchableOpacity>
+                )}
               </View>
               <View>
                 <KurdishText variant="subtitle" color="#1F2937">
@@ -476,9 +487,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   customerInfo: {
+    flex: 1,
+  },
+  customerInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  qrButton: {
+    padding: 8,
+    backgroundColor: '#E0E7FF',
+    borderRadius: 8,
   },
   avatar: {
     width: 48,

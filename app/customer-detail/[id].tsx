@@ -25,6 +25,7 @@ import {
   FileText,
   Send,
   Edit,
+  QrCode,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -235,17 +236,30 @@ export default function CustomerDetailScreen() {
         </View>
 
         {/* Action Buttons */}
-        {hasPermission(PERMISSIONS.SEND_NOTIFICATIONS) && customer.email && (
-          <TouchableOpacity 
-            style={styles.actionButton}
-            onPress={() => router.push(`/send-notification?customerId=${customer.id}`)}
-          >
-            <Send size={20} color="#1E3A8A" />
-            <KurdishText variant="body" color="#1E3A8A">
-              ناردنی ئیمەیڵ
-            </KurdishText>
-          </TouchableOpacity>
-        )}
+        <View style={styles.actionButtonsContainer}>
+          {hasPermission(PERMISSIONS.SEND_NOTIFICATIONS) && customer.email && (
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push(`/send-notification?customerId=${customer.id}`)}
+            >
+              <Send size={20} color="#1E3A8A" />
+              <KurdishText variant="body" color="#1E3A8A">
+                ناردنی ئیمەیڵ
+              </KurdishText>
+            </TouchableOpacity>
+          )}
+          {(hasPermission(PERMISSIONS.GENERATE_CUSTOMER_QR) || hasPermission(PERMISSIONS.USE_CUSTOMER_QR)) && (
+            <TouchableOpacity 
+              style={styles.actionButton}
+              onPress={() => router.push('/customer-qr-management')}
+            >
+              <QrCode size={20} color="#1E3A8A" />
+              <KurdishText variant="body" color="#1E3A8A">
+                بەڕێوەبردنی QR
+              </KurdishText>
+            </TouchableOpacity>
+          )}
+        </View>
       </GradientCard>
 
       {/* Statistics Cards */}
@@ -512,7 +526,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   actionButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
