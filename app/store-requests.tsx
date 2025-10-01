@@ -116,7 +116,7 @@ export default function StoreRequestsScreen() {
                 name: request.ownerName,
                 phone: request.ownerPhone,
                 email: request.ownerEmail,
-                role: 'owner',
+                role: 'admin',
                 password: request.ownerPassword,
                 tenantId: newTenant.id,
               });
@@ -131,7 +131,7 @@ export default function StoreRequestsScreen() {
                 type: 'store_request_approved',
                 priority: 'high',
                 recipientId: request.ownerPhone,
-                recipientType: 'owner',
+                recipientType: 'admin',
                 isRead: false,
                 channels: ['in_app', 'sms'],
                 metadata: {
@@ -172,7 +172,7 @@ export default function StoreRequestsScreen() {
         type: 'store_request_rejected',
         priority: 'high',
         recipientId: selectedRequest.ownerPhone,
-        recipientType: 'owner',
+        recipientType: 'admin',
         isRead: false,
         channels: ['in_app', 'sms'],
         metadata: {
