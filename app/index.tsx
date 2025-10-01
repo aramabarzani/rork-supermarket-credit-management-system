@@ -33,8 +33,11 @@ export default function IndexScreen() {
         if (user.role === 'owner') {
           console.log('IndexScreen: Owner detected, redirecting to owner dashboard');
           router.replace('/owner-dashboard');
+        } else if (user.role === 'customer') {
+          console.log('IndexScreen: Customer detected, redirecting to customer dashboard');
+          router.replace('/customer-dashboard');
         } else {
-          console.log('IndexScreen: Non-owner user, redirecting to dashboard');
+          console.log('IndexScreen: Admin/Employee user, redirecting to dashboard');
           router.replace('/(tabs)/dashboard');
         }
       } else {

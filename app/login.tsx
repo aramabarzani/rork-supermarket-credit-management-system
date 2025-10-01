@@ -57,6 +57,8 @@ export default function LoginScreen() {
         console.log('Login successful, user role:', result.user.role);
         if (result.user.role === 'owner') {
           router.replace('/owner-dashboard');
+        } else if (result.user.role === 'customer') {
+          router.replace('/customer-dashboard');
         } else {
           router.replace('/(tabs)/dashboard');
         }

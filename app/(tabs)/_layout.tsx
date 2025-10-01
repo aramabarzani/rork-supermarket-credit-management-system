@@ -7,13 +7,15 @@ export default function TabLayout() {
   const { user, isLoading, isInitialized } = useAuth();
   const isAdmin = user?.role === 'admin';
   
-  // Show loading state while auth is loading
   if (isLoading || !isInitialized) {
     return null;
   }
 
-  // If user is not authenticated, don't show tabs
   if (!user) {
+    return null;
+  }
+
+  if (user.role === 'customer' || user.role === 'owner') {
     return null;
   }
 
@@ -64,7 +66,7 @@ export default function TabLayout() {
         options={{
           title: "ڕێکخستنەکان",
           tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
-          href: isAdmin ? '/settings' : null,
+          href: isAdmin ? '/(tabs)/settings' : null,
         }}
       />
     </Tabs>
