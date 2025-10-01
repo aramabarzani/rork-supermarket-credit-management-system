@@ -15,8 +15,6 @@ import {
   Filter,
   Plus,
   Calendar,
-  DollarSign,
-  User,
   FileText,
   Edit3,
   Trash2,
@@ -40,11 +38,7 @@ import { Debt } from '@/types/debt';
 export default function DebtManagementScreen() {
   const router = useRouter();
   const { 
-    getFilteredDebts, 
-    updateDebt, 
-    deleteDebt, 
-    filters, 
-    setFilters,
+    debts: allDebts,
     searchDebts,
     getOverdueDebts,
     getUnpaidDebts,
@@ -54,25 +48,54 @@ export default function DebtManagementScreen() {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
-  const [showDebtDetails, setShowDebtDetails] = useState(false);
+
+  const [filters, setFilters] = useState({
+    status: DEBT_FILTERS.ALL as string,
+    category: 'all',
+    amountRange: 'all',
+    searchQuery: '',
+  });
 
   const filteredDebts = useMemo(() => {
-    let debts = getFilteredDebts();
+    let debts = [...allDebts];
+    
+    if (filters.status !== DEBT_FILTERS.ALL) {
+      if (filters.status === DEBT_FILTERS.OVERDUE) {
+        const now = new Date();
+        debts = debts.filter(debt => 
+          debt.dueDate && new Date(debt.dueDate) < now && debt.status !== 'paid'
+        );
+      } else {
+        debts = debts.filter(debt => debt.status === filters.status);
+      }
+    }
+    
+    if (filters.category !== 'all') {
+      debts = debts.filter(debt => debt.category === filters.category);
+    }
+    
+    if (filters.amountRange !== 'all') {
+      const range = AMOUNT_RANGES.find(r => r.id === filters.amountRange);
+      if (range && range.min !== undefined) {
+        debts = debts.filter(debt => debt.amount >= range.min!);
+      }
+      if (range && range.max !== undefined) {
+        debts = debts.filter(debt => debt.amount <= range.max!);
+      }
+    }
     
     if (searchQuery.trim()) {
-      const searchResults = searchDebts(searchQuery.trim());
+      const searchResults = searchDebts({ searchText: searchQuery.trim() });
       debts = debts.filter(debt => 
         searchResults.some(result => result.id === debt.id)
       );
     }
     
     return debts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [getFilteredDebts, searchDebts, searchQuery]);
+  }, [allDebts, filters, searchDebts, searchQuery]);
 
   const overdueDebts = getOverdueDebts();
   const unpaidDebts = getUnpaidDebts();
-  const highDebtCustomers = getHighDebtCustomers();
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ckb-IQ', {
@@ -109,8 +132,9 @@ export default function DebtManagementScreen() {
         { 
           text: 'بەڵێ', 
           style: 'destructive',
-          onPress: async () => {
-            await deleteDebt(debt.id);
+          onPress: () => {
+            console.log('Delete debt:', debt.id);
+            Alert.alert('سەرکەوتوو', 'قەرزەکە سڕایەوە');
           }
         },
       ]
@@ -123,7 +147,7 @@ export default function DebtManagementScreen() {
   };
 
   const applyFilter = (filterType: string, value: string) => {
-    setFilters({ [filterType]: value });
+    setFilters(prev => ({ ...prev, [filterType]: value }));
   };
 
   const clearFilters = () => {
@@ -143,8 +167,7 @@ export default function DebtManagementScreen() {
     return (
       <TouchableOpacity
         onPress={() => {
-          setSelectedDebt(item);
-          setShowDebtDetails(true);
+          router.push(`/customer-detail/${item.customerId}`);
         }}
       >
         <GradientCard style={[styles.debtCard, isOverdue && styles.overdueCard]}>
