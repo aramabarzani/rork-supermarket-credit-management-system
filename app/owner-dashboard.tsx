@@ -27,8 +27,8 @@ export default function OwnerDashboardScreen() {
     duration: 30,
   });
 
-  const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
-    retry: 1,
+  const queryResult = trpc.subscription.owner.getAll.useQuery(void 0, {
+    retry: 2,
     retryDelay: 1000,
     staleTime: 30000,
     refetchOnMount: true,
@@ -37,13 +37,17 @@ export default function OwnerDashboardScreen() {
 
   const { data, isLoading, error, refetch } = queryResult;
 
-  console.log('OwnerDashboard: Query status:', {
-    isLoading,
-    hasData: !!data,
-    hasError: !!error,
-    errorMessage: error?.message,
-    errorDetails: error,
-  });
+  React.useEffect(() => {
+    console.log('OwnerDashboard: Query status:', {
+      isLoading,
+      hasData: !!data,
+      hasError: !!error,
+      errorMessage: error?.message,
+    });
+    if (error) {
+      console.error('[OwnerDashboard] Query error:', error);
+    }
+  }, [isLoading, data, error]);
   const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
   const suspendMutation = trpc.subscription.owner.suspend.useMutation();
   const activateMutation = trpc.subscription.owner.activate.useMutation();
