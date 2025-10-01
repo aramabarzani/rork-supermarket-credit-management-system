@@ -297,6 +297,9 @@ export default function OwnerDashboardScreen() {
               <Text style={styles.featureItem}>✓ چاودێری کارکردن و ئامار</Text>
               <Text style={styles.featureItem}>✓ ڕاگرتن و چالاککردنەوەی هەژمارەکان</Text>
               <Text style={styles.featureItem}>✓ بینینی کۆی داهات</Text>
+              <Text style={styles.featureItem}>✓ بینین و بەڕێوەبردنی داواکاریەکانی فرۆشگا</Text>
+              <Text style={styles.featureItem}>✓ پەسەندکردن یان ڕەتکردنەوەی داواکاریەکان</Text>
+              <Text style={styles.featureItem}>✓ دروستکردنی هەژماری بەڕێوەبەر بە خۆکار دوای پەسەندکردن</Text>
             </View>
             <Text style={styles.descriptionNote}>
               تێبینی: وەک خاوەندار، تەنها دەسەڵاتی بەڕێوەبردنی بەڕێوەبەران و ئابوونەکانیانت هەیە. ناتوانیت دەستکاری قەرز، کارمەندان، یان کڕیاران بکەیت.
