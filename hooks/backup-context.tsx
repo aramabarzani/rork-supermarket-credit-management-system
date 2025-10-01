@@ -8,16 +8,19 @@ export const [BackupContext, useBackup] = createContextHook(() => {
   const [isCreatingBackup, setIsCreatingBackup] = useState<boolean>(false);
 
   const configQuery = trpc.backup.getConfig.useQuery(undefined, {
-    retry: 0,
+    retry: 2,
     retryDelay: 1000,
+    staleTime: 60000,
   });
   const statsQuery = trpc.backup.getStats.useQuery(undefined, {
-    retry: 0,
+    retry: 2,
     retryDelay: 1000,
+    staleTime: 60000,
   });
   const recordsQuery = trpc.backup.getRecords.useQuery({}, {
-    retry: 0,
+    retry: 2,
     retryDelay: 1000,
+    staleTime: 60000,
   });
 
   useEffect(() => {
