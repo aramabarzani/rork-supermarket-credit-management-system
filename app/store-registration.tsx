@@ -14,10 +14,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Store, MapPin, Phone, Mail, User, Lock, CreditCard } from 'lucide-react-native';
 import { useTenant } from '@/hooks/tenant-context';
+import { useNotifications } from '@/hooks/notification-context';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 
 export default function StoreRegistrationScreen() {
   const { createTenant } = useTenant();
+  const { addNotification } = useNotifications();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -111,7 +113,7 @@ export default function StoreRegistrationScreen() {
       const plan = SUBSCRIPTION_PLANS[formData.plan];
       const duration = plan.duration === -1 ? 365 : plan.duration;
       
-      await createTenant({
+      const newTenant = await createTenant({
         storeName: formData.storeName,
         storeNameKurdish: formData.storeNameKurdish,
         ownerName: formData.ownerName,
@@ -123,6 +125,26 @@ export default function StoreRegistrationScreen() {
         status: 'trial',
         startDate: new Date().toISOString(),
         expiryDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
+      });
+
+      await addNotification({
+        title: 'فرۆشگایەکی نوێ تۆمارکرا',
+        titleKurdish: 'فرۆشگایەکی نوێ تۆمارکرا',
+        message: `${formData.storeNameKurdish} (${formData.storeName}) تۆمارکرا. خاوەن: ${formData.ownerName} - ${formData.ownerPhone}`,
+        messageKurdish: `${formData.storeNameKurdish} (${formData.storeName}) تۆمارکرا. خاوەن: ${formData.ownerName} - ${formData.ownerPhone}`,
+        type: 'new_store_registration',
+        priority: 'high',
+        recipientId: 'admin',
+        recipientType: 'admin',
+        isRead: false,
+        channels: ['in_app'],
+        metadata: {
+          tenantId: newTenant.id,
+          storeName: formData.storeName,
+          ownerName: formData.ownerName,
+          ownerPhone: formData.ownerPhone,
+          plan: formData.plan,
+        },
       });
 
       Alert.alert(
