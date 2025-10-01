@@ -1,58 +1,132 @@
-export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
+import { SubscriptionPlan, SubscriptionStatus } from './subscription';
 
 export interface Tenant {
   id: string;
-  name: string;
-  nameKu: string;
-  status: TenantStatus;
-  licenseKey: string;
-  subscriptionId?: string;
-  ownerId: string;
+  storeName: string;
+  storeNameKurdish: string;
   ownerName: string;
-  ownerEmail: string;
   ownerPhone: string;
+  ownerEmail?: string;
+  address: string;
+  city: string;
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  startDate: string;
+  expiryDate: string;
   createdAt: string;
-  activatedAt?: string;
-  expiresAt?: string;
-  lastAccessAt?: string;
-  settings: TenantSettings;
-  stats: TenantStats;
+  lastRenewedAt?: string;
+  suspendedAt?: string;
+  suspensionReason?: string;
+  staffCount: number;
+  customerCount: number;
+  debtCount: number;
+  totalDebtAmount: number;
+  totalPaidAmount: number;
+  lastActivityAt?: string;
+  branding?: TenantBranding;
+  settings?: TenantSettings;
+  features?: TenantFeatures;
+}
+
+export interface TenantBranding {
+  primaryColor: string;
+  secondaryColor: string;
+  logo?: string;
+  favicon?: string;
+  storeBanner?: string;
+  customCss?: string;
 }
 
 export interface TenantSettings {
-  maxUsers: number;
+  language: 'ku' | 'ar' | 'en';
+  currency: string;
+  timezone: string;
+  dateFormat: string;
+  fiscalYearStart: string;
+  enableNotifications: boolean;
+  enableSMS: boolean;
+  enableEmail: boolean;
+  autoBackup: boolean;
+  backupFrequency: 'daily' | 'weekly' | 'monthly';
+}
+
+export interface TenantFeatures {
+  maxStaff: number;
   maxCustomers: number;
-  maxStorage: number;
-  enabledModules: string[];
-  customDomain?: string;
+  maxDebts: number;
+  enableAdvancedReports: boolean;
+  enableCustomForms: boolean;
+  enableIntegrations: boolean;
+  enableAPI: boolean;
+  enableWhiteLabel: boolean;
+  enableMultiLocation: boolean;
+  enableInventory: boolean;
 }
 
 export interface TenantStats {
-  totalUsers: number;
-  totalCustomers: number;
-  totalDebts: number;
-  totalPayments: number;
-  storageUsed: number;
-  lastBackup?: string;
-}
-
-export interface CreateTenantInput {
-  name: string;
-  nameKu: string;
-  ownerName: string;
-  ownerEmail: string;
-  ownerPhone: string;
-  ownerPassword: string;
-  plan: 'trial' | 'basic' | 'professional' | 'enterprise';
-}
-
-export interface TenantDashboardStats {
-  totalTenants: number;
-  activeTenants: number;
-  trialTenants: number;
-  expiredTenants: number;
+  tenantId: string;
   totalRevenue: number;
   monthlyRevenue: number;
-  recentTenants: Tenant[];
-  expiringLicenses: Tenant[];
+  activeCustomers: number;
+  pendingDebts: number;
+  overdueDebts: number;
+  collectionRate: number;
+  averageDebtAmount: number;
+  topCustomers: {
+    id: string;
+    name: string;
+    totalDebt: number;
+  }[];
+  recentActivities: {
+    id: string;
+    type: string;
+    description: string;
+    timestamp: string;
+  }[];
+}
+
+export interface TenantOnboarding {
+  tenantId: string;
+  currentStep: number;
+  totalSteps: number;
+  completedSteps: string[];
+  startedAt: string;
+  completedAt?: string;
+  isCompleted: boolean;
+}
+
+export interface TenantInvoice {
+  id: string;
+  tenantId: string;
+  invoiceNumber: string;
+  plan: SubscriptionPlan;
+  amount: number;
+  currency: string;
+  issueDate: string;
+  dueDate: string;
+  paidDate?: string;
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  paymentMethod?: string;
+  notes?: string;
+}
+
+export interface TenantSupport {
+  id: string;
+  tenantId: string;
+  subject: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+  assignedTo?: string;
+  messages: {
+    id: string;
+    senderId: string;
+    senderName: string;
+    message: string;
+    timestamp: string;
+    attachments?: string[];
+  }[];
 }

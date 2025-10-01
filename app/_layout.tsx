@@ -20,6 +20,7 @@ import { ErrorLoggingProvider } from "@/hooks/error-logging-context";
 import { UICustomizationProvider } from "@/hooks/ui-customization-context";
 import { NotesProvider } from "@/hooks/notes-context";
 import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
+import { TenantProvider } from "@/hooks/tenant-context";
 
 import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
 import { BackupContext as BackupProvider } from "@/hooks/backup-context";
@@ -321,6 +322,12 @@ function RootLayoutNav() {
           title: "وردەکاریەکانی ئابوونە",
         }} 
       />
+      <Stack.Screen 
+        name="store-registration" 
+        options={{ 
+          title: "تۆمارکردنی فرۆشگا",
+        }} 
+      />
 
     </Stack>
   );
@@ -400,6 +407,7 @@ export default function RootLayout() {
                                 <BackupProvider>
                                   <SystemConfigProvider>
                                     <UsabilityProvider>
+                                      <TenantProvider>
                                         <AuthProvider>
                                 <SecurityProvider>
                                   <CustomerSettingsProvider>
@@ -418,6 +426,7 @@ export default function RootLayout() {
                                   </CustomerSettingsProvider>
                                 </SecurityProvider>
                                         </AuthProvider>
+                                      </TenantProvider>
                                     </UsabilityProvider>
                                   </SystemConfigProvider>
                                 </BackupProvider>

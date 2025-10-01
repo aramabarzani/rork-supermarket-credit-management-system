@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LogIn, Phone, Lock } from 'lucide-react-native';
+import { LogIn, Phone, Lock, Store } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
 
 export default function LoginScreen() {
@@ -147,6 +147,16 @@ export default function LoginScreen() {
                     کڕیار: 07701234567 / customer123
                   </Text>
                 </View>
+
+                <TouchableOpacity
+                  style={styles.registerButton}
+                  onPress={() => router.push('/store-registration')}
+                >
+                  <Store size={20} color="#3b82f6" />
+                  <Text style={styles.registerButtonText}>
+                    تۆمارکردنی فرۆشگای نوێ
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
@@ -266,5 +276,23 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     color: '#6B7280',
+  },
+  registerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#eff6ff',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#3b82f6',
+  },
+  registerButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#3b82f6',
   },
 });
