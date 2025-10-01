@@ -38,10 +38,19 @@ import { getCustomerRatingName, getCustomerRatingColor, calculateCustomerRating 
 export default function CustomerDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { getCustomers } = useUsers();
-  const { getCustomerDebts, getPaymentsByCustomer } = useDebts();
-  const { hasPermission } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'debts' | 'payments'>('overview');
+  
+  const usersContext = useUsers();
+  const debtsContext = useDebts();
+  const authContext = useAuth();
+  
+  if (!usersContext || !debtsContext || !authContext) {
+    return null;
+  }
+  
+  const { getCustomers } = usersContext;
+  const { getCustomerDebts, getPaymentsByCustomer } = debtsContext;
+  const { hasPermission } = authContext;
 
   const customer = getCustomers().find(c => c.id === id);
   

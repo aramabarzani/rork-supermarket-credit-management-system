@@ -251,7 +251,20 @@ export default function DashboardScreen() {
     // Implementation for PDF generation would go here
   };
 
-  if (!authContext || !debtContext || !usersContext || !notificationContext || isLoading || !isInitialized) {
+  if (!authContext || !debtContext || !usersContext || !notificationContext) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color="#1E3A8A" />
+          <Text style={{ marginTop: 16, color: '#6B7280' }}>
+            چاوەڕوان بە...
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (isLoading || !isInitialized) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>

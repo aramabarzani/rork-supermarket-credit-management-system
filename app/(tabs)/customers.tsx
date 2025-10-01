@@ -35,14 +35,23 @@ import { getCustomerRatingName, getCustomerRatingColor, CUSTOMER_RATINGS, Custom
 
 export default function CustomersScreen() {
   const router = useRouter();
-  const { getCustomers, deleteUser } = useUsers();
-  const { getCustomerDebts } = useDebts();
-  const { hasPermission } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<CustomerGroupId | 'all'>('all');
   const [selectedRating, setSelectedRating] = useState<CustomerRatingId | 'all'>('all');
   const [showGroupFilter, setShowGroupFilter] = useState(false);
   const [showRatingFilter, setShowRatingFilter] = useState(false);
+  
+  const usersContext = useUsers();
+  const debtsContext = useDebts();
+  const authContext = useAuth();
+  
+  if (!usersContext || !debtsContext || !authContext) {
+    return null;
+  }
+  
+  const { getCustomers, deleteUser } = usersContext;
+  const { getCustomerDebts } = debtsContext;
+  const { hasPermission } = authContext;
 
   const customers = getCustomers();
   const filteredCustomers = customers.filter(customer => {
@@ -107,7 +116,7 @@ export default function CustomersScreen() {
 
     return (
       <TouchableOpacity
-        onPress={() => router.push(`/customer/${item.id}`)}
+        onPress={() => router.push(`/customer-detail/${item.id}`)}
       >
         <GradientCard style={styles.customerCard}>
           <View style={styles.customerHeader}>
