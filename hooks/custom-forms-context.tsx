@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { trpc } from '@/lib/trpc';
 import type { CustomForm, CustomField, FormType } from '@/types/custom-forms';
@@ -26,6 +26,24 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     retryDelay: 1000,
     staleTime: 30000,
   });
+
+  useEffect(() => {
+    if (formsQuery.error) {
+      console.error('[Custom Forms] Failed to fetch forms:', formsQuery.error.message);
+    }
+  }, [formsQuery.error]);
+
+  useEffect(() => {
+    if (formByIdQuery.error) {
+      console.error('[Custom Forms] Failed to fetch form by ID:', formByIdQuery.error.message);
+    }
+  }, [formByIdQuery.error]);
+
+  useEffect(() => {
+    if (submissionsQuery.error) {
+      console.error('[Custom Forms] Failed to fetch submissions:', submissionsQuery.error.message);
+    }
+  }, [submissionsQuery.error]);
 
   const createFormMutation = trpc.forms.create.useMutation({
     onSuccess: () => {

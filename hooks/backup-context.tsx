@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { trpc } from '@/lib/trpc';
 import type { BackupConfig, BackupRecord, BackupDestination, BackupFrequency } from '@/types/backup';
@@ -19,6 +19,24 @@ export const [BackupContext, useBackup] = createContextHook(() => {
     retry: 0,
     retryDelay: 1000,
   });
+
+  useEffect(() => {
+    if (configQuery.error) {
+      console.error('[Backup] Failed to fetch config:', configQuery.error.message);
+    }
+  }, [configQuery.error]);
+
+  useEffect(() => {
+    if (statsQuery.error) {
+      console.error('[Backup] Failed to fetch stats:', statsQuery.error.message);
+    }
+  }, [statsQuery.error]);
+
+  useEffect(() => {
+    if (recordsQuery.error) {
+      console.error('[Backup] Failed to fetch records:', recordsQuery.error.message);
+    }
+  }, [recordsQuery.error]);
 
   const updateConfigMutation = trpc.backup.updateConfig.useMutation({
     onSuccess: () => {

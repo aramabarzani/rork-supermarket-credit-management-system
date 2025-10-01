@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import { trpc } from '@/lib/trpc';
 import type {
@@ -16,6 +16,10 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const configQuery = trpc.system.config.get.useQuery(undefined, {
     retry: 0,
     retryDelay: 1000,
+    onError: (err: Error) => {
+      console.error('[System Config] Failed to fetch config:', err.message);
+      setError('کێشە لە پەیوەندی بە سێرڤەر. تکایە دووبارە هەوڵ بدەرەوە.');
+    },
   });
   const updateConfigMutation = trpc.system.config.update.useMutation();
   const resetConfigMutation = trpc.system.config.reset.useMutation();
@@ -23,6 +27,9 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const passwordPolicyQuery = trpc.system.config.passwordPolicy.get.useQuery(undefined, {
     retry: 0,
     retryDelay: 1000,
+    onError: (err: Error) => {
+      console.error('[System Config] Failed to fetch password policy:', err.message);
+    },
   });
   const updatePasswordPolicyMutation =
     trpc.system.config.passwordPolicy.update.useMutation();
@@ -31,6 +38,9 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     trpc.system.config.notifications.get.useQuery(undefined, {
       retry: 0,
       retryDelay: 1000,
+      onError: (err: Error) => {
+        console.error('[System Config] Failed to fetch notification settings:', err.message);
+      },
     });
   const updateNotificationSettingsMutation =
     trpc.system.config.notifications.update.useMutation();
@@ -38,6 +48,9 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const backupSettingsQuery = trpc.system.config.backup.get.useQuery(undefined, {
     retry: 0,
     retryDelay: 1000,
+    onError: (err: Error) => {
+      console.error('[System Config] Failed to fetch backup settings:', err.message);
+    },
   });
   const updateBackupSettingsMutation =
     trpc.system.config.backup.update.useMutation();
@@ -45,6 +58,9 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const limitSettingsQuery = trpc.system.config.limits.get.useQuery(undefined, {
     retry: 0,
     retryDelay: 1000,
+    onError: (err: Error) => {
+      console.error('[System Config] Failed to fetch limit settings:', err.message);
+    },
   });
   const updateLimitSettingsMutation =
     trpc.system.config.limits.update.useMutation();
@@ -192,7 +208,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     [updateLimitSettingsMutation, limitSettingsQuery]
   );
 
-  return {
+  return useMemo(() => ({
     config: configQuery.data,
     passwordPolicy: passwordPolicyQuery.data,
     notificationSettings: notificationSettingsQuery.data,
@@ -213,5 +229,25 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     updateBackupSettings,
     updateLimitSettings,
     refetch: configQuery.refetch,
-  };
+  }), [
+    configQuery.data,
+    configQuery.isLoading,
+    configQuery.refetch,
+    passwordPolicyQuery.data,
+    passwordPolicyQuery.isLoading,
+    notificationSettingsQuery.data,
+    notificationSettingsQuery.isLoading,
+    backupSettingsQuery.data,
+    backupSettingsQuery.isLoading,
+    limitSettingsQuery.data,
+    limitSettingsQuery.isLoading,
+    isLoading,
+    error,
+    updateSystemConfig,
+    resetSystemConfig,
+    updatePasswordPolicy,
+    updateNotificationSettings,
+    updateBackupSettings,
+    updateLimitSettings,
+  ]);
 });

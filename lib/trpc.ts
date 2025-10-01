@@ -83,7 +83,13 @@ export const trpcClient = trpc.createClient({
           
           return response;
         } catch (error) {
-          console.error('[tRPC] Fetch error:', error);
+          if (error instanceof TypeError && error.message === 'Network request failed') {
+            console.error('[tRPC] Network error - Backend may not be accessible');
+            console.error('[tRPC] Attempted URL:', url);
+            console.error('[tRPC] Base URL:', baseUrl);
+          } else {
+            console.error('[tRPC] Fetch error:', error);
+          }
           throw error;
         }
       },
