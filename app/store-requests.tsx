@@ -9,6 +9,7 @@ import {
   Alert,
   RefreshControl,
   Modal,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -25,6 +26,7 @@ import {
   User,
   FileText,
   AlertCircle,
+  MessageCircle,
 } from 'lucide-react-native';
 import { useStoreRequests } from '@/hooks/store-request-context';
 import { useTenant } from '@/hooks/tenant-context';
@@ -99,6 +101,10 @@ export default function StoreRequestsScreen() {
               const duration = plan.duration === -1 ? 365 : plan.duration;
 
               const newTenant = await createTenant({
+                adminId: request.ownerPhone,
+                adminName: request.ownerName,
+                adminPhone: request.ownerPhone,
+                adminEmail: request.ownerEmail,
                 storeName: request.storeName,
                 storeNameKurdish: request.storeNameKurdish,
                 ownerName: request.ownerName,
@@ -190,6 +196,27 @@ export default function StoreRequestsScreen() {
       console.error('Rejection error:', error);
       Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە ڕەتکردنەوەی داواکاریەکە');
     }
+  };
+
+  const handleWhatsAppContact = (phone: string, storeName: string) => {
+    const cleanPhone = phone.replace(/[^0-9+]/g, '');
+    const message = encodeURIComponent(
+      `سڵاو، پەیوەندیم پێوە دەکەم دەربارەی داواکاری سیستەمی بەڕێوەبردنی قەرز بۆ ${storeName}. چۆنم یارمەتیت بدەم؟`
+    );
+    const whatsappUrl = `whatsapp://send?phone=${cleanPhone}&text=${message}`;
+    
+    Linking.canOpenURL(whatsappUrl)
+      .then((supported) => {
+        if (supported) {
+          return Linking.openURL(whatsappUrl);
+        } else {
+          Alert.alert('هەڵە', 'وەتسئاپ لەسەر ئامێرەکەت دانەمەزراوە');
+        }
+      })
+      .catch((error) => {
+        console.error('WhatsApp error:', error);
+        Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە کردنەوەی وەتسئاپ');
+      });
   };
 
   const getStatusColor = (status: string) => {
@@ -305,9 +332,18 @@ export default function StoreRequestsScreen() {
             <User size={16} color="#6b7280" />
             <Text style={styles.detailText}>{request.ownerName}</Text>
           </View>
-          <View style={styles.detailRow}>
-            <Phone size={16} color="#6b7280" />
-            <Text style={styles.detailText}>{request.ownerPhone}</Text>
+          <View style={styles.detailRowWithAction}>
+            <View style={styles.detailRow}>
+              <Phone size={16} color="#6b7280" />
+              <Text style={styles.detailText}>{request.ownerPhone}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.whatsappButton}
+              onPress={() => handleWhatsAppContact(request.ownerPhone, request.storeNameKurdish)}
+            >
+              <MessageCircle size={16} color="#25D366" />
+              <Text style={styles.whatsappButtonText}>وەتسئاپ</Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.detailRow}>
             <MapPin size={16} color="#6b7280" />
@@ -612,9 +648,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
+  detailRowWithAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   detailText: {
     fontSize: 14,
     color: '#4b5563',
+  },
+  whatsappButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E8F8F0',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#25D366',
+  },
+  whatsappButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#25D366',
   },
   rejectionBox: {
     flexDirection: 'row',
