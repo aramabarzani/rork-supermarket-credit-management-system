@@ -1,19 +1,25 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Issue, IssueComment, IssueStats, IssueFilter, IssuePriority, IssueCategory } from '@/types/support';
+import { Issue, IssueComment, IssueStats, IssueFilter, IssuePriority, IssueCategory, LiveChatSession, LiveChatMessage, ChatStats } from '@/types/support';
 
 const ISSUES_KEY = 'support_issues';
 const COMMENTS_KEY = 'support_comments';
+const CHAT_SESSIONS_KEY = 'chat_sessions';
+const CHAT_MESSAGES_KEY = 'chat_messages';
 
 export const [SupportProvider, useSupport] = createContextHook(() => {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [comments, setComments] = useState<IssueComment[]>([]);
+  const [chatSessions, setChatSessions] = useState<LiveChatSession[]>([]);
+  const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadIssues();
     loadComments();
+    loadChatSessions();
+    loadChatMessages();
   }, []);
 
   const loadIssues = async () => {
@@ -40,6 +46,28 @@ export const [SupportProvider, useSupport] = createContextHook(() => {
     }
   };
 
+  const loadChatSessions = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(CHAT_SESSIONS_KEY);
+      if (stored) {
+        setChatSessions(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load chat sessions:', error);
+    }
+  };
+
+  const loadChatMessages = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(CHAT_MESSAGES_KEY);
+      if (stored) {
+        setChatMessages(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load chat messages:', error);
+    }
+  };
+
   const saveIssues = async (updatedIssues: Issue[]) => {
     try {
       await AsyncStorage.setItem(ISSUES_KEY, JSON.stringify(updatedIssues));
@@ -56,6 +84,26 @@ export const [SupportProvider, useSupport] = createContextHook(() => {
       setComments(updatedComments);
     } catch (error) {
       console.error('Failed to save comments:', error);
+      throw error;
+    }
+  };
+
+  const saveChatSessions = async (sessions: LiveChatSession[]) => {
+    try {
+      await AsyncStorage.setItem(CHAT_SESSIONS_KEY, JSON.stringify(sessions));
+      setChatSessions(sessions);
+    } catch (error) {
+      console.error('Failed to save chat sessions:', error);
+      throw error;
+    }
+  };
+
+  const saveChatMessages = async (messages: LiveChatMessage[]) => {
+    try {
+      await AsyncStorage.setItem(CHAT_MESSAGES_KEY, JSON.stringify(messages));
+      setChatMessages(messages);
+    } catch (error) {
+      console.error('Failed to save chat messages:', error);
       throw error;
     }
   };
@@ -250,9 +298,159 @@ export const [SupportProvider, useSupport] = createContextHook(() => {
     await saveComments(updatedComments);
   }, [issues, comments]);
 
+  const startChatSession = useCallback(async (customerId: string, customerName: string) => {
+    const newSession: LiveChatSession = {
+      id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      customerId,
+      customerName,
+      status: 'waiting',
+      startedAt: new Date().toISOString(),
+      lastMessageAt: new Date().toISOString(),
+      unreadCount: 0,
+    };
+
+    await saveChatSessions([...chatSessions, newSession]);
+    return newSession;
+  }, [chatSessions]);
+
+  const assignChatSession = useCallback(async (sessionId: string, agentId: string, agentName: string) => {
+    const updated = chatSessions.map(s =>
+      s.id === sessionId
+        ? { ...s, assignedTo: agentId, assignedToName: agentName, status: 'active' as const }
+        : s
+    );
+    await saveChatSessions(updated);
+  }, [chatSessions]);
+
+  const closeChatSession = useCallback(async (sessionId: string) => {
+    const updated = chatSessions.map(s =>
+      s.id === sessionId
+        ? { ...s, status: 'closed' as const, endedAt: new Date().toISOString() }
+        : s
+    );
+    await saveChatSessions(updated);
+  }, [chatSessions]);
+
+  const rateChatSession = useCallback(async (sessionId: string, rating: number, comment?: string) => {
+    const updated = chatSessions.map(s =>
+      s.id === sessionId
+        ? { ...s, rating, ratingComment: comment }
+        : s
+    );
+    await saveChatSessions(updated);
+  }, [chatSessions]);
+
+  const sendChatMessage = useCallback(async (
+    sessionId: string,
+    senderId: string,
+    senderName: string,
+    senderRole: 'customer' | 'employee' | 'admin' | 'system',
+    message: string
+  ) => {
+    const newMessage: LiveChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      sessionId,
+      senderId,
+      senderName,
+      senderRole,
+      message,
+      timestamp: new Date().toISOString(),
+      read: false,
+    };
+
+    await saveChatMessages([...chatMessages, newMessage]);
+
+    const updatedSessions = chatSessions.map(s =>
+      s.id === sessionId
+        ? { ...s, lastMessageAt: new Date().toISOString(), unreadCount: s.unreadCount + 1 }
+        : s
+    );
+    await saveChatSessions(updatedSessions);
+
+    return newMessage;
+  }, [chatMessages, chatSessions]);
+
+  const markChatMessagesAsRead = useCallback(async (sessionId: string, userId: string) => {
+    const updated = chatMessages.map(m =>
+      m.sessionId === sessionId && m.senderId !== userId
+        ? { ...m, read: true }
+        : m
+    );
+    await saveChatMessages(updated);
+
+    const updatedSessions = chatSessions.map(s =>
+      s.id === sessionId
+        ? { ...s, unreadCount: 0 }
+        : s
+    );
+    await saveChatSessions(updatedSessions);
+  }, [chatMessages, chatSessions]);
+
+  const getChatSessionMessages = useCallback((sessionId: string) => {
+    return chatMessages.filter(m => m.sessionId === sessionId);
+  }, [chatMessages]);
+
+  const getActiveChatSessions = useCallback(() => {
+    return chatSessions.filter(s => s.status === 'active');
+  }, [chatSessions]);
+
+  const getWaitingChatSessions = useCallback(() => {
+    return chatSessions.filter(s => s.status === 'waiting');
+  }, [chatSessions]);
+
+  const getAgentChatSessions = useCallback((agentId: string) => {
+    return chatSessions.filter(s => s.assignedTo === agentId && s.status === 'active');
+  }, [chatSessions]);
+
+  const getChatStats = useCallback((): ChatStats => {
+    const activeSessions = chatSessions.filter(s => s.status === 'active').length;
+    const waitingSessions = chatSessions.filter(s => s.status === 'waiting').length;
+    const closedSessions = chatSessions.filter(s => s.status === 'closed').length;
+
+    const sessionsWithDuration = chatSessions.filter(s => s.endedAt);
+    const totalDuration = sessionsWithDuration.reduce((sum, s) => {
+      const start = new Date(s.startedAt).getTime();
+      const end = new Date(s.endedAt!).getTime();
+      return sum + (end - start);
+    }, 0);
+    const averageSessionDuration = sessionsWithDuration.length > 0
+      ? totalDuration / sessionsWithDuration.length / (1000 * 60)
+      : 0;
+
+    const ratedSessions = chatSessions.filter(s => s.rating !== undefined);
+    const averageRating = ratedSessions.length > 0
+      ? ratedSessions.reduce((sum, s) => sum + (s.rating || 0), 0) / ratedSessions.length
+      : 0;
+
+    const agentMap = new Map<string, { agentId: string; agentName: string; count: number }>();
+    chatSessions.forEach(s => {
+      if (s.assignedTo && s.assignedToName) {
+        const existing = agentMap.get(s.assignedTo);
+        if (existing) {
+          existing.count++;
+        } else {
+          agentMap.set(s.assignedTo, { agentId: s.assignedTo, agentName: s.assignedToName, count: 1 });
+        }
+      }
+    });
+
+    return {
+      totalSessions: chatSessions.length,
+      activeSessions,
+      waitingSessions,
+      closedSessions,
+      averageResponseTime: 0,
+      averageSessionDuration,
+      averageRating,
+      sessionsByAgent: Array.from(agentMap.values()),
+    };
+  }, [chatSessions]);
+
   return useMemo(() => ({
     issues,
     comments,
+    chatSessions,
+    chatMessages,
     isLoading,
     createIssue,
     updateIssue,
@@ -270,9 +468,22 @@ export const [SupportProvider, useSupport] = createContextHook(() => {
     getAssignedIssues,
     getUnassignedIssues,
     deleteIssue,
+    startChatSession,
+    assignChatSession,
+    closeChatSession,
+    rateChatSession,
+    sendChatMessage,
+    markChatMessagesAsRead,
+    getChatSessionMessages,
+    getActiveChatSessions,
+    getWaitingChatSessions,
+    getAgentChatSessions,
+    getChatStats,
   }), [
     issues,
     comments,
+    chatSessions,
+    chatMessages,
     isLoading,
     createIssue,
     updateIssue,
@@ -290,5 +501,16 @@ export const [SupportProvider, useSupport] = createContextHook(() => {
     getAssignedIssues,
     getUnassignedIssues,
     deleteIssue,
+    startChatSession,
+    assignChatSession,
+    closeChatSession,
+    rateChatSession,
+    sendChatMessage,
+    markChatMessagesAsRead,
+    getChatSessionMessages,
+    getActiveChatSessions,
+    getWaitingChatSessions,
+    getAgentChatSessions,
+    getChatStats,
   ]);
 });

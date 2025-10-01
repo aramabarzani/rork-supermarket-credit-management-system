@@ -4,6 +4,24 @@ export type DateFormat = 'yyyy-mm-dd' | 'dd-mm-yyyy' | 'mm-dd-yyyy';
 export type DisplayMode = 'card' | 'list';
 export type ChartType = 'bar' | 'line' | 'pie';
 
+export interface DashboardWidget {
+  id: string;
+  type: 'stats' | 'chart' | 'list' | 'calendar' | 'quick_actions' | 'notifications' | 'recent_activity';
+  title: string;
+  titleKurdish: string;
+  position: { x: number; y: number; w: number; h: number };
+  visible: boolean;
+  config?: Record<string, any>;
+}
+
+export interface DashboardLayout {
+  id: string;
+  name: string;
+  nameKurdish: string;
+  widgets: DashboardWidget[];
+  isDefault: boolean;
+}
+
 export interface UICustomization {
   themeMode: ThemeMode;
   primaryColor: string;
@@ -19,6 +37,8 @@ export interface UICustomization {
   chartColors: string[];
   dashboardBackground?: string;
   customCSS?: string;
+  dashboardLayouts?: DashboardLayout[];
+  activeDashboardId?: string;
 }
 
 export interface RoleUICustomization {

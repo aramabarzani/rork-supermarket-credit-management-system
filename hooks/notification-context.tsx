@@ -7,7 +7,8 @@ import {
   NotificationChannel,
   NotificationTemplate,
   ScheduledNotification,
-  NotificationLog
+  NotificationLog,
+  ManagerNotificationRule
 } from '@/types/notification';
 
 const NOTIFICATIONS_KEY = 'notifications';
@@ -15,6 +16,7 @@ const NOTIFICATION_SETTINGS_KEY = 'notification_settings';
 const NOTIFICATION_TEMPLATES_KEY = 'notification_templates';
 const SCHEDULED_NOTIFICATIONS_KEY = 'scheduled_notifications';
 const NOTIFICATION_LOGS_KEY = 'notification_logs';
+const MANAGER_RULES_KEY = 'manager_notification_rules';
 
 const defaultSettings: NotificationSettings = {
   userId: '',
@@ -84,6 +86,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
   const [templates, setTemplates] = useState<NotificationTemplate[]>(defaultTemplates);
   const [scheduledNotifications, setScheduledNotifications] = useState<ScheduledNotification[]>([]);
   const [notificationLogs, setNotificationLogs] = useState<NotificationLog[]>([]);
+  const [managerRules, setManagerRules] = useState<ManagerNotificationRule[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -92,6 +95,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     loadTemplates();
     loadScheduledNotifications();
     loadNotificationLogs();
+    loadManagerRules();
   }, []);
 
   const loadNotifications = async () => {
@@ -152,6 +156,17 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     }
   };
 
+  const loadManagerRules = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(MANAGER_RULES_KEY);
+      if (stored) {
+        setManagerRules(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load manager rules:', error);
+    }
+  };
+
   const saveNotifications = async (notifs: Notification[]) => {
     try {
       await AsyncStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(notifs));
@@ -176,6 +191,15 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
       setNotificationLogs(logs);
     } catch (error) {
       console.error('Failed to save notification logs:', error);
+    }
+  };
+
+  const saveManagerRules = async (rules: ManagerNotificationRule[]) => {
+    try {
+      await AsyncStorage.setItem(MANAGER_RULES_KEY, JSON.stringify(rules));
+      setManagerRules(rules);
+    } catch (error) {
+      console.error('Failed to save manager rules:', error);
     }
   };
 
@@ -530,6 +554,123 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     await saveSettings(updated);
   }, [settings]);
 
+  const addManagerRule = useCallback(async (rule: Omit<ManagerNotificationRule, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newRule: ManagerNotificationRule = {
+      ...rule,
+      id: `rule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await saveManagerRules([...managerRules, newRule]);
+  }, [managerRules]);
+
+  const updateManagerRule = useCallback(async (id: string, updates: Partial<ManagerNotificationRule>) => {
+    const updated = managerRules.map(rule =>
+      rule.id === id ? { ...rule, ...updates, updatedAt: new Date().toISOString() } : rule
+    );
+    await saveManagerRules(updated);
+  }, [managerRules]);
+
+  const deleteManagerRule = useCallback(async (id: string) => {
+    const updated = managerRules.filter(rule => rule.id !== id);
+    await saveManagerRules(updated);
+  }, [managerRules]);
+
+  const checkManagerRules = useCallback(async (event: { type: string; data: any }) => {
+    const activeRules = managerRules.filter(rule => rule.enabled);
+
+    for (const rule of activeRules) {
+      let shouldNotify = false;
+      let title = '';
+      let message = '';
+
+      switch (rule.condition.type) {
+        case 'high_debt':
+          if (event.type === 'debt_added' && event.data.amount >= rule.condition.threshold) {
+            shouldNotify = true;
+            title = 'ئاگاداری قەرزی گەورە';
+            message = `قەرزێکی گەورە بە بڕی ${event.data.amount.toLocaleString()} دینار بۆ ${event.data.customerName} زیادکرا.`;
+          }
+          break;
+
+        case 'overdue_debt':
+          if (event.type === 'debt_overdue' && event.data.daysOverdue >= rule.condition.days) {
+            shouldNotify = true;
+            title = 'ئاگاداری قەرزی سەردەشتی';
+            message = `قەرزێک بە بڕی ${event.data.amount.toLocaleString()} دینار ${event.data.daysOverdue} ڕۆژە سەردەشتی بۆ ${event.data.customerName}.`;
+          }
+          break;
+
+        case 'large_payment':
+          if (event.type === 'payment_received' && event.data.amount >= rule.condition.threshold) {
+            shouldNotify = true;
+            title = 'پارەدانی گەورە';
+            message = `پارەدانێکی گەورە بە بڕی ${event.data.amount.toLocaleString()} دینار لە ${event.data.customerName} وەرگیرا.`;
+          }
+          break;
+
+        case 'customer_inactive':
+          if (event.type === 'customer_inactive' && event.data.inactiveDays >= rule.condition.days) {
+            shouldNotify = true;
+            title = 'کڕیاری ناچالاک';
+            message = `کڕیار ${event.data.customerName} ${event.data.inactiveDays} ڕۆژە چالاکی نییە.`;
+          }
+          break;
+
+        case 'staff_activity':
+          if (event.type === 'staff_activity' && event.data.action === rule.condition.action) {
+            shouldNotify = true;
+            title = 'چالاکی کارمەند';
+            message = `کارمەند ${event.data.staffName} ${event.data.action} ئەنجامدا.`;
+          }
+          break;
+
+        case 'system_error':
+          if (event.type === 'system_error' && event.data.severity === rule.condition.severity) {
+            shouldNotify = true;
+            title = 'هەڵەی سیستەم';
+            message = `هەڵەیەک لە سیستەمدا ڕوویدا: ${event.data.message}`;
+          }
+          break;
+
+        case 'backup_failed':
+          if (event.type === 'backup_failed') {
+            shouldNotify = true;
+            title = 'شکستی پاشەکەوتکردن';
+            message = 'پاشەکەوتکردنی خۆکار سەرکەوتوو نەبوو. تکایە بە دەستی پاشەکەوت بکە.';
+          }
+          break;
+
+        case 'subscription_expiring':
+          if (event.type === 'subscription_expiring' && event.data.daysUntilExpiry <= rule.condition.days) {
+            shouldNotify = true;
+            title = 'ئاگاداری بەسەرچوونی ئابوونە';
+            message = `ئابوونەکە ${event.data.daysUntilExpiry} ڕۆژی ماوە بۆ بەسەرچوون.`;
+          }
+          break;
+      }
+
+      if (shouldNotify) {
+        for (const recipientId of rule.recipients) {
+          const notification: Omit<Notification, 'id' | 'createdAt'> = {
+            type: event.type as any,
+            title,
+            message,
+            userId: recipientId,
+            recipientId,
+            recipientType: 'admin',
+            isRead: false,
+            priority: rule.priority,
+            channels: rule.channels,
+            metadata: event.data,
+          };
+
+          await sendNotification(notification, rule.channels);
+        }
+      }
+    }
+  }, [managerRules, sendNotification]);
+
   const unreadCount = useMemo(() => {
     return notifications.filter(n => !n.isRead).length;
   }, [notifications]);
@@ -541,6 +682,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     settings,
     templates,
     notificationLogs,
+    managerRules,
     addNotification,
     markAsRead,
     markAllAsRead,
@@ -554,6 +696,10 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     sendReceiptNotification,
     sendManagerAlert,
     sendCustomerAlert,
+    addManagerRule,
+    updateManagerRule,
+    deleteManagerRule,
+    checkManagerRules,
   }), [
     notifications,
     isLoading,
@@ -561,6 +707,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     settings,
     templates,
     notificationLogs,
+    managerRules,
     addNotification,
     markAsRead,
     markAllAsRead,
@@ -574,5 +721,9 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     sendReceiptNotification,
     sendManagerAlert,
     sendCustomerAlert,
+    addManagerRule,
+    updateManagerRule,
+    deleteManagerRule,
+    checkManagerRules,
   ]);
 });

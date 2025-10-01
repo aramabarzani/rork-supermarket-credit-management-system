@@ -139,12 +139,39 @@ export interface NotificationStats {
   byType: Record<Notification['type'], { sent: number; delivered: number; failed: number }>;
 }
 
+export interface ManagerNotificationRule {
+  id: string;
+  name: string;
+  nameKurdish: string;
+  enabled: boolean;
+  condition: ManagerNotificationCondition;
+  channels: NotificationChannel[];
+  recipients: string[];
+  priority: 'low' | 'medium' | 'high';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ManagerNotificationCondition = 
+  | { type: 'high_debt'; threshold: number }
+  | { type: 'overdue_debt'; days: number }
+  | { type: 'large_payment'; threshold: number }
+  | { type: 'customer_inactive'; days: number }
+  | { type: 'staff_activity'; action: string }
+  | { type: 'system_error'; severity: 'low' | 'medium' | 'high' }
+  | { type: 'backup_failed' }
+  | { type: 'subscription_expiring'; days: number }
+  | { type: 'daily_summary'; time: string }
+  | { type: 'weekly_report'; dayOfWeek: number; time: string }
+  | { type: 'monthly_report'; dayOfMonth: number; time: string };
+
 export interface NotificationContextType {
   notifications: Notification[];
   unreadCount: number;
   settings: NotificationSettings | null;
   templates: NotificationTemplate[];
   messageThreads: MessageThread[];
+  managerRules: ManagerNotificationRule[];
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -155,4 +182,8 @@ export interface NotificationContextType {
   sendDirectMessage: (receiverId: string, message: string, attachments?: MessageAttachment[]) => Promise<void>;
   scheduleNotification: (templateId: string, recipientId: string, scheduledFor: Date, variables: Record<string, any>) => Promise<void>;
   sendBulkNotification: (recipientIds: string[], templateId: string, variables: Record<string, any>) => Promise<void>;
+  addManagerRule: (rule: Omit<ManagerNotificationRule, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateManagerRule: (id: string, updates: Partial<ManagerNotificationRule>) => Promise<void>;
+  deleteManagerRule: (id: string) => Promise<void>;
+  checkManagerRules: (event: { type: string; data: any }) => Promise<void>;
 }

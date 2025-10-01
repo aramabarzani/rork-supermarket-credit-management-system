@@ -84,3 +84,54 @@ export interface IssueFilter {
   dateFrom?: string;
   dateTo?: string;
 }
+
+export interface LiveChatMessage {
+  id: string;
+  sessionId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'customer' | 'employee' | 'admin' | 'system';
+  message: string;
+  timestamp: string;
+  read: boolean;
+  attachments?: ChatAttachment[];
+}
+
+export interface ChatAttachment {
+  id: string;
+  type: 'image' | 'file' | 'receipt';
+  url: string;
+  filename: string;
+  size: number;
+}
+
+export interface LiveChatSession {
+  id: string;
+  customerId: string;
+  customerName: string;
+  assignedTo?: string;
+  assignedToName?: string;
+  status: 'active' | 'waiting' | 'closed';
+  startedAt: string;
+  endedAt?: string;
+  lastMessageAt: string;
+  unreadCount: number;
+  tags?: string[];
+  rating?: number;
+  ratingComment?: string;
+}
+
+export interface ChatStats {
+  totalSessions: number;
+  activeSessions: number;
+  waitingSessions: number;
+  closedSessions: number;
+  averageResponseTime: number;
+  averageSessionDuration: number;
+  averageRating: number;
+  sessionsByAgent: {
+    agentId: string;
+    agentName: string;
+    count: number;
+  }[];
+}

@@ -7,6 +7,8 @@ import {
   RoleUICustomization,
   UserUIPreferences,
   DEFAULT_UI_CUSTOMIZATION,
+  DashboardLayout,
+  DashboardWidget,
 } from '@/types/ui-customization';
 
 const UI_CUSTOMIZATION_KEY = 'ui_customization';
@@ -168,6 +170,116 @@ const [UICustomizationProvider, useUICustomization] = createContextHook(() => {
     }
   }, [userPreferences]);
 
+  const addDashboardLayout = useCallback(async (layout: Omit<DashboardLayout, 'id'>) => {
+    try {
+      const newLayout: DashboardLayout = {
+        ...layout,
+        id: `layout_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+
+      const layouts = currentCustomization.dashboardLayouts || [];
+      const updated = { ...currentCustomization, dashboardLayouts: [...layouts, newLayout] };
+      setCurrentCustomization(updated);
+      safeStorage.setItem(UI_CUSTOMIZATION_KEY, updated);
+      return newLayout;
+    } catch (error) {
+      console.error('Error adding dashboard layout:', error);
+      throw error;
+    }
+  }, [currentCustomization]);
+
+  const updateDashboardLayout = useCallback(async (layoutId: string, updates: Partial<DashboardLayout>) => {
+    try {
+      const layouts = currentCustomization.dashboardLayouts || [];
+      const updatedLayouts = layouts.map(l => l.id === layoutId ? { ...l, ...updates } : l);
+      const updated = { ...currentCustomization, dashboardLayouts: updatedLayouts };
+      setCurrentCustomization(updated);
+      safeStorage.setItem(UI_CUSTOMIZATION_KEY, updated);
+    } catch (error) {
+      console.error('Error updating dashboard layout:', error);
+    }
+  }, [currentCustomization]);
+
+  const deleteDashboardLayout = useCallback(async (layoutId: string) => {
+    try {
+      const layouts = currentCustomization.dashboardLayouts || [];
+      const filtered = layouts.filter(l => l.id !== layoutId);
+      const updated = { ...currentCustomization, dashboardLayouts: filtered };
+      setCurrentCustomization(updated);
+      safeStorage.setItem(UI_CUSTOMIZATION_KEY, updated);
+    } catch (error) {
+      console.error('Error deleting dashboard layout:', error);
+    }
+  }, [currentCustomization]);
+
+  const setActiveDashboard = useCallback(async (layoutId: string) => {
+    try {
+      const updated = { ...currentCustomization, activeDashboardId: layoutId };
+      setCurrentCustomization(updated);
+      safeStorage.setItem(UI_CUSTOMIZATION_KEY, updated);
+    } catch (error) {
+      console.error('Error setting active dashboard:', error);
+    }
+  }, [currentCustomization]);
+
+  const addWidgetToLayout = useCallback(async (layoutId: string, widget: Omit<DashboardWidget, 'id'>) => {
+    try {
+      const layouts = currentCustomization.dashboardLayouts || [];
+      const layout = layouts.find(l => l.id === layoutId);
+      if (!layout) throw new Error('Layout not found');
+
+      const newWidget: DashboardWidget = {
+        ...widget,
+        id: `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      };
+
+      const updatedLayout = {
+        ...layout,
+        widgets: [...layout.widgets, newWidget],
+      };
+
+      await updateDashboardLayout(layoutId, updatedLayout);
+      return newWidget;
+    } catch (error) {
+      console.error('Error adding widget:', error);
+      throw error;
+    }
+  }, [currentCustomization, updateDashboardLayout]);
+
+  const updateWidget = useCallback(async (layoutId: string, widgetId: string, updates: Partial<DashboardWidget>) => {
+    try {
+      const layouts = currentCustomization.dashboardLayouts || [];
+      const layout = layouts.find(l => l.id === layoutId);
+      if (!layout) throw new Error('Layout not found');
+
+      const updatedWidgets = layout.widgets.map(w => w.id === widgetId ? { ...w, ...updates } : w);
+      await updateDashboardLayout(layoutId, { widgets: updatedWidgets });
+    } catch (error) {
+      console.error('Error updating widget:', error);
+    }
+  }, [currentCustomization, updateDashboardLayout]);
+
+  const deleteWidget = useCallback(async (layoutId: string, widgetId: string) => {
+    try {
+      const layouts = currentCustomization.dashboardLayouts || [];
+      const layout = layouts.find(l => l.id === layoutId);
+      if (!layout) throw new Error('Layout not found');
+
+      const filteredWidgets = layout.widgets.filter(w => w.id !== widgetId);
+      await updateDashboardLayout(layoutId, { widgets: filteredWidgets });
+    } catch (error) {
+      console.error('Error deleting widget:', error);
+    }
+  }, [currentCustomization, updateDashboardLayout]);
+
+  const getActiveDashboard = useCallback((): DashboardLayout | null => {
+    const layouts = currentCustomization.dashboardLayouts || [];
+    if (currentCustomization.activeDashboardId) {
+      return layouts.find(l => l.id === currentCustomization.activeDashboardId) || null;
+    }
+    return layouts.find(l => l.isDefault) || layouts[0] || null;
+  }, [currentCustomization]);
+
   return useMemo(() => ({
     currentCustomization,
     roleCustomizations,
@@ -182,6 +294,14 @@ const [UICustomizationProvider, useUICustomization] = createContextHook(() => {
     resetToDefault,
     deleteRoleCustomization,
     deleteUserPreferences,
+    addDashboardLayout,
+    updateDashboardLayout,
+    deleteDashboardLayout,
+    setActiveDashboard,
+    addWidgetToLayout,
+    updateWidget,
+    deleteWidget,
+    getActiveDashboard,
   }), [
     currentCustomization,
     roleCustomizations,
@@ -197,6 +317,14 @@ const [UICustomizationProvider, useUICustomization] = createContextHook(() => {
     resetToDefault,
     deleteRoleCustomization,
     deleteUserPreferences,
+    addDashboardLayout,
+    updateDashboardLayout,
+    deleteDashboardLayout,
+    setActiveDashboard,
+    addWidgetToLayout,
+    updateWidget,
+    deleteWidget,
+    getActiveDashboard,
   ]);
 });
 
