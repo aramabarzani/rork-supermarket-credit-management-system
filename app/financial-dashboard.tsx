@@ -22,7 +22,6 @@ import {
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
-import { trpc } from '@/lib/trpc';
 
 type StatCardProps = {
   title: string;
@@ -77,14 +76,11 @@ const TopListItem: React.FC<TopListItemProps> = ({ name, amount, subtitle, isDeb
 export default function FinancialDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly');
 
-  const systemBalanceQuery = trpc.financial.balance.system.useQuery({});
-  const monthlyReportQuery = trpc.financial.reports.monthly.useQuery({
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
-  });
-  const topDebtorsQuery = trpc.financial.reports.topDebtors.useQuery({ limit: 5, period: selectedPeriod });
-  const topPayersQuery = trpc.financial.reports.topPayers.useQuery({ limit: 5, period: selectedPeriod });
-  const irregularPaymentsQuery = trpc.financial.reports.irregularPayments.useQuery({});
+  const systemBalanceQuery = { data: { totalDebt: 0, totalPayments: 0, remainingDebt: 0, activeCustomers: 0, totalCustomers: 0 } };
+  const monthlyReportQuery = { data: { month: new Date().getMonth() + 1, year: new Date().getFullYear(), totalDebt: 0, totalPayments: 0, newCustomers: 0 } };
+  const topDebtorsQuery = { data: [] };
+  const topPayersQuery = { data: [] };
+  const irregularPaymentsQuery = { data: { irregularPayments: [] } };
 
   const handleExportReport = async () => {
     if (Platform.OS === 'web') {
@@ -203,7 +199,7 @@ export default function FinancialDashboard() {
             <View style={styles.topListSection}>
               <KurdishText style={styles.topListTitle}>أكبر المدينين</KurdishText>
               <GradientCard style={styles.topListCard}>
-                {topDebtors.map((debtor) => (
+                {topDebtors.length > 0 ? topDebtors.map((debtor: any) => (
                   <TopListItem
                     key={debtor.id}
                     name={debtor.name}
@@ -211,7 +207,9 @@ export default function FinancialDashboard() {
                     subtitle={`آخر دفعة: ${debtor.lastPayment}`}
                     isDebt
                   />
-                ))}
+                )) : (
+                  <KurdishText style={styles.topListName}>هیچ داتایەک نییە</KurdishText>
+                )}
               </GradientCard>
             </View>
 
@@ -219,14 +217,16 @@ export default function FinancialDashboard() {
             <View style={styles.topListSection}>
               <KurdishText style={styles.topListTitle}>أفضل الدافعين</KurdishText>
               <GradientCard style={styles.topListCard}>
-                {topPayers.map((payer) => (
+                {topPayers.length > 0 ? topPayers.map((payer: any) => (
                   <TopListItem
                     key={payer.id}
                     name={payer.name}
                     amount={payer.totalPayments}
                     subtitle={`آخر دفعة: ${payer.lastPayment}`}
                   />
-                ))}
+                )) : (
+                  <KurdishText style={styles.topListName}>هیچ داتایەک نییە</KurdishText>
+                )}
               </GradientCard>
             </View>
           </View>

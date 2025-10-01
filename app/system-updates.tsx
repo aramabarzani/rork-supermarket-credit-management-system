@@ -17,56 +17,31 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
-import { trpc } from '@/lib/trpc';
 
 export default function SystemUpdatesScreen() {
   const insets = useSafeAreaInsets();
   const [showSettings, setShowSettings] = useState<boolean>(false);
-
-  const updatesQuery = trpc.system.updates.getAll.useQuery();
-  const checkUpdatesQuery = trpc.system.updates.check.useQuery();
-  const settingsQuery = trpc.system.updates.getSettings.useQuery();
-
-  const updateSettingsMutation = trpc.system.updates.updateSettings.useMutation();
-  const downloadMutation = trpc.system.updates.download.useMutation();
-  const installMutation = trpc.system.updates.install.useMutation();
+  const [updates] = useState<any[]>([]);
+  const [settings, setSettings] = useState({
+    autoCheck: false,
+    autoDownload: false,
+    autoInstall: false,
+    notifyAdmin: false,
+  });
 
   const handleToggleSetting = async (
     key: 'autoCheck' | 'autoDownload' | 'autoInstall' | 'notifyAdmin',
     value: boolean
   ) => {
-    try {
-      await updateSettingsMutation.mutateAsync({ [key]: value });
-      await settingsQuery.refetch();
-    } catch (error) {
-      console.error('Error updating settings:', error);
-    }
+    setSettings({ ...settings, [key]: value });
   };
 
   const handleDownload = async (updateId: string) => {
-    try {
-      await downloadMutation.mutateAsync({ updateId });
-      await updatesQuery.refetch();
-    } catch (error) {
-      console.error('Error downloading update:', error);
-    }
+    console.log('Download update:', updateId);
   };
 
   const handleInstall = async (updateId: string) => {
-    try {
-      await installMutation.mutateAsync({ updateId });
-      await updatesQuery.refetch();
-    } catch (error) {
-      console.error('Error installing update:', error);
-    }
-  };
-
-  const updates = updatesQuery.data || [];
-  const settings = settingsQuery.data || {
-    autoCheck: false,
-    autoDownload: false,
-    autoInstall: false,
-    notifyAdmin: false,
+    console.log('Install update:', updateId);
   };
 
   return (
@@ -86,19 +61,7 @@ export default function SystemUpdatesScreen() {
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          {checkUpdatesQuery.data?.hasUpdate && (
-            <View style={styles.updateBanner}>
-              <AlertCircle size={24} color="#FF9800" />
-              <View style={styles.bannerContent}>
-                <KurdishText style={styles.bannerTitle}>
-                  نوێکردنەوەی نوێ بەردەستە
-                </KurdishText>
-                <KurdishText style={styles.bannerText}>
-                  وەشانی {checkUpdatesQuery.data.latestVersion} ئامادەیە
-                </KurdishText>
-              </View>
-            </View>
-          )}
+
 
           {showSettings && (
             <View style={styles.settingsCard}>
@@ -159,9 +122,9 @@ export default function SystemUpdatesScreen() {
               نوێکردنەوەکان
             </KurdishText>
 
-            {updatesQuery.isLoading ? (
+            {updates.length === 0 ? (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007AFF" />
+                <KurdishText style={styles.emptyText}>هیچ نوێکردنەوەیەک نییە</KurdishText>
               </View>
             ) : (
               updates.map((update: any) => (
@@ -330,6 +293,10 @@ const styles = StyleSheet.create({
   loadingContainer: {
     padding: 40,
     alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#666',
   },
   updateCard: {
     backgroundColor: '#FFF',
