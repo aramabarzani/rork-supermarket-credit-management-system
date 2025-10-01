@@ -9,23 +9,26 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
   const [isEditingForm, setIsEditingForm] = useState<boolean>(false);
 
   const formsQuery = trpc.forms.getAll.useQuery(undefined, {
-    retry: 2,
-    retryDelay: 1000,
+    retry: false,
     staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
   const formByIdQuery = trpc.forms.getById.useQuery(
     { id: selectedForm?.id || '' },
     { 
       enabled: !!selectedForm?.id,
-      retry: 2,
-      retryDelay: 1000,
+      retry: false,
       staleTime: 60000,
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
     }
   );
   const submissionsQuery = trpc.forms.getSubmissions.useQuery(undefined, {
-    retry: 2,
-    retryDelay: 1000,
+    retry: false,
     staleTime: 60000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   useEffect(() => {
