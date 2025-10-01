@@ -16,6 +16,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const configQuery = trpc.system.config.get.useQuery(undefined, {
     retry: 1,
     retryDelay: 1000,
+    enabled: false,
   });
   const updateConfigMutation = trpc.system.config.update.useMutation();
   const resetConfigMutation = trpc.system.config.reset.useMutation();
@@ -23,6 +24,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const passwordPolicyQuery = trpc.system.config.passwordPolicy.get.useQuery(undefined, {
     retry: 1,
     retryDelay: 1000,
+    enabled: false,
   });
   const updatePasswordPolicyMutation =
     trpc.system.config.passwordPolicy.update.useMutation();
@@ -31,6 +33,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     trpc.system.config.notifications.get.useQuery(undefined, {
       retry: 1,
       retryDelay: 1000,
+      enabled: false,
     });
   const updateNotificationSettingsMutation =
     trpc.system.config.notifications.update.useMutation();
@@ -38,6 +41,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const backupSettingsQuery = trpc.system.config.backup.get.useQuery(undefined, {
     retry: 1,
     retryDelay: 1000,
+    enabled: false,
   });
   const updateBackupSettingsMutation =
     trpc.system.config.backup.update.useMutation();
@@ -45,6 +49,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const limitSettingsQuery = trpc.system.config.limits.get.useQuery(undefined, {
     retry: 1,
     retryDelay: 1000,
+    enabled: false,
   });
   const updateLimitSettingsMutation =
     trpc.system.config.limits.update.useMutation();
