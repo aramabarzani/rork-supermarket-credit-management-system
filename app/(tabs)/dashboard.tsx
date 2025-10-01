@@ -143,33 +143,19 @@ export default function DashboardScreen() {
     }).format(amount);
   };
 
-  // Mock data for demonstration - replace with real data
-  const mockDebts = [
-    { id: '1', amount: 500000, customerId: '1', customerName: 'ئەحمەد محەمەد', date: '2024-01-15', status: 'active' },
-    { id: '2', amount: 750000, customerId: '2', customerName: 'فاتمە ئەحمەد', date: '2024-01-20', status: 'active' },
-    { id: '3', amount: 300000, customerId: '3', customerName: 'عەلی حەسەن', date: '2024-01-25', status: 'paid' },
-  ];
-
-  const mockPayments = [
-    { id: '1', amount: 200000, debtId: '1', date: '2024-01-18' },
-    { id: '2', amount: 300000, debtId: '3', date: '2024-01-26' },
-    { id: '3', amount: 150000, debtId: '2', date: '2024-01-28' },
-  ];
-
-  const mockCustomers = [
-    { id: '1', name: 'ئەحمەد محەمەد', totalDebt: 300000, totalPaid: 200000 },
-    { id: '2', name: 'فاتمە ئەحمەد', totalDebt: 750000, totalPaid: 150000 },
-    { id: '3', name: 'عەلی حەسەن', totalDebt: 0, totalPaid: 300000 },
-  ];
+  // Use real data from context
+  const allDebts = debts || [];
+  const allPayments = payments || [];
+  const allCustomers = users?.filter(u => u.role === 'customer') || [];
 
   // Calculate dashboard statistics
   const dashboardStats = useMemo(() => {
-    const totalDebts = mockDebts.reduce((sum, debt) => sum + debt.amount, 0);
-    const totalPayments = mockPayments.reduce((sum, payment) => sum + payment.amount, 0);
-    const remainingDebt = totalDebts - totalPayments;
-    const activeDebts = mockDebts.filter(debt => debt.status === 'active').length;
-    const paidDebts = mockDebts.filter(debt => debt.status === 'paid').length;
-    const totalCustomers = mockCustomers.length;
+    const totalDebts = allDebts.reduce((sum, debt) => sum + debt.amount, 0);
+    const totalPayments = allPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    const remainingDebt = allDebts.reduce((sum, debt) => sum + debt.remainingAmount, 0);
+    const activeDebts = allDebts.filter(debt => debt.status === 'active').length;
+    const paidDebts = allDebts.filter(debt => debt.status === 'paid').length;
+    const totalCustomers = allCustomers.length;
     
     return {
       totalDebts,
@@ -179,7 +165,7 @@ export default function DashboardScreen() {
       paidDebts,
       totalCustomers,
     };
-  }, []);
+  }, [allDebts, allPayments, allCustomers]);
 
   // Chart data - responsive to screen size
   const getChartLabels = () => {
@@ -232,18 +218,51 @@ export default function DashboardScreen() {
   ];
 
   // Top debtors and best payers
-  const topDebtors = mockCustomers
-    .filter(customer => customer.totalDebt - customer.totalPaid > 0)
-    .sort((a, b) => (b.totalDebt - b.totalPaid) - (a.totalDebt - a.totalPaid))
-    .slice(0, 3);
+  const topDebtors = useMemo(() => {
+    const customerDebts = allCustomers.map(customer => {
+      const customerDebtsData = allDebts.filter(d => d.customerId === customer.id);
+      const totalDebt = customerDebtsData.reduce((sum, d) => sum + d.remainingAmount, 0);
+      return {
+        id: customer.id,
+        name: customer.name,
+        totalDebt,
+        totalPaid: customerDebtsData.reduce((sum, d) => sum + (d.amount - d.remainingAmount), 0),
+      };
+    });
+    return customerDebts
+      .filter(c => c.totalDebt > 0)
+      .sort((a, b) => b.totalDebt - a.totalDebt)
+      .slice(0, 3);
+  }, [allCustomers, allDebts]);
 
-  const bestPayers = mockCustomers
-    .sort((a, b) => b.totalPaid - a.totalPaid)
-    .slice(0, 3);
+  const bestPayers = useMemo(() => {
+    const customerPayments = allCustomers.map(customer => {
+      const customerDebtsData = allDebts.filter(d => d.customerId === customer.id);
+      const totalPaid = customerDebtsData.reduce((sum, d) => sum + (d.amount - d.remainingAmount), 0);
+      return {
+        id: customer.id,
+        name: customer.name,
+        totalDebt: customerDebtsData.reduce((sum, d) => sum + d.remainingAmount, 0),
+        totalPaid,
+      };
+    });
+    return customerPayments
+      .sort((a, b) => b.totalPaid - a.totalPaid)
+      .slice(0, 3);
+  }, [allCustomers, allDebts]);
 
   // Recent transactions
-  const recentDebts = mockDebts.slice(-3).reverse();
-  const recentPayments = mockPayments.slice(-3).reverse();
+  const recentDebts = useMemo(() => {
+    return [...allDebts]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 3);
+  }, [allDebts]);
+  
+  const recentPayments = useMemo(() => {
+    return [...allPayments]
+      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+      .slice(0, 3);
+  }, [allPayments]);
   const recentNotifications = notifications?.slice(-5) || [];
 
   const generateQuickReport = () => {
@@ -613,7 +632,7 @@ export default function DashboardScreen() {
                     </View>
                     <View style={styles.transactionInfo}>
                       <Text style={styles.transactionTitle}>{debt.customerName}</Text>
-                      <Text style={styles.transactionDate}>{debt.date}</Text>
+                      <Text style={styles.transactionDate}>{new Date(debt.createdAt).toLocaleDateString('ckb-IQ')}</Text>
                     </View>
                     <Text style={[styles.transactionAmount, styles.debtAmount]}>
                       {formatCurrency(debt.amount)}
@@ -636,7 +655,7 @@ export default function DashboardScreen() {
                     </View>
                     <View style={styles.transactionInfo}>
                       <Text style={styles.transactionTitle}>پارەدان</Text>
-                      <Text style={styles.transactionDate}>{payment.date}</Text>
+                      <Text style={styles.transactionDate}>{new Date(payment.paymentDate).toLocaleDateString('ckb-IQ')}</Text>
                     </View>
                     <Text style={[styles.transactionAmount, styles.paymentAmount]}>
                       {formatCurrency(payment.amount)}

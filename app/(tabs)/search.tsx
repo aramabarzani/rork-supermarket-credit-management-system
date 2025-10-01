@@ -132,11 +132,7 @@ export default function SearchTab() {
               textAlign="right"
             />
           </View>
-          <VoiceSearchButton
-            onResult={(text) => setQuickSearch(text)}
-            language="ku"
-            searchType="general"
-          />
+
           <TouchableOpacity
             style={styles.filterButton}
             onPress={() => setShowAdvancedSearch(true)}
