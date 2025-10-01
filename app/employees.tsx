@@ -18,6 +18,7 @@ import {
   Shield,
   Phone,
   Calendar,
+  QrCode,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -68,6 +69,10 @@ export default function EmployeesScreen() {
     router.push(`/employee-permissions?id=${employee.id}`);
   };
 
+  const handleQRManagement = () => {
+    router.push('/customer-qr-management');
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <View style={styles.header}>
@@ -75,14 +80,24 @@ export default function EmployeesScreen() {
           <KurdishText variant="title" color="#1F2937">
             {'بەڕێوەبردنی کارمەندەکان'}
           </KurdishText>
-          {hasPermission(PERMISSIONS.ADD_EMPLOYEE) && (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={() => router.push('/add-user')}
-            >
-              <Plus size={24} color="white" />
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerButtons}>
+            {(hasPermission(PERMISSIONS.GENERATE_CUSTOMER_QR) || hasPermission(PERMISSIONS.USE_CUSTOMER_QR)) && (
+              <TouchableOpacity
+                style={styles.qrButton}
+                onPress={handleQRManagement}
+              >
+                <QrCode size={24} color="white" />
+              </TouchableOpacity>
+            )}
+            {hasPermission(PERMISSIONS.ADD_EMPLOYEE) && (
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => router.push('/add-user')}
+              >
+                <Plus size={24} color="white" />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         
         {/* Search */}
@@ -210,11 +225,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   addButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: '#1E3A8A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  qrButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
   },
