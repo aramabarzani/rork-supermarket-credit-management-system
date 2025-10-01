@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { CustomForm, CustomField, FormType } from '@/types/custom-forms';
@@ -23,6 +23,10 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadForms();
+  }, [loadForms]);
 
   const createForm = useCallback((name: string, description: string | undefined, type: FormType, fields: CustomField[]) => {
     const newForm: CustomForm = {
@@ -95,6 +99,9 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     return forms.find((form) => form.type === type && form.isActive);
   }, [forms]);
 
+  const setIsCreatingForm = useCallback(() => {}, []);
+  const setIsEditingForm = useCallback(() => {}, []);
+
   return useMemo(() => ({
     forms,
     selectedForm,
@@ -103,8 +110,8 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     isCreatingForm: false,
     isEditingForm: false,
     setSelectedForm,
-    setIsCreatingForm: useCallback(() => {}, []),
-    setIsEditingForm: useCallback(() => {}, []),
+    setIsCreatingForm,
+    setIsEditingForm,
     createForm,
     updateForm,
     deleteForm,
@@ -120,5 +127,5 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     isDeleting,
     isSubmitting: false,
     isExporting,
-  }), [forms, selectedForm, isLoading, isDeleting, isExporting, createForm, updateForm, deleteForm, addField, removeField, updateField, submitForm, exportForm, getFormsByType, getActiveForm]);
+  }), [forms, selectedForm, isLoading, isDeleting, isExporting, createForm, updateForm, deleteForm, addField, removeField, updateField, submitForm, exportForm, getFormsByType, getActiveForm, setIsCreatingForm, setIsEditingForm]);
 });

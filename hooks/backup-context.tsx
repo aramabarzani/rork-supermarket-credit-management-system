@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { BackupConfig, BackupRecord, BackupDestination, BackupFrequency } from '@/types/backup';
@@ -25,6 +25,10 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const updateConfig = useCallback(async (updates: Partial<BackupConfig>) => {
     const newConfig = { ...config, ...updates } as BackupConfig;
@@ -69,6 +73,8 @@ export const [BackupContext, useBackup] = createContextHook(() => {
     return { success: true };
   }, []);
 
+  const setSelectedBackup = useCallback(() => {}, []);
+
   const stats = useMemo(() => ({
     totalBackups: records.length,
     successfulBackups: records.filter(r => r.status === 'completed').length,
@@ -82,7 +88,7 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       records,
       totalRecords: records.length,
       selectedBackup: null,
-      setSelectedBackup: useCallback(() => {}, []),
+      setSelectedBackup,
       isCreatingBackup,
       isLoadingConfig: isLoading,
       isLoadingStats: isLoading,
@@ -97,6 +103,6 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       refetchStats: loadData,
       refetchConfig: loadData,
     }),
-    [config, stats, records, isCreatingBackup, isLoading, updateConfig, createBackup, restoreBackup, verifyBackup, deleteBackup, generateReport, loadData]
+    [config, stats, records, isCreatingBackup, isLoading, updateConfig, createBackup, restoreBackup, verifyBackup, deleteBackup, generateReport, loadData, setSelectedBackup]
   );
 });
