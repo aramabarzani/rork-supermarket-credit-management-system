@@ -30,17 +30,36 @@ export function verifyPassword(password: string, hash: string): boolean {
 }
 
 /**
+ * Check if a string is valid base64
+ */
+function isValidBase64(str: string): boolean {
+  if (!str || str.trim() === '') return false;
+  try {
+    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+    if (!base64Regex.test(str)) return false;
+    atob(str);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Simple XOR encryption for data
  * In production, use AES or similar
  */
 export function encryptData(data: string): string {
   try {
+    const utf8Bytes = unescape(encodeURIComponent(data));
     let encrypted = '';
-    for (let i = 0; i < data.length; i++) {
-      const charCode = data.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
+    for (let i = 0; i < utf8Bytes.length; i++) {
+      const charCode = utf8Bytes.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
       encrypted += String.fromCharCode(charCode);
     }
-    return btoa(encrypted);
+    const binaryString = encrypted.split('').map(c => 
+      String.fromCharCode(c.charCodeAt(0) & 0xff)
+    ).join('');
+    return btoa(binaryString);
   } catch (error) {
     console.error('Encryption error:', error);
     return data;
@@ -52,13 +71,22 @@ export function encryptData(data: string): string {
  */
 export function decryptData(encryptedData: string): string {
   try {
+    if (!encryptedData || encryptedData.trim() === '') {
+      return encryptedData;
+    }
+    
+    if (!isValidBase64(encryptedData)) {
+      return encryptedData;
+    }
+    
     const decoded = atob(encryptedData);
     let decrypted = '';
     for (let i = 0; i < decoded.length; i++) {
       const charCode = decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
       decrypted += String.fromCharCode(charCode);
     }
-    return decrypted;
+    
+    return decodeURIComponent(escape(decrypted));
   } catch (error) {
     console.error('Decryption error:', error);
     return encryptedData;
