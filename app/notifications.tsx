@@ -55,6 +55,16 @@ export default function NotificationsScreen() {
       }
       
       if (user.role === 'admin') {
+        if (notification.recipientType === 'owner') {
+          return false;
+        }
+        
+        if (notification.type === 'new_store_registration' ||
+            notification.type === 'store_request_approved' ||
+            notification.type === 'store_request_rejected') {
+          return false;
+        }
+        
         return notification.recipientType === 'admin' || 
                notification.recipientId === user.id ||
                notification.userId === user.id ||
@@ -62,6 +72,10 @@ export default function NotificationsScreen() {
       }
       
       if (user.role === 'employee') {
+        if (notification.recipientType === 'owner' || notification.recipientType === 'admin') {
+          return false;
+        }
+        
         return notification.recipientType === 'employee' || 
                notification.recipientId === user.id ||
                notification.userId === user.id;
