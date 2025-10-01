@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
-import { Calendar, DollarSign, Users, Package, CheckCircle, XCircle, AlertCircle, Edit2, RefreshCw } from 'lucide-react-native';
+import { Calendar, DollarSign, Users, Package, CheckCircle, XCircle, AlertCircle, Edit2, RefreshCw, Settings, Shield } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
 
@@ -371,15 +371,25 @@ export default function SubscriptionDetailsScreen() {
           </View>
         </View>
 
-        {tenant.status === 'active' && (
+        <View style={styles.actionsContainer}>
+          {tenant.status === 'active' && (
+            <TouchableOpacity
+              style={styles.renewButton}
+              onPress={() => setShowRenewModal(true)}
+            >
+              <RefreshCw size={24} color="#fff" />
+              <Text style={styles.renewButtonText}>نوێکردنەوەی ئابوونە</Text>
+            </TouchableOpacity>
+          )}
+
           <TouchableOpacity
-            style={styles.renewButton}
-            onPress={() => setShowRenewModal(true)}
+            style={styles.featuresButton}
+            onPress={() => router.push({ pathname: '/tenant-features', params: { id: tenant.id } })}
           >
-            <RefreshCw size={24} color="#fff" />
-            <Text style={styles.renewButtonText}>نوێکردنەوەی ئابوونە</Text>
+            <Settings size={24} color="#fff" />
+            <Text style={styles.featuresButtonText}>بەڕێوەبردنی تایبەتمەندیەکان</Text>
           </TouchableOpacity>
-        )}
+        </View>
       </ScrollView>
 
       <Modal visible={showRenewModal} animationType="slide" transparent>
@@ -755,6 +765,10 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontWeight: '600',
   },
+  actionsContainer: {
+    gap: 12,
+    marginBottom: 16,
+  },
   renewButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -763,9 +777,22 @@ const styles = StyleSheet.create({
     backgroundColor: '#3b82f6',
     paddingVertical: 16,
     borderRadius: 12,
-    marginBottom: 16,
   },
   renewButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  featuresButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    backgroundColor: '#10b981',
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  featuresButtonText: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '700',
