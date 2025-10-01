@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Modal,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -203,20 +204,33 @@ export default function StoreRequestsScreen() {
     const message = encodeURIComponent(
       `سڵاو، پەیوەندیم پێوە دەکەم دەربارەی داواکاری سیستەمی بەڕێوەبردنی قەرز بۆ ${storeName}. چۆنم یارمەتیت بدەم؟`
     );
-    const whatsappUrl = `whatsapp://send?phone=${cleanPhone}&text=${message}`;
     
-    Linking.canOpenURL(whatsappUrl)
-      .then((supported) => {
-        if (supported) {
-          return Linking.openURL(whatsappUrl);
-        } else {
-          Alert.alert('هەڵە', 'وەتسئاپ لەسەر ئامێرەکەت دانەمەزراوە');
-        }
-      })
-      .catch((error) => {
-        console.error('WhatsApp error:', error);
+    if (Platform.OS === 'web') {
+      const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+      Linking.openURL(webUrl).catch((error) => {
+        console.error('WhatsApp web error:', error);
         Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە کردنەوەی وەتسئاپ');
       });
+    } else {
+      const whatsappUrl = `whatsapp://send?phone=${cleanPhone}&text=${message}`;
+      
+      Linking.canOpenURL(whatsappUrl)
+        .then((supported) => {
+          if (supported) {
+            return Linking.openURL(whatsappUrl);
+          } else {
+            const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+            return Linking.openURL(webUrl);
+          }
+        })
+        .catch((error) => {
+          console.error('WhatsApp error:', error);
+          const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+          Linking.openURL(webUrl).catch(() => {
+            Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە کردنەوەی وەتسئاپ');
+          });
+        });
+    }
   };
 
   const getStatusColor = (status: string) => {
