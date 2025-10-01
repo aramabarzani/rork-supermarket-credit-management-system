@@ -17,6 +17,8 @@ import {
   Settings,
   MessageCircle,
   Zap,
+  QrCode,
+  Camera,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -52,6 +54,20 @@ export default function SettingsScreen() {
       subtitle: `${employees.length} کارمەند`,
       onPress: () => router.push('/employees'),
       color: '#3B82F6',
+    },
+    {
+      icon: QrCode,
+      title: 'بەڕێوەبردنی QR Code',
+      subtitle: 'دروستکردن و بەڕێوەبردنی QR Code بۆ کڕیارەکان',
+      onPress: () => router.push('/customer-qr-management'),
+      color: '#8B5CF6',
+    },
+    {
+      icon: Camera,
+      title: 'سکان کردنی QR Code',
+      subtitle: 'سکان کردنی QR Code کڕیارەکان',
+      onPress: () => router.push('/scan-customer-qr'),
+      color: '#06B6D4',
     },
     {
       icon: Settings,

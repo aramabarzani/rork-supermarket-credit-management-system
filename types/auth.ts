@@ -1,3 +1,15 @@
+export interface CustomerQRCode {
+  id: string;
+  customerId: string;
+  code: string;
+  isActive: boolean;
+  createdAt: string;
+  createdBy: string;
+  expiresAt?: string;
+  usageCount: number;
+  lastUsedAt?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -23,6 +35,7 @@ export interface User {
   onTimePayments?: number;
   latePayments?: number;
   lastPaymentDate?: string;
+  qrCode?: CustomerQRCode;
 }
 
 export interface Permission {

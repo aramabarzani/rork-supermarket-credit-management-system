@@ -20,6 +20,19 @@ export interface Customer {
   isVIP?: boolean; // کڕیاری VIP
   vipLevel?: number; // پلەی VIP (1-5)
   usageDuration?: number; // ماوەی بەکارهێنان بە ڕۆژ
+  qrCode?: CustomerQRCode; // QR Code زانیاری
+}
+
+export interface CustomerQRCode {
+  id: string;
+  customerId: string;
+  code: string; // کۆدی یەکتا
+  isActive: boolean;
+  createdAt: string;
+  createdBy: string;
+  expiresAt?: string; // بەرواری بەسەرچوون
+  usageCount: number; // ژمارەی بەکارهێنان
+  lastUsedAt?: string;
 }
 
 export interface CustomerAnalytics {
