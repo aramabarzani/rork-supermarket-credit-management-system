@@ -1,6 +1,5 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Platform } from 'react-native';
 import { User, LoginCredentials, LoginResult } from '@/types/auth';
 import { safeStorage } from '@/utils/storage';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
@@ -77,25 +76,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [isHydrated, setIsHydrated] = useState(Platform.OS !== 'web');
-
-
-  // Handle web hydration - ensure this runs only on client side
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      // Ensure we're in browser environment before accessing localStorage
-      if (typeof window !== 'undefined') {
-        setIsHydrated(true);
-      }
-    }
-  }, []);
 
   useEffect(() => {
-    // Don't load auth until hydration is complete
-    if (!isHydrated) {
-      return;
-    }
-
     console.log('AuthProvider: Loading stored auth...');
     
     const loadAuth = async () => {
@@ -118,10 +100,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
     };
 
-    // Immediate load on native, small delay on web
-    const timer = setTimeout(loadAuth, Platform.OS === 'web' ? 10 : 0);
-    return () => clearTimeout(timer);
-  }, [isHydrated]);
+    loadAuth();
+  }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
@@ -226,18 +206,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     safeStorage.setItem('user', updatedUser);
   }, [user]);
 
-  return useMemo(() => {
-    const finalIsLoading = isLoading || !isHydrated;
-    const finalIsInitialized = isInitialized && isHydrated;
-    
-    return {
-      user,
-      isLoading: finalIsLoading,
-      isInitialized: finalIsInitialized,
-      login,
-      logout,
-      hasPermission,
-      updateUser,
-    };
-  }, [user, isLoading, isInitialized, isHydrated, login, logout, hasPermission, updateUser]);
+  return useMemo(() => ({
+    user,
+    isLoading,
+    isInitialized,
+    login,
+    logout,
+    hasPermission,
+    updateUser,
+  }), [user, isLoading, isInitialized, login, logout, hasPermission, updateUser]);
 });

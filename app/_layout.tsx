@@ -145,18 +145,7 @@ function RootLayoutNav() {
         }} 
       />
 
-      <Stack.Screen 
-        name="edit-employee" 
-        options={{ 
-          title: "دەستکاری کارمەند",
-        }} 
-      />
-      <Stack.Screen 
-        name="employee-permissions" 
-        options={{ 
-          title: "دەسەڵاتەکانی کارمەند",
-        }} 
-      />
+
       <Stack.Screen 
         name="employee-activity" 
         options={{ 
@@ -415,61 +404,61 @@ export default function RootLayout() {
   }
 
   return (
-      <GestureHandlerRootView style={styles.container}>
-            <ErrorLoggingProvider>
-              <ErrorBoundary>
-                <UICustomizationProvider>
-                  <SettingsProvider>
-                    <IntegrationProvider>
-                    <AdvancedFiltersProvider>
-                      <CustomFormsProvider>
-                        <NotesProvider>
-                          <ProfileTrackingProvider>
-                              <GuidanceProvider>
-                                <BackupProvider>
-                                  <SystemConfigProvider>
-                                    <UsabilityProvider>
-                                      <TenantProvider>
-                                        <StoreRequestProvider>
-                                          <SupportProvider>
-                                            <FAQProvider>
-                                              <VoiceInputProvider>
-                                                <AuthProvider>
-                                                  <SecurityProvider>
-                                                    <CustomerSettingsProvider>
-                                                      <MessagingProvider>
-                                                        <DebtProvider>
-                                                          <ReceiptProvider>
-                                                            <UsersProvider>
-                                                              <NotificationProvider>
-                                                                <RootLayoutNav />
-                                                                <SessionTimeoutWarning />
-                                                              </NotificationProvider>
-                                                            </UsersProvider>
-                                                          </ReceiptProvider>
-                                                        </DebtProvider>
-                                                      </MessagingProvider>
-                                                    </CustomerSettingsProvider>
-                                                  </SecurityProvider>
-                                                </AuthProvider>
-                                              </VoiceInputProvider>
-                                            </FAQProvider>
-                                          </SupportProvider>
-                                        </StoreRequestProvider>
-                                      </TenantProvider>
-                                    </UsabilityProvider>
-                                  </SystemConfigProvider>
-                                </BackupProvider>
-                              </GuidanceProvider>
-                          </ProfileTrackingProvider>
-                        </NotesProvider>
-                      </CustomFormsProvider>
-                    </AdvancedFiltersProvider>
-                    </IntegrationProvider>
-                  </SettingsProvider>
-                </UICustomizationProvider>
-              </ErrorBoundary>
-            </ErrorLoggingProvider>
-      </GestureHandlerRootView>
+    <GestureHandlerRootView style={styles.container}>
+      <ErrorBoundary>
+        <ErrorLoggingProvider>
+          <TenantProvider>
+            <AuthProvider>
+              <SettingsProvider>
+                <SecurityProvider>
+                  <DebtProvider>
+                    <UsersProvider>
+                      <NotificationProvider>
+                        <ReceiptProvider>
+                          <CustomerSettingsProvider>
+                            <MessagingProvider>
+                              <IntegrationProvider>
+                                <AdvancedFiltersProvider>
+                                  <CustomFormsProvider>
+                                    <NotesProvider>
+                                      <ProfileTrackingProvider>
+                                        <UICustomizationProvider>
+                                          <GuidanceProvider>
+                                            <BackupProvider>
+                                              <SystemConfigProvider>
+                                                <UsabilityProvider>
+                                                  <StoreRequestProvider>
+                                                    <SupportProvider>
+                                                      <FAQProvider>
+                                                        <VoiceInputProvider>
+                                                          <RootLayoutNav />
+                                                          <SessionTimeoutWarning />
+                                                        </VoiceInputProvider>
+                                                      </FAQProvider>
+                                                    </SupportProvider>
+                                                  </StoreRequestProvider>
+                                                </UsabilityProvider>
+                                              </SystemConfigProvider>
+                                            </BackupProvider>
+                                          </GuidanceProvider>
+                                        </UICustomizationProvider>
+                                      </ProfileTrackingProvider>
+                                    </NotesProvider>
+                                  </CustomFormsProvider>
+                                </AdvancedFiltersProvider>
+                              </IntegrationProvider>
+                            </MessagingProvider>
+                          </CustomerSettingsProvider>
+                        </ReceiptProvider>
+                      </NotificationProvider>
+                    </UsersProvider>
+                  </DebtProvider>
+                </SecurityProvider>
+              </SettingsProvider>
+            </AuthProvider>
+          </TenantProvider>
+        </ErrorLoggingProvider>
+      </ErrorBoundary>
+    </GestureHandlerRootView>
   );
 }
