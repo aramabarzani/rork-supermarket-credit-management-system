@@ -249,8 +249,8 @@ export default function EmployeePermissionsScreen() {
           </KurdishText>
           
           <View style={styles.selectedPermissions}>
-            {selectedPermissions.slice(0, 5).map((permission) => (
-              <View key={permission} style={styles.permissionTag}>
+            {selectedPermissions.slice(0, 5).map((permission, index) => (
+              <View key={`${permission}-${index}`} style={styles.permissionTag}>
                 <KurdishText variant="caption" color="#1E3A8A">
                   {PERMISSION_LABELS[permission] || permission}
                 </KurdishText>
