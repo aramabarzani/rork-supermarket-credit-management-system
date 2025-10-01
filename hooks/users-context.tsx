@@ -175,26 +175,59 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
         const stored = await AsyncStorage.getItem('users');
         if (stored && stored.trim()) {
           try {
-            if (!stored.startsWith('[') && !stored.startsWith('{')) {
+            const trimmedData = stored.trim();
+            
+            if (!trimmedData.startsWith('[') && !trimmedData.startsWith('{')) {
+              console.error('UsersContext: Invalid JSON format - data does not start with [ or {');
               throw new Error('Invalid JSON format - data is corrupted');
             }
-            const parsedUsers = JSON.parse(stored);
-            if (Array.isArray(parsedUsers) && parsedUsers.length > 0) {
-              const validUsers = parsedUsers.every(u => u && typeof u === 'object' && u.id && u.name && u.role);
-              if (validUsers) {
-                setUsers(parsedUsers);
-                console.log('UsersContext: Loaded users from storage:', parsedUsers.length);
-              } else {
-                throw new Error('Invalid users data structure');
-              }
-            } else {
+            
+            if (trimmedData.length < 2) {
+              console.error('UsersContext: Data too short to be valid JSON');
+              throw new Error('Invalid JSON format - data is corrupted');
+            }
+            
+            let parsedUsers;
+            try {
+              parsedUsers = JSON.parse(trimmedData);
+            } catch (jsonError) {
+              console.error('UsersContext: JSON.parse failed:', jsonError);
+              throw new Error('Invalid JSON format - data is corrupted');
+            }
+            
+            if (!Array.isArray(parsedUsers)) {
+              console.error('UsersContext: Parsed data is not an array');
               throw new Error('Invalid users data structure');
             }
+            
+            if (parsedUsers.length === 0) {
+              console.log('UsersContext: Empty users array, resetting to sample data');
+              throw new Error('Empty users array');
+            }
+            
+            const validUsers = parsedUsers.every(u => 
+              u && 
+              typeof u === 'object' && 
+              typeof u.id === 'string' && 
+              typeof u.name === 'string' && 
+              typeof u.role === 'string'
+            );
+            
+            if (!validUsers) {
+              console.error('UsersContext: Users array contains invalid user objects');
+              throw new Error('Invalid users data structure');
+            }
+            
+            setUsers(parsedUsers);
+            console.log('UsersContext: Successfully loaded users from storage:', parsedUsers.length);
           } catch (parseError) {
             console.error('UsersContext: Error parsing users, resetting:', parseError);
             try {
+              console.log('UsersContext: Clearing corrupted storage...');
               await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
+              console.log('UsersContext: Saving fresh sample data...');
               await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
+              console.log('UsersContext: Storage reset complete');
             } catch (clearError) {
               console.error('UsersContext: Error clearing storage:', clearError);
             }
@@ -382,17 +415,46 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   const saveUsers = async (updatedUsers: User[]) => {
     try {
       if (!Array.isArray(updatedUsers)) {
+        console.error('UsersContext: Invalid users data - not an array');
         throw new Error('Invalid users data: must be an array');
       }
-      const jsonString = JSON.stringify(updatedUsers);
-      if (!jsonString || jsonString === 'undefined' || jsonString === 'null') {
+      
+      if (updatedUsers.length === 0) {
+        console.error('UsersContext: Cannot save empty users array');
+        throw new Error('Cannot save empty users array');
+      }
+      
+      const validUsers = updatedUsers.every(u => 
+        u && 
+        typeof u === 'object' && 
+        typeof u.id === 'string' && 
+        typeof u.name === 'string' && 
+        typeof u.role === 'string'
+      );
+      
+      if (!validUsers) {
+        console.error('UsersContext: Users array contains invalid user objects');
+        throw new Error('Invalid users data structure');
+      }
+      
+      let jsonString;
+      try {
+        jsonString = JSON.stringify(updatedUsers);
+      } catch (stringifyError) {
+        console.error('UsersContext: JSON.stringify failed:', stringifyError);
+        throw new Error('Failed to serialize users data');
+      }
+      
+      if (!jsonString || jsonString === 'undefined' || jsonString === 'null' || jsonString.length < 2) {
+        console.error('UsersContext: Invalid JSON serialization result');
         throw new Error('Invalid JSON serialization');
       }
+      
       await AsyncStorage.setItem('users', jsonString);
       setUsers(updatedUsers);
       console.log('UsersContext: Saved users successfully:', updatedUsers.length);
     } catch (error) {
-      console.error('Error saving users:', error);
+      console.error('UsersContext: Error saving users:', error);
       throw error;
     }
   };
