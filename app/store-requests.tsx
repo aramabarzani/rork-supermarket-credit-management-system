@@ -10,7 +10,6 @@ import {
   RefreshControl,
   Modal,
   Linking,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -205,32 +204,24 @@ export default function StoreRequestsScreen() {
       `سڵاو، پەیوەندیم پێوە دەکەم دەربارەی داواکاری سیستەمی بەڕێوەبردنی قەرز بۆ ${storeName}. چۆنم یارمەتیت بدەم؟`
     );
     
-    if (Platform.OS === 'web') {
-      const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
-      Linking.openURL(webUrl).catch((error) => {
-        console.error('WhatsApp web error:', error);
-        Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە کردنەوەی وەتسئاپ');
-      });
-    } else {
-      const whatsappUrl = `whatsapp://send?phone=${cleanPhone}&text=${message}`;
-      
-      Linking.canOpenURL(whatsappUrl)
-        .then((supported) => {
-          if (supported) {
-            return Linking.openURL(whatsappUrl);
-          } else {
-            const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
-            return Linking.openURL(webUrl);
+    const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
+    
+    Linking.openURL(webUrl).catch((error) => {
+      console.error('WhatsApp error:', error);
+      Alert.alert(
+        'هەڵە',
+        'کێشەیەک ڕوویدا لە کردنەوەی وەتسئاپ. تکایە دڵنیابە لەوەی کە وەتسئاپ دامەزراوە لەسەر ئامێرەکەت.',
+        [
+          { text: 'باشە', style: 'cancel' },
+          {
+            text: 'کۆپی کردنی ژمارە',
+            onPress: () => {
+              Alert.alert('ژمارەی تەلەفۆن', cleanPhone);
+            }
           }
-        })
-        .catch((error) => {
-          console.error('WhatsApp error:', error);
-          const webUrl = `https://wa.me/${cleanPhone}?text=${message}`;
-          Linking.openURL(webUrl).catch(() => {
-            Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە کردنەوەی وەتسئاپ');
-          });
-        });
-    }
+        ]
+      );
+    });
   };
 
   const getStatusColor = (status: string) => {

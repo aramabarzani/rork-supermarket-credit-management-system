@@ -35,9 +35,11 @@ export function verifyPassword(password: string, hash: string): boolean {
 function isValidBase64(str: string): boolean {
   if (!str || str.trim() === '') return false;
   try {
-    const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-    if (!base64Regex.test(str)) return false;
-    atob(str);
+    const trimmed = str.trim();
+    const base64Regex = /^[A-Za-z0-9+/]+=*$/;
+    if (!base64Regex.test(trimmed)) return false;
+    if (trimmed.length % 4 !== 0) return false;
+    atob(trimmed);
     return true;
   } catch {
     return false;
@@ -75,11 +77,14 @@ export function decryptData(encryptedData: string): string {
       return encryptedData;
     }
     
-    if (!isValidBase64(encryptedData)) {
+    const trimmed = encryptedData.trim();
+    
+    if (!isValidBase64(trimmed)) {
+      console.log('Not valid base64, returning as-is');
       return encryptedData;
     }
     
-    const decoded = atob(encryptedData);
+    const decoded = atob(trimmed);
     let decrypted = '';
     for (let i = 0; i < decoded.length; i++) {
       const charCode = decoded.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length);
@@ -88,7 +93,7 @@ export function decryptData(encryptedData: string): string {
     
     return decodeURIComponent(escape(decrypted));
   } catch (error) {
-    console.error('Decryption error:', error);
+    console.log('Decryption error, returning original:', error);
     return encryptedData;
   }
 }

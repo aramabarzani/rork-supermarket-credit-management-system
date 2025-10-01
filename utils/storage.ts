@@ -42,9 +42,11 @@ export const safeStorage = {
         if (isSensitive) {
           try {
             const decrypted = decryptData(item);
-            return JSON.parse(decrypted) as T;
-          } catch (decryptError) {
-            return JSON.parse(item) as T;
+            if (decrypted && decrypted !== item) {
+              return JSON.parse(decrypted) as T;
+            }
+          } catch {
+            console.log(`Decryption failed for ${key}, trying direct parse`);
           }
         }
         
