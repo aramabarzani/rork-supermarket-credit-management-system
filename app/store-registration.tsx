@@ -200,6 +200,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="ناوی فرۆشگا (English)"
+          placeholderTextColor="#9ca3af"
           value={formData.storeName}
           onChangeText={(text) => updateField('storeName', text)}
           textAlign="right"
@@ -211,6 +212,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="ناوی فرۆشگا (کوردی)"
+          placeholderTextColor="#9ca3af"
           value={formData.storeNameKurdish}
           onChangeText={(text) => updateField('storeNameKurdish', text)}
           textAlign="right"
@@ -222,6 +224,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="ناونیشان"
+          placeholderTextColor="#9ca3af"
           value={formData.address}
           onChangeText={(text) => updateField('address', text)}
           textAlign="right"
@@ -233,6 +236,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="شار"
+          placeholderTextColor="#9ca3af"
           value={formData.city}
           onChangeText={(text) => updateField('city', text)}
           textAlign="right"
@@ -250,6 +254,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="ناوی خاوەن"
+          placeholderTextColor="#9ca3af"
           value={formData.ownerName}
           onChangeText={(text) => updateField('ownerName', text)}
           textAlign="right"
@@ -261,6 +266,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="ژمارەی مۆبایل"
+          placeholderTextColor="#9ca3af"
           value={formData.ownerPhone}
           onChangeText={(text) => updateField('ownerPhone', text)}
           keyboardType="phone-pad"
@@ -273,6 +279,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="ئیمەیڵ (ئیختیاری)"
+          placeholderTextColor="#9ca3af"
           value={formData.ownerEmail}
           onChangeText={(text) => updateField('ownerEmail', text)}
           keyboardType="email-address"
@@ -286,6 +293,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="وشەی نهێنی"
+          placeholderTextColor="#9ca3af"
           value={formData.password}
           onChangeText={(text) => updateField('password', text)}
           secureTextEntry
@@ -298,6 +306,7 @@ export default function StoreRegistrationScreen() {
         <TextInput
           style={styles.input}
           placeholder="دووبارەکردنەوەی وشەی نهێنی"
+          placeholderTextColor="#9ca3af"
           value={formData.confirmPassword}
           onChangeText={(text) => updateField('confirmPassword', text)}
           secureTextEntry
@@ -497,7 +506,8 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     fontSize: 16,
-    color: '#1f2937',
+    color: '#111827',
+    fontWeight: '500',
   },
   plansContainer: {
     gap: 16,
