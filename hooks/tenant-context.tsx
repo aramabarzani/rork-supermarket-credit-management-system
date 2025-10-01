@@ -2,14 +2,34 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Tenant, TenantStats } from '@/types/tenant';
-import { SUBSCRIPTION_PLANS } from '@/types/subscription';
+import { SUBSCRIPTION_PLANS, SubscriptionNotification, SubscriptionNotificationSettings } from '@/types/subscription';
+
+const DEFAULT_NOTIFICATION_SETTINGS: SubscriptionNotificationSettings = {
+  enabled: true,
+  warningDays: [30, 15, 7, 3, 1],
+  channels: ['sms', 'in_app'],
+  autoSuspendOnExpiry: false,
+};
 
 export const [TenantProvider, useTenant] = createContextHook(() => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [subscriptionNotifications, setSubscriptionNotifications] = useState<SubscriptionNotification[]>([]);
+  const [notificationSettings, setNotificationSettings] = useState<SubscriptionNotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
 
   useEffect(() => {
     loadTenants();
+    loadSubscriptionNotifications();
+    loadNotificationSettings();
+    checkExpiringSubscriptions();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      checkExpiringSubscriptions();
+    }, 24 * 60 * 60 * 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const loadTenants = async () => {
@@ -25,6 +45,46 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     }
   };
 
+  const loadSubscriptionNotifications = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('subscription_notifications');
+      if (stored) {
+        setSubscriptionNotifications(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load subscription notifications:', error);
+    }
+  };
+
+  const loadNotificationSettings = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('subscription_notification_settings');
+      if (stored) {
+        setNotificationSettings(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load notification settings:', error);
+    }
+  };
+
+  const saveSubscriptionNotifications = async (notifications: SubscriptionNotification[]) => {
+    try {
+      await AsyncStorage.setItem('subscription_notifications', JSON.stringify(notifications));
+      setSubscriptionNotifications(notifications);
+    } catch (error) {
+      console.error('Failed to save subscription notifications:', error);
+    }
+  };
+
+  const saveNotificationSettings = async (settings: SubscriptionNotificationSettings) => {
+    try {
+      await AsyncStorage.setItem('subscription_notification_settings', JSON.stringify(settings));
+      setNotificationSettings(settings);
+    } catch (error) {
+      console.error('Failed to save notification settings:', error);
+    }
+  };
+
   const saveTenants = async (updatedTenants: Tenant[]) => {
     try {
       await AsyncStorage.setItem('tenants', JSON.stringify(updatedTenants));
@@ -35,7 +95,7 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     }
   };
 
-  const createTenant = useCallback(async (tenant: Omit<Tenant, 'id' | 'createdAt' | 'staffCount' | 'customerCount' | 'debtCount' | 'totalDebtAmount' | 'totalPaidAmount'>) => {
+  const createTenant = useCallback(async (tenant: Omit<Tenant, 'id' | 'createdAt' | 'staffCount' | 'customerCount' | 'debtCount' | 'totalDebtAmount' | 'totalPaidAmount' | 'features' | 'settings' | 'branding'>) => {
     const plan = SUBSCRIPTION_PLANS[tenant.plan];
     const newTenant: Tenant = {
       ...tenant,
@@ -212,6 +272,149 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     });
   }, [tenants]);
 
+  const sendSubscriptionNotification = async (notification: SubscriptionNotification) => {
+    try {
+      console.log(`[Notification] Sending ${notification.type} to ${notification.adminName}`);
+      
+      for (const channel of notification.channels) {
+        if (channel === 'sms') {
+          console.log(`[SMS] To: ${notification.adminPhone}`);
+          console.log(`[SMS] Message: ${notification.message}`);
+        } else if (channel === 'email') {
+          console.log(`[Email] To: ${notification.adminId}`);
+          console.log(`[Email] Subject: ${notification.title}`);
+          console.log(`[Email] Body: ${notification.message}`);
+        } else if (channel === 'in_app') {
+          console.log(`[In-App] Notification created for ${notification.adminName}`);
+        }
+      }
+
+      const updatedNotifications = subscriptionNotifications.map(n =>
+        n.id === notification.id ? { ...n, status: 'sent' as const } : n
+      );
+      await saveSubscriptionNotifications(updatedNotifications);
+    } catch (error) {
+      console.error('[Notification] Failed to send:', error);
+      const updatedNotifications = subscriptionNotifications.map(n =>
+        n.id === notification.id ? { ...n, status: 'failed' as const } : n
+      );
+      await saveSubscriptionNotifications(updatedNotifications);
+    }
+  };
+
+  const checkExpiringSubscriptions = useCallback(async () => {
+    if (!notificationSettings.enabled) return;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastCheck = notificationSettings.lastCheckDate 
+      ? new Date(notificationSettings.lastCheckDate)
+      : null;
+
+    if (lastCheck && lastCheck.toDateString() === today.toDateString()) {
+      return;
+    }
+
+    console.log('[Subscription Check] Checking for expiring subscriptions...');
+
+    const newNotifications: SubscriptionNotification[] = [];
+
+    for (const tenant of tenants) {
+      if (tenant.status !== 'active') continue;
+
+      const expiryDate = new Date(tenant.expiryDate);
+      expiryDate.setHours(0, 0, 0, 0);
+      const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+      if (daysUntilExpiry < 0) {
+        const alreadySent = subscriptionNotifications.some(
+          n => n.tenantId === tenant.id && n.type === 'expired' && n.status === 'sent'
+        );
+
+        if (!alreadySent) {
+          const notification: SubscriptionNotification = {
+            id: `sub_notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tenantId: tenant.id,
+            adminId: tenant.adminId,
+            adminName: tenant.adminName,
+            adminPhone: tenant.adminPhone,
+            type: 'expired',
+            title: 'ئابوونە بەسەرچووە',
+            message: `ئابوونەی ${SUBSCRIPTION_PLANS[tenant.plan].nameKurdish} بۆ ${tenant.adminName} بەسەرچووە. تکایە نوێی بکەرەوە.`,
+            sentAt: new Date().toISOString(),
+            read: false,
+            daysUntilExpiry,
+            channels: notificationSettings.channels,
+            status: 'pending',
+          };
+          newNotifications.push(notification);
+
+          if (notificationSettings.autoSuspendOnExpiry) {
+            await suspendTenant(tenant.id, 'ئابوونە بەسەرچووە');
+          }
+        }
+      } else if (notificationSettings.warningDays.includes(daysUntilExpiry)) {
+        const alreadySent = subscriptionNotifications.some(
+          n => n.tenantId === tenant.id && 
+          n.type === 'expiry_warning' && 
+          n.daysUntilExpiry === daysUntilExpiry &&
+          n.status === 'sent'
+        );
+
+        if (!alreadySent) {
+          const notification: SubscriptionNotification = {
+            id: `sub_notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            tenantId: tenant.id,
+            adminId: tenant.adminId,
+            adminName: tenant.adminName,
+            adminPhone: tenant.adminPhone,
+            type: 'expiry_warning',
+            title: 'ئاگاداری بەسەرچوونی ئابوونە',
+            message: `ئابوونەی ${SUBSCRIPTION_PLANS[tenant.plan].nameKurdish} بۆ ${tenant.adminName} ${daysUntilExpiry} ڕۆژی ماوە بۆ بەسەرچوون. تکایە نوێی بکەرەوە.`,
+            sentAt: new Date().toISOString(),
+            read: false,
+            daysUntilExpiry,
+            channels: notificationSettings.channels,
+            status: 'pending',
+          };
+          newNotifications.push(notification);
+        }
+      }
+    }
+
+    if (newNotifications.length > 0) {
+      console.log(`[Subscription Check] Created ${newNotifications.length} new notifications`);
+      const updatedNotifications = [...subscriptionNotifications, ...newNotifications];
+      await saveSubscriptionNotifications(updatedNotifications);
+
+      for (const notification of newNotifications) {
+        await sendSubscriptionNotification(notification);
+      }
+    }
+
+    await saveNotificationSettings({
+      ...notificationSettings,
+      lastCheckDate: today.toISOString(),
+    });
+  }, [tenants, subscriptionNotifications, notificationSettings, suspendTenant, saveSubscriptionNotifications, saveNotificationSettings, sendSubscriptionNotification]);
+
+  const updateNotificationSettings = useCallback(async (settings: Partial<SubscriptionNotificationSettings>) => {
+    const updated = { ...notificationSettings, ...settings };
+    await saveNotificationSettings(updated);
+  }, [notificationSettings]);
+
+  const markNotificationAsRead = useCallback(async (id: string) => {
+    const updated = subscriptionNotifications.map(n =>
+      n.id === id ? { ...n, read: true } : n
+    );
+    await saveSubscriptionNotifications(updated);
+  }, [subscriptionNotifications]);
+
+  const getUnreadNotifications = useCallback(() => {
+    return subscriptionNotifications.filter(n => !n.read);
+  }, [subscriptionNotifications]);
+
   return useMemo(() => ({
     tenants,
     isLoading,
@@ -227,5 +430,11 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     getExpiredTenants,
     getSuspendedTenants,
     getExpiringTenants,
-  }), [tenants, isLoading, createTenant, updateTenant, deleteTenant, suspendTenant, activateTenant, renewSubscription, getTenantById, getTenantStats, getActiveTenants, getExpiredTenants, getSuspendedTenants, getExpiringTenants]);
+    subscriptionNotifications,
+    notificationSettings,
+    checkExpiringSubscriptions,
+    updateNotificationSettings,
+    markNotificationAsRead,
+    getUnreadNotifications,
+  }), [tenants, isLoading, createTenant, updateTenant, deleteTenant, suspendTenant, activateTenant, renewSubscription, getTenantById, getTenantStats, getActiveTenants, getExpiredTenants, getSuspendedTenants, getExpiringTenants, subscriptionNotifications, notificationSettings, checkExpiringSubscriptions, updateNotificationSettings, markNotificationAsRead, getUnreadNotifications]);
 });

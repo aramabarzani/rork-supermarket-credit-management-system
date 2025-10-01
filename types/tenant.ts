@@ -2,6 +2,10 @@ import { SubscriptionPlan, SubscriptionStatus } from './subscription';
 
 export interface Tenant {
   id: string;
+  adminId: string;
+  adminName: string;
+  adminPhone: string;
+  adminEmail?: string;
   storeName: string;
   storeNameKurdish: string;
   ownerName: string;

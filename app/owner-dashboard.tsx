@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
-import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle, LogOut, Store, Clock } from 'lucide-react-native';
+import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle, LogOut, Store, Clock, Bell, BellOff, Settings } from 'lucide-react-native';
 import type { SubscriptionPlan } from '@/types/subscription';
 import { SUBSCRIPTION_PLANS } from '@/types/subscription';
 import { useAuth } from '@/hooks/auth-context';
@@ -36,6 +36,8 @@ export default function OwnerDashboardScreen() {
   const { user, logout } = useAuth();
   const { requests, getStats } = useStoreRequests();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showNotificationsModal, setShowNotificationsModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [tenants, setTenants] = useState<TenantSubscription[]>([]);
   const [newAdmin, setNewAdmin] = useState({
@@ -46,9 +48,64 @@ export default function OwnerDashboardScreen() {
     duration: 30,
   });
 
+  const [subscriptionNotifications, setSubscriptionNotifications] = React.useState<any[]>([]);
+  const [notificationSettings, setNotificationSettings] = React.useState({
+    enabled: true,
+    warningDays: [30, 15, 7, 3, 1],
+    channels: ['sms', 'in_app'] as ('sms' | 'email' | 'in_app')[],
+    autoSuspendOnExpiry: false,
+  });
+
   React.useEffect(() => {
     loadTenants();
+    loadSubscriptionNotifications();
+    loadNotificationSettings();
   }, []);
+
+  const loadSubscriptionNotifications = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('subscription_notifications');
+      if (stored) {
+        setSubscriptionNotifications(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load subscription notifications:', error);
+    }
+  };
+
+  const loadNotificationSettings = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('subscription_notification_settings');
+      if (stored) {
+        setNotificationSettings(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load notification settings:', error);
+    }
+  };
+
+  const saveNotificationSettings = async (settings: typeof notificationSettings) => {
+    try {
+      await AsyncStorage.setItem('subscription_notification_settings', JSON.stringify(settings));
+      setNotificationSettings(settings);
+    } catch (error) {
+      console.error('Failed to save notification settings:', error);
+    }
+  };
+
+  const markNotificationAsRead = async (id: string) => {
+    try {
+      const updated = subscriptionNotifications.map(n =>
+        n.id === id ? { ...n, read: true } : n
+      );
+      await AsyncStorage.setItem('subscription_notifications', JSON.stringify(updated));
+      setSubscriptionNotifications(updated);
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  };
+
+  const unreadNotificationsCount = subscriptionNotifications.filter(n => !n.read).length;
 
   const loadTenants = async () => {
     try {
@@ -270,9 +327,26 @@ export default function OwnerDashboardScreen() {
             </TouchableOpacity>
           ),
           headerRight: () => (
-            <TouchableOpacity onPress={() => setShowCreateModal(true)} style={styles.headerButton}>
-              <Plus size={24} color="#fff" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity 
+                onPress={() => setShowNotificationsModal(true)} 
+                style={styles.headerButton}
+              >
+                <View>
+                  <Bell size={24} color="#fff" />
+                  {unreadNotificationsCount > 0 && (
+                    <View style={styles.notificationBadge}>
+                      <Text style={styles.notificationBadgeText}>
+                        {unreadNotificationsCount > 9 ? '9+' : unreadNotificationsCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowCreateModal(true)} style={styles.headerButton}>
+                <Plus size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
           ),
         }}
       />
@@ -550,6 +624,184 @@ export default function OwnerDashboardScreen() {
                 <Text style={styles.modalButtonText}>دروستکردن</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showNotificationsModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>ئاگادارکردنەوەکانی ئابوونە</Text>
+              <TouchableOpacity onPress={() => setShowSettingsModal(true)}>
+                <Settings size={24} color="#3b82f6" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.notificationsList}>
+              {subscriptionNotifications.length === 0 ? (
+                <View style={styles.emptyNotifications}>
+                  <Bell size={48} color="#9ca3af" />
+                  <Text style={styles.emptyNotificationsText}>هیچ ئاگادارکردنەوەیەک نییە</Text>
+                </View>
+              ) : (
+                subscriptionNotifications.map((notification) => (
+                  <TouchableOpacity
+                    key={notification.id}
+                    style={[
+                      styles.notificationItem,
+                      !notification.read && styles.notificationItemUnread,
+                    ]}
+                    onPress={() => markNotificationAsRead(notification.id)}
+                  >
+                    <View style={styles.notificationIcon}>
+                      {notification.type === 'expired' ? (
+                        <XCircle size={24} color="#ef4444" />
+                      ) : (
+                        <AlertCircle size={24} color="#f59e0b" />
+                      )}
+                    </View>
+                    <View style={styles.notificationContent}>
+                      <Text style={styles.notificationTitle}>{notification.title}</Text>
+                      <Text style={styles.notificationMessage}>{notification.message}</Text>
+                      <Text style={styles.notificationDate}>
+                        {new Date(notification.sentAt).toLocaleDateString('ar-IQ')}
+                      </Text>
+                    </View>
+                    {!notification.read && <View style={styles.unreadDot} />}
+                  </TouchableOpacity>
+                ))
+              )}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setShowNotificationsModal(false)}
+            >
+              <Text style={styles.modalButtonText}>داخستن</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showSettingsModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>ڕێکخستنەکانی ئاگادارکردنەوە</Text>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>چالاککردنی ئاگادارکردنەوە</Text>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  notificationSettings.enabled && styles.toggleButtonActive,
+                ]}
+                onPress={() =>
+                  saveNotificationSettings({
+                    ...notificationSettings,
+                    enabled: !notificationSettings.enabled,
+                  })
+                }
+              >
+                {notificationSettings.enabled ? (
+                  <Bell size={20} color="#fff" />
+                ) : (
+                  <BellOff size={20} color="#6b7280" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>ڕاگرتنی خۆکار لە کاتی بەسەرچوون</Text>
+              <TouchableOpacity
+                style={[
+                  styles.toggleButton,
+                  notificationSettings.autoSuspendOnExpiry && styles.toggleButtonActive,
+                ]}
+                onPress={() =>
+                  saveNotificationSettings({
+                    ...notificationSettings,
+                    autoSuspendOnExpiry: !notificationSettings.autoSuspendOnExpiry,
+                  })
+                }
+              >
+                {notificationSettings.autoSuspendOnExpiry ? (
+                  <CheckCircle size={20} color="#fff" />
+                ) : (
+                  <XCircle size={20} color="#6b7280" />
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.settingLabel}>ڕۆژەکانی ئاگادارکردنەوە:</Text>
+            <View style={styles.warningDaysContainer}>
+              {[30, 15, 7, 3, 1].map((day) => (
+                <TouchableOpacity
+                  key={day}
+                  style={[
+                    styles.dayChip,
+                    notificationSettings.warningDays.includes(day) && styles.dayChipActive,
+                  ]}
+                  onPress={() => {
+                    const newDays = notificationSettings.warningDays.includes(day)
+                      ? notificationSettings.warningDays.filter((d) => d !== day)
+                      : [...notificationSettings.warningDays, day].sort((a, b) => b - a);
+                    saveNotificationSettings({
+                      ...notificationSettings,
+                      warningDays: newDays,
+                    });
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.dayChipText,
+                      notificationSettings.warningDays.includes(day) && styles.dayChipTextActive,
+                    ]}
+                  >
+                    {day} ڕۆژ
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={styles.settingLabel}>کەناڵەکانی ئاگادارکردنەوە:</Text>
+            <View style={styles.channelsContainer}>
+              {(['sms', 'email', 'in_app'] as const).map((channel) => (
+                <TouchableOpacity
+                  key={channel}
+                  style={[
+                    styles.channelChip,
+                    notificationSettings.channels.includes(channel) && styles.channelChipActive,
+                  ]}
+                  onPress={() => {
+                    const newChannels = notificationSettings.channels.includes(channel)
+                      ? notificationSettings.channels.filter((c) => c !== channel)
+                      : [...notificationSettings.channels, channel];
+                    saveNotificationSettings({
+                      ...notificationSettings,
+                      channels: newChannels,
+                    });
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.channelChipText,
+                      notificationSettings.channels.includes(channel) &&
+                        styles.channelChipTextActive,
+                    ]}
+                  >
+                    {channel === 'sms' ? 'SMS' : channel === 'email' ? 'ئیمەیڵ' : 'ناو ئەپ'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setShowSettingsModal(false)}
+            >
+              <Text style={styles.modalButtonText}>داخستن</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1063,6 +1315,162 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#ef4444',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  notificationsList: {
+    maxHeight: 400,
+  },
+  emptyNotifications: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  emptyNotificationsText: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginTop: 12,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: '#f9fafb',
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 12,
+  },
+  notificationItemUnread: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  notificationIcon: {
+    marginTop: 2,
+  },
+  notificationContent: {
+    flex: 1,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    color: '#4b5563',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  notificationDate: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#3b82f6',
+    marginTop: 8,
+  },
+  settingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    marginBottom: 12,
+  },
+  settingLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 12,
+  },
+  toggleButton: {
+    width: 50,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toggleButtonActive: {
+    backgroundColor: '#3b82f6',
+  },
+  warningDaysContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  dayChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+  },
+  dayChipActive: {
+    backgroundColor: '#dbeafe',
+    borderColor: '#3b82f6',
+  },
+  dayChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  dayChipTextActive: {
+    color: '#3b82f6',
+  },
+  channelsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 20,
+  },
+  channelChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+  },
+  channelChipActive: {
+    backgroundColor: '#d1fae5',
+    borderColor: '#10b981',
+  },
+  channelChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  channelChipTextActive: {
+    color: '#10b981',
   },
   requestsCard: {
     backgroundColor: '#fff',

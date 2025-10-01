@@ -52,12 +52,24 @@ export interface SubscriptionNotification {
   id: string;
   tenantId: string;
   adminId: string;
+  adminName: string;
+  adminPhone: string;
   type: 'expiry_warning' | 'expired' | 'suspended' | 'renewed';
   title: string;
   message: string;
   sentAt: string;
   read: boolean;
   daysUntilExpiry?: number;
+  channels: ('sms' | 'email' | 'in_app')[];
+  status: 'pending' | 'sent' | 'failed';
+}
+
+export interface SubscriptionNotificationSettings {
+  enabled: boolean;
+  warningDays: number[];
+  channels: ('sms' | 'email' | 'in_app')[];
+  autoSuspendOnExpiry: boolean;
+  lastCheckDate?: string;
 }
 
 export interface RenewSubscriptionRequest {
