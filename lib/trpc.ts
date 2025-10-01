@@ -28,53 +28,55 @@ const getBaseUrl = () => {
 const baseUrl = getBaseUrl();
 const trpcUrl = `${baseUrl}/api/trpc`;
 
+console.log('[tRPC] Initialized with base URL:', baseUrl);
+console.log('[tRPC] Full tRPC endpoint:', trpcUrl);
+
 export const trpcClient = trpc.createClient({
   links: [
     httpLink({
       url: trpcUrl,
       transformer: superjson,
       fetch: async (url, options) => {
+        let token: string | null = null;
+        
         try {
-          let token: string | null = null;
-          
-          try {
-            if (Platform.OS === 'web') {
-              if (typeof window !== 'undefined' && window.localStorage) {
-                const userStr = window.localStorage.getItem('user');
-                if (userStr) {
-                  const user = JSON.parse(userStr);
-                  token = user.id || 'demo-token';
-                }
-              }
-            } else {
-              const userStr = await AsyncStorage.getItem('user');
+          if (Platform.OS === 'web') {
+            if (typeof window !== 'undefined' && window.localStorage) {
+              const userStr = window.localStorage.getItem('user');
               if (userStr) {
                 const user = JSON.parse(userStr);
                 token = user.id || 'demo-token';
               }
             }
-          } catch (storageError) {
-            console.warn('[tRPC] Could not retrieve auth token:', storageError);
+          } else {
+            const userStr = await AsyncStorage.getItem('user');
+            if (userStr) {
+              const user = JSON.parse(userStr);
+              token = user.id || 'demo-token';
+            }
           }
-          
-          if (!token) {
-            token = 'demo-token';
-          }
-          
-          const fetchOptions = {
-            ...options,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-              ...options?.headers,
-            },
-            signal: options?.signal,
-          };
+        } catch (storageError) {
+          console.warn('[tRPC] Could not retrieve auth token:', storageError);
+        }
+        
+        if (!token) {
+          token = 'demo-token';
+        }
+        
+        const fetchOptions = {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options?.headers,
+          },
+          signal: options?.signal,
+        };
 
-          console.log('[tRPC] Making request to:', url);
-          
+        console.log('[tRPC] Request:', url);
+        
+        try {
           const response = await fetch(url, fetchOptions);
-          
           console.log('[tRPC] Response status:', response.status);
           
           if (!response.ok) {
@@ -85,19 +87,17 @@ export const trpcClient = trpc.createClient({
           
           return response;
         } catch (error) {
-          console.error('[tRPC] Request failed:', error);
-          if (error instanceof Error) {
-            console.error('[tRPC] Error details:', {
-              message: error.message,
-              name: error.name,
-              stack: error.stack,
-            });
-            
-            if (error.message.includes('Network request failed') || error.message.includes('Failed to fetch')) {
-              console.error('[tRPC] Network error - Backend may not be running or CORS issue');
-              throw new Error('نەتوانرا پەیوەندی بە سێرڤەر بکرێت. تکایە پشکنینی هێڵی ئینتەرنێت بکە یان ئەپەکە دووبارە بکەرەوە.');
-            }
+          console.error('[tRPC] Fetch error:', error);
+          
+          if (error instanceof Error && 
+              (error.message.includes('Network request failed') || 
+               error.message.includes('Failed to fetch') ||
+               error.message.includes('fetch failed'))) {
+            console.error('[tRPC] Network error - Backend may not be accessible');
+            console.error('[tRPC] Attempted URL:', url);
+            console.error('[tRPC] Base URL:', baseUrl);
           }
+          
           throw error;
         }
       },
