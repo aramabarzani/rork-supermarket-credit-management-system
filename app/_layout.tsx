@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Platform, View, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { trpc, trpcClient } from "@/lib/trpc";
 import { AuthProvider } from "@/hooks/auth-context";
 import { DebtProvider } from "@/hooks/debt-context";
 import { UsersProvider } from "@/hooks/users-context";
@@ -390,7 +389,6 @@ export default function RootLayout() {
   return (
       <GestureHandlerRootView style={styles.container}>
           <QueryClientProvider client={queryClient}>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
             <ErrorLoggingProvider>
               <ErrorBoundary>
                 <UICustomizationProvider>
@@ -435,7 +433,6 @@ export default function RootLayout() {
                 </UICustomizationProvider>
               </ErrorBoundary>
             </ErrorLoggingProvider>
-        </trpc.Provider>
           </QueryClientProvider>
       </GestureHandlerRootView>
   );

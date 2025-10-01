@@ -1,264 +1,110 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
-import { trpc } from '@/lib/trpc';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { CustomForm, CustomField, FormType } from '@/types/custom-forms';
 
 export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
+  const [forms, setForms] = useState<CustomForm[]>([]);
   const [selectedForm, setSelectedForm] = useState<CustomForm | null>(null);
-  const [isCreatingForm, setIsCreatingForm] = useState<boolean>(false);
-  const [isEditingForm, setIsEditingForm] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
+  const [isExporting, setIsExporting] = useState<boolean>(false);
 
-  const formsQuery = trpc.forms.getAll.useQuery(undefined, {
-    retry: false,
-    staleTime: 60000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    enabled: false,
-  });
-  const formByIdQuery = trpc.forms.getById.useQuery(
-    { id: selectedForm?.id || '' },
-    { 
-      enabled: false,
-      retry: false,
-      staleTime: 60000,
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    }
-  );
-  const submissionsQuery = trpc.forms.getSubmissions.useQuery(undefined, {
-    retry: false,
-    staleTime: 60000,
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    enabled: false,
-  });
-
-  useEffect(() => {
-    if (formsQuery.error) {
-      console.error('[Custom Forms] Failed to fetch forms:', formsQuery.error.message);
-    }
-  }, [formsQuery.error]);
-
-  useEffect(() => {
-    if (formByIdQuery.error) {
-      console.error('[Custom Forms] Failed to fetch form by ID:', formByIdQuery.error.message);
-    }
-  }, [formByIdQuery.error]);
-
-  useEffect(() => {
-    if (submissionsQuery.error) {
-      console.error('[Custom Forms] Failed to fetch submissions:', submissionsQuery.error.message);
-    }
-  }, [submissionsQuery.error]);
-
-  const createFormMutation = trpc.forms.create.useMutation({
-    onSuccess: () => {
-      formsQuery.refetch();
-      setIsCreatingForm(false);
-      console.log('✅ فۆرمی نوێ دروستکرا');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە دروستکردنی فۆرم:', error.message);
-      alert('هەڵە لە دروستکردنی فۆرم. تکایە دووبارە هەوڵ بدەرەوە.');
-    },
-  });
-
-  const updateFormMutation = trpc.forms.update.useMutation({
-    onSuccess: () => {
-      formsQuery.refetch();
-      if (selectedForm?.id) {
-        formByIdQuery.refetch();
+  const loadForms = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const stored = await AsyncStorage.getItem('custom_forms');
+      if (stored) {
+        setForms(JSON.parse(stored));
       }
-      setIsEditingForm(false);
-      console.log('✅ فۆرم نوێکرایەوە');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە نوێکردنەوەی فۆرم:', error.message);
-    },
-  });
+    } catch (error) {
+      console.error('[Custom Forms] Failed to load forms:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
-  const deleteFormMutation = trpc.forms.delete.useMutation({
-    onSuccess: () => {
-      formsQuery.refetch();
-      setSelectedForm(null);
-      console.log('✅ فۆرم سڕایەوە');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە سڕینەوەی فۆرم:', error.message);
-      alert('هەڵە لە سڕینەوەی فۆرم. تکایە دووبارە هەوڵ بدەرەوە.');
-    },
-  });
+  const createForm = useCallback((name: string, description: string | undefined, type: FormType, fields: CustomField[]) => {
+    const newForm: CustomForm = {
+      id: Date.now().toString(),
+      name,
+      description,
+      type,
+      fields,
+      isActive: true,
+      createdBy: 'system',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    const updated = [...forms, newForm];
+    AsyncStorage.setItem('custom_forms', JSON.stringify(updated));
+    setForms(updated);
+  }, [forms]);
 
-  const addFieldMutation = trpc.forms.addField.useMutation({
-    onSuccess: () => {
-      formsQuery.refetch();
-      if (selectedForm?.id) {
-        formByIdQuery.refetch();
-      }
-      console.log('✅ خانەی نوێ زیادکرا');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە زیادکردنی خانە:', error.message);
-    },
-  });
+  const updateForm = useCallback((id: string, updates: Partial<CustomForm>) => {
+    const updated = forms.map(f => f.id === id ? { ...f, ...updates, updatedAt: new Date().toISOString() } : f);
+    AsyncStorage.setItem('custom_forms', JSON.stringify(updated));
+    setForms(updated);
+  }, [forms]);
 
-  const removeFieldMutation = trpc.forms.removeField.useMutation({
-    onSuccess: () => {
-      formsQuery.refetch();
-      if (selectedForm?.id) {
-        formByIdQuery.refetch();
-      }
-      console.log('✅ خانە سڕایەوە');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە سڕینەوەی خانە:', error.message);
-    },
-  });
+  const deleteForm = useCallback(async (id: string) => {
+    setIsDeleting(true);
+    const updated = forms.filter(f => f.id !== id);
+    await AsyncStorage.setItem('custom_forms', JSON.stringify(updated));
+    setForms(updated);
+    setIsDeleting(false);
+  }, [forms]);
 
-  const updateFieldMutation = trpc.forms.updateField.useMutation({
-    onSuccess: () => {
-      formsQuery.refetch();
-      if (selectedForm?.id) {
-        formByIdQuery.refetch();
-      }
-      console.log('✅ خانە نوێکرایەوە');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە نوێکردنەوەی خانە:', error.message);
-    },
-  });
+  const exportForm = useCallback(async (formId: string, format: 'excel' | 'pdf' | 'json' | 'csv') => {
+    setIsExporting(true);
+    console.log('Exporting form:', formId, format);
+    setTimeout(() => setIsExporting(false), 1000);
+  }, []);
 
-  const submitFormMutation = trpc.forms.submit.useMutation({
-    onSuccess: () => {
-      submissionsQuery.refetch();
-      console.log('✅ فۆرم پڕکرایەوە');
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە پڕکردنەوەی فۆرم:', error.message);
-    },
-  });
+  const addField = useCallback((formId: string, field: CustomField) => {
+    const updated = forms.map(f => f.id === formId ? { ...f, fields: [...f.fields, field] } : f);
+    AsyncStorage.setItem('custom_forms', JSON.stringify(updated));
+    setForms(updated);
+  }, [forms]);
 
-  const exportFormMutation = trpc.forms.export.useMutation({
-    onSuccess: (data) => {
-      console.log('✅ داتای فۆرم هەناردەکرا:', data.fileName);
-      alert(`داتای فۆرم هەناردەکرا: ${data.fileName}`);
-    },
-    onError: (error) => {
-      console.error('❌ هەڵە لە هەناردەکردنی داتا:', error.message);
-      alert('هەڵە لە هەناردەکردنی داتا. تکایە دووبارە هەوڵ بدەرەوە.');
-    },
-  });
+  const removeField = useCallback((formId: string, fieldId: string) => {
+    const updated = forms.map(f => f.id === formId ? { ...f, fields: f.fields.filter(field => field.id !== fieldId) } : f);
+    AsyncStorage.setItem('custom_forms', JSON.stringify(updated));
+    setForms(updated);
+  }, [forms]);
 
-  const createForm = useCallback(
-    (name: string, description: string | undefined, type: FormType, fields: CustomField[]) => {
-      createFormMutation.mutate({ name, description, type, fields });
-    },
-    [createFormMutation]
-  );
+  const updateField = useCallback((formId: string, fieldId: string, updates: Partial<CustomField>) => {
+    const updated = forms.map(f => 
+      f.id === formId 
+        ? { ...f, fields: f.fields.map(field => field.id === fieldId ? { ...field, ...updates } : field) }
+        : f
+    );
+    AsyncStorage.setItem('custom_forms', JSON.stringify(updated));
+    setForms(updated);
+  }, [forms]);
 
-  const updateForm = useCallback(
-    (id: string, updates: { name?: string; description?: string; fields?: CustomField[]; isActive?: boolean }) => {
-      updateFormMutation.mutate({ id, ...updates });
-    },
-    [updateFormMutation]
-  );
+  const submitForm = useCallback((formId: string, data: Record<string, unknown>) => {
+    console.log('Submitting form:', formId, data);
+  }, []);
 
-  const deleteForm = useCallback(
-    (id: string) => {
-      deleteFormMutation.mutate({ id });
-    },
-    [deleteFormMutation]
-  );
+  const getFormsByType = useCallback((type: FormType) => {
+    return forms.filter((form) => form.type === type);
+  }, [forms]);
 
-  const addField = useCallback(
-    (formId: string, field: CustomField) => {
-      addFieldMutation.mutate({ formId, field });
-    },
-    [addFieldMutation]
-  );
-
-  const removeField = useCallback(
-    (formId: string, fieldId: string) => {
-      removeFieldMutation.mutate({ formId, fieldId });
-    },
-    [removeFieldMutation]
-  );
-
-  const updateField = useCallback(
-    (formId: string, fieldId: string, updates: Partial<CustomField>) => {
-      updateFieldMutation.mutate({ formId, fieldId, updates });
-    },
-    [updateFieldMutation]
-  );
-
-  const submitForm = useCallback(
-    (
-      formId: string,
-      data: Record<string, unknown>,
-      relatedEntityId?: string,
-      relatedEntityType?: 'customer' | 'employee' | 'debt' | 'payment'
-    ) => {
-      submitFormMutation.mutate({ formId, data, relatedEntityId, relatedEntityType });
-    },
-    [submitFormMutation]
-  );
-
-  const exportForm = useCallback(
-    (formId: string, format: 'excel' | 'pdf' | 'json' | 'csv') => {
-      exportFormMutation.mutate({ formId, format });
-    },
-    [exportFormMutation]
-  );
-
-  const getFormsByType = useCallback(
-    (type: FormType) => {
-      return formsQuery.data?.filter((form) => form.type === type) || [];
-    },
-    [formsQuery.data]
-  );
-
-  const getActiveForm = useCallback(
-    (type: FormType) => {
-      return formsQuery.data?.find((form) => form.type === type && form.isActive);
-    },
-    [formsQuery.data]
-  );
+  const getActiveForm = useCallback((type: FormType) => {
+    return forms.find((form) => form.type === type && form.isActive);
+  }, [forms]);
 
   return useMemo(() => ({
-    forms: formsQuery.data || [],
-    selectedForm: formByIdQuery.data || selectedForm,
-    submissions: submissionsQuery.data || [],
-    isLoading: formsQuery.isLoading || formByIdQuery.isLoading || submissionsQuery.isLoading,
-    isCreatingForm,
-    isEditingForm,
-    setSelectedForm,
-    setIsCreatingForm,
-    setIsEditingForm,
-    createForm,
-    updateForm,
-    deleteForm,
-    addField,
-    removeField,
-    updateField,
-    submitForm,
-    exportForm,
-    getFormsByType,
-    getActiveForm,
-    isCreating: createFormMutation.isPending,
-    isUpdating: updateFormMutation.isPending,
-    isDeleting: deleteFormMutation.isPending,
-    isSubmitting: submitFormMutation.isPending,
-    isExporting: exportFormMutation.isPending,
-  }), [
-    formsQuery.data,
-    formByIdQuery.data,
+    forms,
     selectedForm,
-    submissionsQuery.data,
-    formsQuery.isLoading,
-    formByIdQuery.isLoading,
-    submissionsQuery.isLoading,
-    isCreatingForm,
-    isEditingForm,
+    submissions: [],
+    isLoading,
+    isCreatingForm: false,
+    isEditingForm: false,
+    setSelectedForm,
+    setIsCreatingForm: useCallback(() => {}, []),
+    setIsEditingForm: useCallback(() => {}, []),
     createForm,
     updateForm,
     deleteForm,
@@ -269,10 +115,10 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     exportForm,
     getFormsByType,
     getActiveForm,
-    createFormMutation.isPending,
-    updateFormMutation.isPending,
-    deleteFormMutation.isPending,
-    submitFormMutation.isPending,
-    exportFormMutation.isPending,
-  ]);
+    isCreating: false,
+    isUpdating: false,
+    isDeleting,
+    isSubmitting: false,
+    isExporting,
+  }), [forms, selectedForm, isLoading, isDeleting, isExporting, createForm, updateForm, deleteForm, addField, removeField, updateField, submitForm, exportForm, getFormsByType, getActiveForm]);
 });

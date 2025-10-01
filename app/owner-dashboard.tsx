@@ -11,15 +11,31 @@ import {
   Platform,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
-import { trpc } from '@/lib/trpc';
 import { Plus, Users, DollarSign, AlertCircle, CheckCircle, XCircle, LogOut } from 'lucide-react-native';
-import type { TenantSubscription, SubscriptionPlan } from '@/types/subscription';
+import type { SubscriptionPlan } from '@/types/subscription';
 import { SUBSCRIPTION_PLANS } from '@/types/subscription';
 import { useAuth } from '@/hooks/auth-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+interface TenantSubscription {
+  id: string;
+  adminName: string;
+  adminPhone: string;
+  plan: SubscriptionPlan;
+  status: 'active' | 'expired' | 'suspended';
+  startDate: string;
+  expiryDate: string;
+  staffCount: number;
+  customerCount: number;
+  lastRenewedAt?: string;
+  suspensionReason?: string;
+}
 
 export default function OwnerDashboardScreen() {
   const { user, logout } = useAuth();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tenants, setTenants] = useState<TenantSubscription[]>([]);
   const [newAdmin, setNewAdmin] = useState({
     name: '',
     phone: '',
@@ -28,30 +44,32 @@ export default function OwnerDashboardScreen() {
     duration: 30,
   });
 
-  const queryResult = trpc.subscription.owner.getAll.useQuery(undefined, {
-    retry: false,
-    staleTime: 30000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-  });
-
-  const { data, isLoading, error, refetch } = queryResult;
-
   React.useEffect(() => {
-    console.log('OwnerDashboard: Query status:', {
-      isLoading,
-      hasData: !!data,
-      hasError: !!error,
-      errorMessage: error?.message,
-    });
-    if (error) {
-      console.error('[OwnerDashboard] Query error:', error);
+    loadTenants();
+  }, []);
+
+  const loadTenants = async () => {
+    try {
+      setIsLoading(true);
+      const stored = await AsyncStorage.getItem('tenants');
+      if (stored) {
+        setTenants(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load tenants:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, [isLoading, data, error]);
-  const createAdminMutation = trpc.subscription.owner.createAdmin.useMutation();
-  const suspendMutation = trpc.subscription.owner.suspend.useMutation();
-  const activateMutation = trpc.subscription.owner.activate.useMutation();
-  const deleteMutation = trpc.subscription.owner.delete.useMutation();
+  };
+
+  const saveTenants = async (updatedTenants: TenantSubscription[]) => {
+    try {
+      await AsyncStorage.setItem('tenants', JSON.stringify(updatedTenants));
+      setTenants(updatedTenants);
+    } catch (error) {
+      console.error('Failed to save tenants:', error);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -78,7 +96,18 @@ export default function OwnerDashboardScreen() {
     }
 
     try {
-      await createAdminMutation.mutateAsync(newAdmin);
+      const newTenant: TenantSubscription = {
+        id: Date.now().toString(),
+        adminName: newAdmin.name,
+        adminPhone: newAdmin.phone,
+        plan: newAdmin.plan,
+        status: 'active',
+        startDate: new Date().toISOString(),
+        expiryDate: new Date(Date.now() + newAdmin.duration * 24 * 60 * 60 * 1000).toISOString(),
+        staffCount: 0,
+        customerCount: 0,
+      };
+      await saveTenants([...tenants, newTenant]);
       Alert.alert('سەرکەوتوو', 'بەڕێوەبەر بە سەرکەوتوویی دروستکرا');
       setShowCreateModal(false);
       setNewAdmin({
@@ -88,7 +117,6 @@ export default function OwnerDashboardScreen() {
         plan: 'basic',
         duration: 30,
       });
-      refetch();
     } catch {
       Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
     }
@@ -105,12 +133,13 @@ export default function OwnerDashboardScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await suspendMutation.mutateAsync({
-                tenantId,
-                reason: 'ڕاگیراوە لەلایەن خاوەندارەوە',
-              });
+              const updated = tenants.map(t => 
+                t.id === tenantId 
+                  ? { ...t, status: 'suspended' as const, suspensionReason: 'ڕاگیراوە لەلایەن خاوەندارەوە' }
+                  : t
+              );
+              await saveTenants(updated);
               Alert.alert('سەرکەوتوو', 'بەڕێوەبەر ڕاگیرا');
-              refetch();
             } catch {
               Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
             }
@@ -122,9 +151,13 @@ export default function OwnerDashboardScreen() {
 
   const handleActivate = async (tenantId: string) => {
     try {
-      await activateMutation.mutateAsync({ tenantId });
+      const updated = tenants.map(t => 
+        t.id === tenantId 
+          ? { ...t, status: 'active' as const, suspensionReason: undefined }
+          : t
+      );
+      await saveTenants(updated);
       Alert.alert('سەرکەوتوو', 'بەڕێوەبەر چالاککرایەوە');
-      refetch();
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'کێشەیەک ڕوویدا';
       Alert.alert('هەڵە', errorMessage);
@@ -142,9 +175,9 @@ export default function OwnerDashboardScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              await deleteMutation.mutateAsync({ tenantId });
+              const updated = tenants.filter(t => t.id !== tenantId);
+              await saveTenants(updated);
               Alert.alert('سەرکەوتوو', 'بەڕێوەبەر سڕایەوە');
-              refetch();
             } catch {
               Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
             }
@@ -200,7 +233,7 @@ export default function OwnerDashboardScreen() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
-  if (isLoading && !error) {
+  if (isLoading) {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'داشبۆردی خاوەندار' }} />
@@ -212,11 +245,15 @@ export default function OwnerDashboardScreen() {
     );
   }
 
-  const displayData = data || {
-    getAllTenants: [],
-    getActiveTenants: [],
-    getExpiredTenants: [],
-    getTotalRevenue: 0,
+  const activeTenants = tenants.filter(t => t.status === 'active');
+  const expiredTenants = tenants.filter(t => t.status === 'expired');
+  const totalRevenue = tenants.reduce((sum, t) => sum + SUBSCRIPTION_PLANS[t.plan].price, 0);
+
+  const displayData = {
+    getAllTenants: tenants,
+    getActiveTenants: activeTenants,
+    getExpiredTenants: expiredTenants,
+    getTotalRevenue: totalRevenue,
   };
 
   return (
@@ -238,26 +275,6 @@ export default function OwnerDashboardScreen() {
       />
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {error && (
-          <View style={styles.errorBanner}>
-            <AlertCircle size={24} color="#dc2626" />
-            <View style={styles.errorBannerContent}>
-              <Text style={styles.errorBannerTitle}>سێرڤەری Backend کارناکات</Text>
-              <Text style={styles.errorBannerText}>
-                بۆ کارکردنی سیستەم، پێویستە سێرڤەری backend دەستپێبکرێت.
-              </Text>
-              <Text style={styles.errorBannerCommand}>
-                bun run backend/hono.ts
-              </Text>
-              <Text style={styles.errorBannerNote}>
-                دوای دەستپێکردنی سێرڤەر، دوگمەی &quot;هەوڵدانەوە&quot; دابگرە.
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => refetch()} style={styles.errorBannerButton}>
-              <Text style={styles.errorBannerButtonText}>هەوڵدانەوە</Text>
-            </TouchableOpacity>
-          </View>
-        )}
         <View style={styles.welcomeCard}>
           <View style={styles.welcomeHeader}>
             <Users size={48} color="#1E3A8A" />
@@ -312,7 +329,7 @@ export default function OwnerDashboardScreen() {
 
         <View style={styles.tenantsContainer}>
           <Text style={styles.sectionTitle}>بەڕێوەبەران</Text>
-          {displayData.getAllTenants.length === 0 && !error && (
+          {displayData.getAllTenants.length === 0 && (
             <View style={styles.emptyState}>
               <Users size={64} color="#9ca3af" />
               <Text style={styles.emptyStateTitle}>هیچ بەڕێوەبەرێک نییە</Text>
@@ -465,11 +482,8 @@ export default function OwnerDashboardScreen() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.createButton]}
                 onPress={handleCreateAdmin}
-                disabled={createAdminMutation.isPending}
               >
-                <Text style={styles.modalButtonText}>
-                  {createAdminMutation.isPending ? 'چاوەڕوان بە...' : 'دروستکردن'}
-                </Text>
+                <Text style={styles.modalButtonText}>دروستکردن</Text>
               </TouchableOpacity>
             </View>
           </View>
