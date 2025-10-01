@@ -675,6 +675,41 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     return notifications.filter(n => !n.isRead).length;
   }, [notifications]);
 
+  const getNotificationsForUser = useCallback((userId: string, userRole: string) => {
+    return notifications.filter(notification => {
+      if (userRole === 'owner') {
+        return notification.recipientType === 'owner' || 
+               notification.recipientId === userId ||
+               notification.userId === userId ||
+               notification.type === 'new_store_registration' ||
+               notification.type === 'store_request_approved' ||
+               notification.type === 'store_request_rejected';
+      }
+      
+      if (userRole === 'admin') {
+        return notification.recipientType === 'admin' || 
+               notification.recipientId === userId ||
+               notification.userId === userId ||
+               !notification.recipientType;
+      }
+      
+      if (userRole === 'employee') {
+        return notification.recipientType === 'employee' || 
+               notification.recipientId === userId ||
+               notification.userId === userId;
+      }
+      
+      if (userRole === 'customer') {
+        return notification.recipientType === 'customer' || 
+               notification.recipientId === userId ||
+               notification.userId === userId ||
+               notification.customerId === userId;
+      }
+      
+      return false;
+    });
+  }, [notifications]);
+
   return useMemo(() => ({
     notifications,
     isLoading,
@@ -700,6 +735,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     updateManagerRule,
     deleteManagerRule,
     checkManagerRules,
+    getNotificationsForUser,
   }), [
     notifications,
     isLoading,
@@ -725,5 +761,6 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     updateManagerRule,
     deleteManagerRule,
     checkManagerRules,
+    getNotificationsForUser,
   ]);
 });

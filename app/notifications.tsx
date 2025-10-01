@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, Settings, AlertTriangle, CheckCircle, X } from 'lucide-react-native';
 import { useNotifications } from '@/hooks/notification-context';
+import { useAuth } from '@/hooks/auth-context';
 import { NotificationList } from '@/components/NotificationList';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const {
     notifications,
-    unreadCount,
     settings,
     markAsRead,
     markAllAsRead,
@@ -34,13 +35,54 @@ export default function NotificationsScreen() {
     await removeNotification(notificationId);
   };
 
+  const userNotifications = useMemo(() => {
+    if (!user) return [];
+    
+    return notifications.filter(notification => {
+      if (user.role === 'owner') {
+        return notification.recipientType === 'owner' || 
+               notification.recipientId === user.id ||
+               notification.userId === user.id ||
+               notification.type === 'new_store_registration' ||
+               notification.type === 'store_request_approved' ||
+               notification.type === 'store_request_rejected';
+      }
+      
+      if (user.role === 'admin') {
+        return notification.recipientType === 'admin' || 
+               notification.recipientId === user.id ||
+               notification.userId === user.id ||
+               !notification.recipientType;
+      }
+      
+      if (user.role === 'employee') {
+        return notification.recipientType === 'employee' || 
+               notification.recipientId === user.id ||
+               notification.userId === user.id;
+      }
+      
+      if (user.role === 'customer') {
+        return notification.recipientType === 'customer' || 
+               notification.recipientId === user.id ||
+               notification.userId === user.id ||
+               notification.customerId === user.id;
+      }
+      
+      return false;
+    });
+  }, [notifications, user]);
+
+  const userUnreadCount = useMemo(() => {
+    return userNotifications.filter(n => !n.isRead).length;
+  }, [userNotifications]);
+
   const getFilteredNotifications = () => {
     switch (activeTab) {
       case 'unread':
-        return notifications.filter(n => !n.isRead);
+        return userNotifications.filter(n => !n.isRead);
       case 'all':
       default:
-        return notifications;
+        return userNotifications;
     }
   };
 
@@ -162,9 +204,9 @@ export default function NotificationsScreen() {
   };
 
   const renderStats = () => {
-    const overdueNotifications = notifications.filter(n => n.type === 'debt_overdue').length;
-    const highDebtNotifications = notifications.filter(n => n.type === 'high_debt_warning').length;
-    const paymentNotifications = notifications.filter(n => n.type === 'payment_received').length;
+    const overdueNotifications = userNotifications.filter(n => n.type === 'debt_overdue').length;
+    const highDebtNotifications = userNotifications.filter(n => n.type === 'high_debt_warning').length;
+    const paymentNotifications = userNotifications.filter(n => n.type === 'payment_received').length;
 
     return (
       <View style={styles.statsContainer}>
@@ -197,14 +239,14 @@ export default function NotificationsScreen() {
           <KurdishText style={styles.headerTitle}>
             ئاگاداریەکان
           </KurdishText>
-          {unreadCount > 0 && (
+          {userUnreadCount > 0 && (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
+              <Text style={styles.badgeText}>{userUnreadCount}</Text>
             </View>
           )}
         </View>
         
-        {unreadCount > 0 && (
+        {userUnreadCount > 0 && (
           <TouchableOpacity
             style={styles.markAllButton}
             onPress={markAllAsRead}
@@ -223,7 +265,7 @@ export default function NotificationsScreen() {
           onPress={() => setActiveTab('all')}
         >
           <Text style={[styles.tabText, activeTab === 'all' && styles.activeTabText]}>
-            هەموو ({notifications.length})
+            هەموو ({userNotifications.length})
           </Text>
         </TouchableOpacity>
         
@@ -232,7 +274,7 @@ export default function NotificationsScreen() {
           onPress={() => setActiveTab('unread')}
         >
           <Text style={[styles.tabText, activeTab === 'unread' && styles.activeTabText]}>
-            نەخوێندراو ({unreadCount})
+            نەخوێندراو ({userUnreadCount})
           </Text>
         </TouchableOpacity>
         
