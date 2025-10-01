@@ -31,17 +31,7 @@ const sampleChanges: ProfileChange[] = [
   },
 ];
 
-const sampleImages: ProfileImage[] = [
-  {
-    id: 'img-1',
-    userId: 'user-1',
-    imageUrl: 'https://via.placeholder.com/150',
-    uploadedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    uploadedBy: 'admin',
-    fileSize: 102400,
-    mimeType: 'image/jpeg',
-  },
-];
+const sampleImages: ProfileImage[] = [];
 
 export const [ProfileTrackingProvider, useProfileTracking] = createContextHook(() => {
   const [changes, setChanges] = useState<ProfileChange[]>(sampleChanges);
