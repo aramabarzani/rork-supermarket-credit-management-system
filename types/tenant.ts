@@ -61,6 +61,32 @@ export interface TenantFeatures {
   enableWhiteLabel: boolean;
   enableMultiLocation: boolean;
   enableInventory: boolean;
+  enableAdvancedSearch: boolean;
+  enableVoiceSearch: boolean;
+  enableCustomerGroups: boolean;
+  enableCustomerRatings: boolean;
+  enableDebtCategories: boolean;
+  enableNotifications: boolean;
+  enableReceipts: boolean;
+  enableBalanceMonitor: boolean;
+  enableExportData: boolean;
+  enableBackupRestore: boolean;
+  enableActivityLog: boolean;
+  enableSecurityFeatures: boolean;
+  enableMultiLanguage: boolean;
+  enableCustomThemes: boolean;
+  enableAnalytics: boolean;
+  enableRealtimeMonitoring: boolean;
+  enableErrorLogging: boolean;
+  enableSystemUpdates: boolean;
+  enableNotes: boolean;
+  enableSharing: boolean;
+  enableGuidance: boolean;
+  enableNewsletter: boolean;
+  enableInternalMessaging: boolean;
+  enableUsabilitySettings: boolean;
+  enablePerformanceMonitoring: boolean;
+  enableUsageStatistics: boolean;
 }
 
 export interface TenantStats {

@@ -23,6 +23,32 @@ import {
   XCircle,
   AlertCircle,
   Save,
+  Search,
+  Mic,
+  Tag,
+  Star,
+  FolderOpen,
+  Bell,
+  Receipt,
+  TrendingUp,
+  Download,
+  HardDrive,
+  Activity,
+  Lock,
+  Languages,
+  Palette,
+  BarChart3,
+  Monitor,
+  AlertTriangle,
+  RefreshCw,
+  StickyNote,
+  Share2,
+  HelpCircle,
+  Mail,
+  MessageSquare,
+  Sliders,
+  Gauge,
+  PieChart,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SUBSCRIPTION_PLANS, SubscriptionPlan } from '@/types/subscription';
@@ -53,6 +79,32 @@ export default function TenantFeaturesScreen() {
     enableWhiteLabel: false,
     enableMultiLocation: false,
     enableInventory: false,
+    enableAdvancedSearch: true,
+    enableVoiceSearch: false,
+    enableCustomerGroups: true,
+    enableCustomerRatings: true,
+    enableDebtCategories: true,
+    enableNotifications: true,
+    enableReceipts: true,
+    enableBalanceMonitor: true,
+    enableExportData: false,
+    enableBackupRestore: false,
+    enableActivityLog: false,
+    enableSecurityFeatures: false,
+    enableMultiLanguage: false,
+    enableCustomThemes: false,
+    enableAnalytics: false,
+    enableRealtimeMonitoring: false,
+    enableErrorLogging: false,
+    enableSystemUpdates: true,
+    enableNotes: true,
+    enableSharing: false,
+    enableGuidance: true,
+    enableNewsletter: false,
+    enableInternalMessaging: true,
+    enableUsabilitySettings: false,
+    enablePerformanceMonitoring: false,
+    enableUsageStatistics: false,
   });
 
   useEffect(() => {
@@ -83,6 +135,32 @@ export default function TenantFeaturesScreen() {
               enableWhiteLabel: found.plan === 'enterprise',
               enableMultiLocation: found.plan === 'enterprise',
               enableInventory: found.plan !== 'basic',
+              enableAdvancedSearch: true,
+              enableVoiceSearch: found.plan !== 'basic',
+              enableCustomerGroups: true,
+              enableCustomerRatings: true,
+              enableDebtCategories: true,
+              enableNotifications: true,
+              enableReceipts: true,
+              enableBalanceMonitor: true,
+              enableExportData: found.plan !== 'basic',
+              enableBackupRestore: found.plan !== 'basic',
+              enableActivityLog: found.plan !== 'basic',
+              enableSecurityFeatures: found.plan !== 'basic',
+              enableMultiLanguage: found.plan === 'enterprise',
+              enableCustomThemes: found.plan === 'enterprise',
+              enableAnalytics: found.plan !== 'basic',
+              enableRealtimeMonitoring: found.plan === 'enterprise',
+              enableErrorLogging: found.plan !== 'basic',
+              enableSystemUpdates: true,
+              enableNotes: true,
+              enableSharing: found.plan !== 'basic',
+              enableGuidance: true,
+              enableNewsletter: found.plan !== 'basic',
+              enableInternalMessaging: true,
+              enableUsabilitySettings: found.plan !== 'basic',
+              enablePerformanceMonitoring: found.plan === 'enterprise',
+              enableUsageStatistics: found.plan !== 'basic',
             });
           }
         }
@@ -435,6 +513,596 @@ export default function TenantFeaturesScreen() {
               onValueChange={(value) => updateFeature('enableInventory', value)}
               trackColor={{ false: '#d1d5db', true: '#5eead4' }}
               thumbColor={features.enableInventory ? '#14b8a6' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Search size={24} color="#f59e0b" />
+            <Text style={styles.sectionTitle}>گەڕان و پاڵاوتن</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Search size={20} color="#3b82f6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>گەڕانی پێشکەوتوو</Text>
+                <Text style={styles.featureDescription}>
+                  گەڕانی تایبەت و پاڵاوتنی پێشکەوتوو
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableAdvancedSearch}
+              onValueChange={(value) => updateFeature('enableAdvancedSearch', value)}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={features.enableAdvancedSearch ? '#3b82f6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Mic size={20} color="#ef4444" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>گەڕانی دەنگی</Text>
+                <Text style={styles.featureDescription}>
+                  گەڕان بە دەنگ و فەرمانی دەنگی
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableVoiceSearch}
+              onValueChange={(value) => updateFeature('enableVoiceSearch', value)}
+              trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
+              thumbColor={features.enableVoiceSearch ? '#ef4444' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Tag size={24} color="#8b5cf6" />
+            <Text style={styles.sectionTitle}>بەڕێوەبردنی کڕیاران</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Tag size={20} color="#8b5cf6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>کۆمەڵەی کڕیاران</Text>
+                <Text style={styles.featureDescription}>
+                  دابەشکردنی کڕیاران بۆ کۆمەڵەکان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableCustomerGroups}
+              onValueChange={(value) => updateFeature('enableCustomerGroups', value)}
+              trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+              thumbColor={features.enableCustomerGroups ? '#8b5cf6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Star size={20} color="#f59e0b" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>هەڵسەنگاندنی کڕیاران</Text>
+                <Text style={styles.featureDescription}>
+                  هەڵسەنگاندن و پلەدانی کڕیاران
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableCustomerRatings}
+              onValueChange={(value) => updateFeature('enableCustomerRatings', value)}
+              trackColor={{ false: '#d1d5db', true: '#fcd34d' }}
+              thumbColor={features.enableCustomerRatings ? '#f59e0b' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <FolderOpen size={24} color="#10b981" />
+            <Text style={styles.sectionTitle}>بەڕێوەبردنی قەرز</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <FolderOpen size={20} color="#10b981" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>جۆرەکانی قەرز</Text>
+                <Text style={styles.featureDescription}>
+                  دابەشکردنی قەرزەکان بەپێی جۆر
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableDebtCategories}
+              onValueChange={(value) => updateFeature('enableDebtCategories', value)}
+              trackColor={{ false: '#d1d5db', true: '#6ee7b7' }}
+              thumbColor={features.enableDebtCategories ? '#10b981' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Bell size={24} color="#3b82f6" />
+            <Text style={styles.sectionTitle}>ئاگادارکردنەوە و پەیوەندی</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Bell size={20} color="#3b82f6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>ئاگادارکردنەوەکان</Text>
+                <Text style={styles.featureDescription}>
+                  ناردنی ئاگادارکردنەوە بۆ کڕیاران
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableNotifications}
+              onValueChange={(value) => updateFeature('enableNotifications', value)}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={features.enableNotifications ? '#3b82f6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <MessageSquare size={20} color="#8b5cf6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>پەیامی ناوخۆیی</Text>
+                <Text style={styles.featureDescription}>
+                  پەیامی ناوخۆیی نێوان کارمەندان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableInternalMessaging}
+              onValueChange={(value) => updateFeature('enableInternalMessaging', value)}
+              trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+              thumbColor={features.enableInternalMessaging ? '#8b5cf6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Mail size={20} color="#10b981" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>نامەی هەواڵ</Text>
+                <Text style={styles.featureDescription}>
+                  ناردنی نامەی هەواڵ بۆ کڕیاران
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableNewsletter}
+              onValueChange={(value) => updateFeature('enableNewsletter', value)}
+              trackColor={{ false: '#d1d5db', true: '#6ee7b7' }}
+              thumbColor={features.enableNewsletter ? '#10b981' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Receipt size={24} color="#ef4444" />
+            <Text style={styles.sectionTitle}>وەسڵ و داتا</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Receipt size={20} color="#ef4444" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>وەسڵەکان</Text>
+                <Text style={styles.featureDescription}>
+                  دروستکردن و چاپکردنی وەسڵ
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableReceipts}
+              onValueChange={(value) => updateFeature('enableReceipts', value)}
+              trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
+              thumbColor={features.enableReceipts ? '#ef4444' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Download size={20} color="#6366f1" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>هەناردەکردنی داتا</Text>
+                <Text style={styles.featureDescription}>
+                  هەناردەکردنی داتا بە فۆرماتی جیاواز
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableExportData}
+              onValueChange={(value) => updateFeature('enableExportData', value)}
+              trackColor={{ false: '#d1d5db', true: '#a5b4fc' }}
+              thumbColor={features.enableExportData ? '#6366f1' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <HardDrive size={20} color="#14b8a6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>پاشەکەوت و گەڕانەوە</Text>
+                <Text style={styles.featureDescription}>
+                  پاشەکەوتکردن و گەڕاندنەوەی داتا
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableBackupRestore}
+              onValueChange={(value) => updateFeature('enableBackupRestore', value)}
+              trackColor={{ false: '#d1d5db', true: '#5eead4' }}
+              thumbColor={features.enableBackupRestore ? '#14b8a6' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <TrendingUp size={24} color="#f59e0b" />
+            <Text style={styles.sectionTitle}>چاودێری و شیکاری</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <TrendingUp size={20} color="#10b981" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>چاودێری باڵانس</Text>
+                <Text style={styles.featureDescription}>
+                  چاودێری باڵانس و ئاگادارکردنەوە
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableBalanceMonitor}
+              onValueChange={(value) => updateFeature('enableBalanceMonitor', value)}
+              trackColor={{ false: '#d1d5db', true: '#6ee7b7' }}
+              thumbColor={features.enableBalanceMonitor ? '#10b981' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <BarChart3 size={20} color="#3b82f6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>شیکاری</Text>
+                <Text style={styles.featureDescription}>
+                  شیکاری تەواو و راپۆرتی تایبەت
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableAnalytics}
+              onValueChange={(value) => updateFeature('enableAnalytics', value)}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={features.enableAnalytics ? '#3b82f6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Monitor size={20} color="#8b5cf6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>چاودێری ڕاستەوخۆ</Text>
+                <Text style={styles.featureDescription}>
+                  چاودێری ڕاستەوخۆی سیستەم
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableRealtimeMonitoring}
+              onValueChange={(value) => updateFeature('enableRealtimeMonitoring', value)}
+              trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+              thumbColor={features.enableRealtimeMonitoring ? '#8b5cf6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <PieChart size={20} color="#f59e0b" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>ئاماری بەکارهێنان</Text>
+                <Text style={styles.featureDescription}>
+                  ئاماری بەکارهێنانی سیستەم
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableUsageStatistics}
+              onValueChange={(value) => updateFeature('enableUsageStatistics', value)}
+              trackColor={{ false: '#d1d5db', true: '#fcd34d' }}
+              thumbColor={features.enableUsageStatistics ? '#f59e0b' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Activity size={24} color="#10b981" />
+            <Text style={styles.sectionTitle}>تۆمارکردن و پاراستن</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Activity size={20} color="#10b981" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>تۆماری چالاکی</Text>
+                <Text style={styles.featureDescription}>
+                  تۆمارکردنی هەموو چالاکیەکان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableActivityLog}
+              onValueChange={(value) => updateFeature('enableActivityLog', value)}
+              trackColor={{ false: '#d1d5db', true: '#6ee7b7' }}
+              thumbColor={features.enableActivityLog ? '#10b981' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Lock size={20} color="#ef4444" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>تایبەتمەندیە ئەمنیەکان</Text>
+                <Text style={styles.featureDescription}>
+                  تایبەتمەندیە پێشکەوتووە ئەمنیەکان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableSecurityFeatures}
+              onValueChange={(value) => updateFeature('enableSecurityFeatures', value)}
+              trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
+              thumbColor={features.enableSecurityFeatures ? '#ef4444' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <AlertTriangle size={20} color="#f59e0b" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>تۆماری هەڵەکان</Text>
+                <Text style={styles.featureDescription}>
+                  تۆمارکردن و چاودێری هەڵەکان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableErrorLogging}
+              onValueChange={(value) => updateFeature('enableErrorLogging', value)}
+              trackColor={{ false: '#d1d5db', true: '#fcd34d' }}
+              thumbColor={features.enableErrorLogging ? '#f59e0b' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Palette size={24} color="#8b5cf6" />
+            <Text style={styles.sectionTitle}>تایبەتکردن</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Languages size={20} color="#3b82f6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>چەند زمانێک</Text>
+                <Text style={styles.featureDescription}>
+                  پشتگیری چەند زمانێک
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableMultiLanguage}
+              onValueChange={(value) => updateFeature('enableMultiLanguage', value)}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={features.enableMultiLanguage ? '#3b82f6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Palette size={20} color="#8b5cf6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>ڕووکاری تایبەت</Text>
+                <Text style={styles.featureDescription}>
+                  تایبەتکردنی ڕووکار و ڕەنگەکان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableCustomThemes}
+              onValueChange={(value) => updateFeature('enableCustomThemes', value)}
+              trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+              thumbColor={features.enableCustomThemes ? '#8b5cf6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Sliders size={20} color="#10b981" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>ڕێکخستنی بەکارهێنان</Text>
+                <Text style={styles.featureDescription}>
+                  ڕێکخستنی ئاسانکاری بەکارهێنان
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableUsabilitySettings}
+              onValueChange={(value) => updateFeature('enableUsabilitySettings', value)}
+              trackColor={{ false: '#d1d5db', true: '#6ee7b7' }}
+              thumbColor={features.enableUsabilitySettings ? '#10b981' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <StickyNote size={24} color="#f59e0b" />
+            <Text style={styles.sectionTitle}>یارمەتی و ڕێنمایی</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <StickyNote size={20} color="#f59e0b" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>تێبینیەکان</Text>
+                <Text style={styles.featureDescription}>
+                  زیادکردنی تێبینی بۆ کڕیاران
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableNotes}
+              onValueChange={(value) => updateFeature('enableNotes', value)}
+              trackColor={{ false: '#d1d5db', true: '#fcd34d' }}
+              thumbColor={features.enableNotes ? '#f59e0b' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Share2 size={20} color="#3b82f6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>هاوبەشکردن</Text>
+                <Text style={styles.featureDescription}>
+                  هاوبەشکردنی راپۆرت و زانیاری
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableSharing}
+              onValueChange={(value) => updateFeature('enableSharing', value)}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={features.enableSharing ? '#3b82f6' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <HelpCircle size={20} color="#8b5cf6" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>ڕێنمایی</Text>
+                <Text style={styles.featureDescription}>
+                  ڕێنمایی و یارمەتی بەکارهێنەران
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableGuidance}
+              onValueChange={(value) => updateFeature('enableGuidance', value)}
+              trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+              thumbColor={features.enableGuidance ? '#8b5cf6' : '#f3f4f6'}
+            />
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <RefreshCw size={24} color="#10b981" />
+            <Text style={styles.sectionTitle}>سیستەم</Text>
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <RefreshCw size={20} color="#10b981" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>نوێکردنەوەی سیستەم</Text>
+                <Text style={styles.featureDescription}>
+                  نوێکردنەوەی خۆکار و دەستی
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enableSystemUpdates}
+              onValueChange={(value) => updateFeature('enableSystemUpdates', value)}
+              trackColor={{ false: '#d1d5db', true: '#6ee7b7' }}
+              thumbColor={features.enableSystemUpdates ? '#10b981' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={styles.featureCard}>
+            <View style={styles.featureInfo}>
+              <View style={styles.featureIcon}>
+                <Gauge size={20} color="#ef4444" />
+              </View>
+              <View style={styles.featureText}>
+                <Text style={styles.featureName}>چاودێری کارایی</Text>
+                <Text style={styles.featureDescription}>
+                  چاودێری کارایی و خێرایی سیستەم
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={features.enablePerformanceMonitoring}
+              onValueChange={(value) => updateFeature('enablePerformanceMonitoring', value)}
+              trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
+              thumbColor={features.enablePerformanceMonitoring ? '#ef4444' : '#f3f4f6'}
             />
           </View>
         </View>
