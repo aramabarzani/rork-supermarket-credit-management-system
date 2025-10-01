@@ -5,6 +5,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -32,7 +33,7 @@ import {
 
 export default function UICustomizationScreen() {
   const router = useRouter();
-  const { currentCustomization, updateCustomization, resetToDefault } = useUICustomization();
+  const { currentCustomization, updateCustomization, resetToDefault, isLoading } = useUICustomization();
 
   const [themeMode, setThemeMode] = useState<ThemeMode>(currentCustomization.themeMode);
   const [primaryColor, setPrimaryColor] = useState<string>(currentCustomization.primaryColor);
@@ -69,6 +70,19 @@ export default function UICustomizationScreen() {
     setBackgroundColor('#F3F4F6');
   };
 
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#3B82F6" />
+          <KurdishText variant="body" color="#6B7280" style={styles.loadingText}>
+            چاوەڕوان بە...
+          </KurdishText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -102,21 +116,24 @@ export default function UICustomizationScreen() {
           </KurdishText>
           <GradientCard>
             <View style={styles.colorGrid}>
-              {COLOR_PRESETS.map((color) => (
-                <TouchableOpacity
-                  key={color.value}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: color.value },
-                    primaryColor === color.value && styles.colorOptionSelected,
-                  ]}
-                  onPress={() => setPrimaryColor(color.value)}
-                >
-                  {primaryColor === color.value && (
-                    <View style={styles.colorCheck} />
-                  )}
-                </TouchableOpacity>
-              ))}
+              {COLOR_PRESETS.map((color) => {
+                const isSelected = primaryColor === color.value;
+                return (
+                  <TouchableOpacity
+                    key={color.value}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color.value },
+                      isSelected && styles.colorOptionSelected,
+                    ]}
+                    onPress={() => setPrimaryColor(color.value)}
+                  >
+                    {isSelected && (
+                      <View style={styles.colorCheck} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </GradientCard>
         </View>
@@ -267,21 +284,24 @@ export default function UICustomizationScreen() {
           </KurdishText>
           <GradientCard>
             <View style={styles.colorGrid}>
-              {['#F3F4F6', '#FFFFFF', '#1F2937', '#374151', '#EFF6FF', '#FEF2F2'].map((color) => (
-                <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: color },
-                    backgroundColor === color && styles.colorOptionSelected,
-                  ]}
-                  onPress={() => setBackgroundColor(color)}
-                >
-                  {backgroundColor === color && (
-                    <View style={styles.colorCheck} />
-                  )}
-                </TouchableOpacity>
-              ))}
+              {['#F3F4F6', '#FFFFFF', '#1F2937', '#374151', '#EFF6FF', '#FEF2F2'].map((color) => {
+                const isSelected = backgroundColor === color;
+                return (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: color },
+                      isSelected && styles.colorOptionSelected,
+                    ]}
+                    onPress={() => setBackgroundColor(color)}
+                  >
+                    {isSelected && (
+                      <View style={styles.colorCheck} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </GradientCard>
         </View>
@@ -397,5 +417,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#EF4444',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 12,
   },
 });
