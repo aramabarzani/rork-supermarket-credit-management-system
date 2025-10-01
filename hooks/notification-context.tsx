@@ -675,7 +675,11 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     return notifications.filter(n => !n.isRead).length;
   }, [notifications]);
 
-  const getNotificationsForUser = useCallback((userId: string, userRole: string) => {
+  const getNotificationsForUser = useCallback((userId: string, userRole?: string) => {
+    if (!userRole) {
+      return notifications.filter(n => n.userId === userId || n.recipientId === userId);
+    }
+
     return notifications.filter(notification => {
       if (userRole === 'owner') {
         return notification.recipientType === 'owner' || 
