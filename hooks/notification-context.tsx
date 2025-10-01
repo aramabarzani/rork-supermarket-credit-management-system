@@ -304,7 +304,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
 
     const updatedLogs = [...notificationLogs, ...logs];
     await saveNotificationLogs(updatedLogs);
-  }, [addNotification, notificationLogs, settings]);
+  }, [addNotification, notificationLogs]);
 
   const sendDebtNotification = useCallback(async (
     customerId: string,
