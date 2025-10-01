@@ -22,6 +22,7 @@ import { NotesProvider } from "@/hooks/notes-context";
 import { ProfileTrackingProvider } from "@/hooks/profile-tracking-context";
 import { TenantProvider } from "@/hooks/tenant-context";
 import { StoreRequestProvider } from "@/hooks/store-request-context";
+import { SupportProvider } from "@/hooks/support-context";
 
 import { GuidanceContext as GuidanceProvider } from "@/hooks/guidance-context";
 import { BackupContext as BackupProvider } from "@/hooks/backup-context";
@@ -428,7 +429,8 @@ export default function RootLayout() {
                                     <UsabilityProvider>
                                       <TenantProvider>
                                         <StoreRequestProvider>
-                                          <AuthProvider>
+                                          <SupportProvider>
+                                            <AuthProvider>
                                 <SecurityProvider>
                                   <CustomerSettingsProvider>
                                     <MessagingProvider>
@@ -445,7 +447,8 @@ export default function RootLayout() {
                                     </MessagingProvider>
                                   </CustomerSettingsProvider>
                                 </SecurityProvider>
-                                          </AuthProvider>
+                                            </AuthProvider>
+                                          </SupportProvider>
                                         </StoreRequestProvider>
                                       </TenantProvider>
                                     </UsabilityProvider>

@@ -12,7 +12,7 @@ import {
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertCircle, CheckCircle, Clock, XCircle, Send, Star } from 'lucide-react-native';
-import { trpc } from '@/lib/trpc';
+import { useSupport } from '@/hooks/support-context';
 import { useAuth } from '@/hooks/auth-context';
 import type { IssueStatus, IssuePriority, IssueCategory } from '@/types/support';
 
@@ -25,57 +25,53 @@ export default function SupportIssueDetailScreen() {
   const [rating, setRating] = useState(0);
   const [ratingComment, setRatingComment] = useState('');
 
-  const issueQuery = trpc.support.issues.getOne.useQuery({ id: id || '' });
-  const commentsQuery = trpc.support.issues.getComments.useQuery({ issueId: id || '' });
+  const { getIssueById, getIssueComments, addComment, rateIssue } = useSupport();
+  const issue = getIssueById(id || '');
+  const comments = getIssueComments(id || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const addCommentMutation = trpc.support.issues.addComment.useMutation({
-    onSuccess: () => {
-      setComment('');
-      commentsQuery.refetch();
-      issueQuery.refetch();
-      Alert.alert('سەرکەوتوو', 'تێبینیەکە زیاد کرا');
-    },
-    onError: (error) => {
-      Alert.alert('هەڵە', error.message);
-    },
-  });
-
-  const rateIssueMutation = trpc.support.issues.rate.useMutation({
-    onSuccess: () => {
-      setShowRating(false);
-      setRating(0);
-      setRatingComment('');
-      issueQuery.refetch();
-      Alert.alert('سەرکەوتوو', 'هەڵسەنگاندنەکە تۆمار کرا');
-    },
-    onError: (error) => {
-      Alert.alert('هەڵە', error.message);
-    },
-  });
-
-  const handleAddComment = () => {
+  const handleAddComment = async () => {
     if (!comment.trim()) {
       Alert.alert('هەڵە', 'تکایە تێبینیەکە بنووسە');
       return;
     }
 
-    addCommentMutation.mutate({
-      issueId: id || '',
-      comment: comment.trim(),
-    });
+    try {
+      setIsSubmitting(true);
+      await addComment(
+        id || '',
+        user?.id || 'unknown',
+        user?.name || 'Unknown User',
+        (user?.role === 'owner' ? 'admin' : user?.role) || 'customer',
+        comment.trim()
+      );
+      setComment('');
+      Alert.alert('سەرکەوتوو', 'تێبینیەکە زیاد کرا');
+    } catch (error) {
+      Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleRateIssue = () => {
+  const handleRateIssue = async () => {
     if (rating === 0) {
       Alert.alert('هەڵە', 'تکایە هەڵسەنگاندن هەڵبژێرە');
       return;
     }
 
-    rateIssueMutation.mutate({
-      id: id || '',
-      rating,
-      comment: ratingComment.trim() || undefined,
-    });
+    try {
+      setIsSubmitting(true);
+      await rateIssue(id || '', rating, ratingComment.trim() || undefined);
+      setShowRating(false);
+      setRating(0);
+      setRatingComment('');
+      Alert.alert('سەرکەوتوو', 'هەڵسەنگاندنەکە تۆمار کرا');
+    } catch (error) {
+      Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStatusIcon = (status: IssueStatus) => {
@@ -145,24 +141,7 @@ export default function SupportIssueDetailScreen() {
     }
   };
 
-  if (issueQuery.isLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <Stack.Screen
-          options={{
-            title: 'وردەکاری کێشە',
-            headerStyle: { backgroundColor: '#1f2937' },
-            headerTintColor: '#fff',
-          }}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  if (issueQuery.error || !issueQuery.data) {
+  if (!issue) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <Stack.Screen
@@ -179,7 +158,7 @@ export default function SupportIssueDetailScreen() {
     );
   }
 
-  const issue = issueQuery.data;
+
   const canRate =
     user?.role === 'customer' &&
     issue.reportedBy === user.id &&
@@ -287,10 +266,8 @@ export default function SupportIssueDetailScreen() {
         <View style={styles.commentsSection}>
           <Text style={styles.commentsTitle}>تێبینیەکان</Text>
 
-          {commentsQuery.isLoading ? (
-            <ActivityIndicator size="small" color="#3b82f6" />
-          ) : commentsQuery.data && commentsQuery.data.length > 0 ? (
-            commentsQuery.data.map((comment) => (
+          {comments.length > 0 ? (
+            comments.map((comment) => (
               <View key={comment.id} style={styles.commentCard}>
                 <View style={styles.commentHeader}>
                   <Text style={styles.commentAuthor}>{comment.userName}</Text>
@@ -319,9 +296,9 @@ export default function SupportIssueDetailScreen() {
           <TouchableOpacity
             style={styles.sendButton}
             onPress={handleAddComment}
-            disabled={addCommentMutation.isPending}
+            disabled={isSubmitting}
           >
-            {addCommentMutation.isPending ? (
+            {isSubmitting ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <>
@@ -374,9 +351,9 @@ export default function SupportIssueDetailScreen() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.submitButton]}
                 onPress={handleRateIssue}
-                disabled={rateIssueMutation.isPending}
+                disabled={isSubmitting}
               >
-                {rateIssueMutation.isPending ? (
+                {isSubmitting ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <Text style={styles.submitButtonText}>تۆمارکردن</Text>

@@ -13,7 +13,7 @@ import {
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertCircle, CheckCircle, Clock, XCircle, Plus, Filter } from 'lucide-react-native';
-import { trpc } from '@/lib/trpc';
+import { useSupport } from '@/hooks/support-context';
 import { useAuth } from '@/hooks/auth-context';
 import type { IssueStatus, IssuePriority, IssueCategory } from '@/types/support';
 
@@ -31,29 +31,15 @@ export default function SupportIssuesScreen() {
     priority: 'medium' as IssuePriority,
   });
 
-  const issuesQuery = trpc.support.issues.getAll.useQuery({
+  const { user } = useAuth();
+  const { issues, isLoading, createIssue, getFilteredIssues } = useSupport();
+
+  const filteredIssues = getFilteredIssues({
     status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
     priority: selectedPriorities.length > 0 ? selectedPriorities : undefined,
   });
 
-  const createIssueMutation = trpc.support.issues.create.useMutation({
-    onSuccess: () => {
-      setShowCreateModal(false);
-      setNewIssue({
-        title: '',
-        description: '',
-        category: 'other',
-        priority: 'medium',
-      });
-      issuesQuery.refetch();
-      Alert.alert('سەرکەوتوو', 'کێشەکە بە سەرکەوتوویی تۆمار کرا');
-    },
-    onError: (error) => {
-      Alert.alert('هەڵە', error.message);
-    },
-  });
-
-  const handleCreateIssue = () => {
+  const handleCreateIssue = async () => {
     if (!newIssue.title.trim()) {
       Alert.alert('هەڵە', 'تکایە ناونیشانی کێشەکە بنووسە');
       return;
@@ -63,7 +49,27 @@ export default function SupportIssuesScreen() {
       return;
     }
 
-    createIssueMutation.mutate(newIssue);
+    try {
+      await createIssue(
+        newIssue.title,
+        newIssue.description,
+        newIssue.category,
+        newIssue.priority,
+        user?.id || 'unknown',
+        user?.name || 'Unknown User',
+        user?.role || 'customer'
+      );
+      setShowCreateModal(false);
+      setNewIssue({
+        title: '',
+        description: '',
+        category: 'other',
+        priority: 'medium',
+      });
+      Alert.alert('سەرکەوتوو', 'کێشەکە بە سەرکەوتوویی تۆمار کرا');
+    } catch (error) {
+      Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە تۆمارکردنی کێشەکە');
+    }
   };
 
   const getStatusIcon = (status: IssueStatus) => {
@@ -180,23 +186,19 @@ export default function SupportIssuesScreen() {
         </TouchableOpacity>
       </View>
 
-      {issuesQuery.isLoading ? (
+      {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3b82f6" />
         </View>
-      ) : issuesQuery.error ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>هەڵەیەک ڕوویدا</Text>
-        </View>
       ) : (
         <ScrollView style={styles.content}>
-          {issuesQuery.data && issuesQuery.data.length === 0 ? (
+          {filteredIssues.length === 0 ? (
             <View style={styles.emptyContainer}>
               <AlertCircle size={48} color="#9ca3af" />
               <Text style={styles.emptyText}>هیچ کێشەیەک نییە</Text>
             </View>
           ) : (
-            issuesQuery.data?.map((issue) => (
+            filteredIssues.map((issue) => (
               <TouchableOpacity
                 key={issue.id}
                 style={styles.issueCard}
@@ -330,13 +332,8 @@ export default function SupportIssuesScreen() {
               <TouchableOpacity
                 style={[styles.modalButton, styles.submitButton]}
                 onPress={handleCreateIssue}
-                disabled={createIssueMutation.isPending}
               >
-                {createIssueMutation.isPending ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Text style={styles.submitButtonText}>تۆمارکردن</Text>
-                )}
+                <Text style={styles.submitButtonText}>تۆمارکردن</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -411,10 +408,7 @@ export default function SupportIssuesScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.submitButton]}
-                onPress={() => {
-                  setShowFilterModal(false);
-                  issuesQuery.refetch();
-                }}
+                onPress={() => setShowFilterModal(false)}
               >
                 <Text style={styles.submitButtonText}>جێبەجێکردن</Text>
               </TouchableOpacity>
