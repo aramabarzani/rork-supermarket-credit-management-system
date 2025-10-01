@@ -3,8 +3,7 @@ import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
 import { StyleSheet, Platform, View, Text } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { trpc, trpcClient } from "@/lib/trpc";
+
 import { AuthProvider } from "@/hooks/auth-context";
 import { DebtProvider } from "@/hooks/debt-context";
 import { UsersProvider } from "@/hooks/users-context";
@@ -343,8 +342,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// Create a single QueryClient instance
-const queryClient = new QueryClient();
+
 
 export default function RootLayout() {
   const [isHydrated, setIsHydrated] = useState(Platform.OS !== 'web');
@@ -389,8 +387,6 @@ export default function RootLayout() {
 
   return (
       <GestureHandlerRootView style={styles.container}>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <QueryClientProvider client={queryClient}>
             <ErrorLoggingProvider>
               <ErrorBoundary>
                 <UICustomizationProvider>
@@ -435,8 +431,6 @@ export default function RootLayout() {
                 </UICustomizationProvider>
               </ErrorBoundary>
             </ErrorLoggingProvider>
-          </QueryClientProvider>
-        </trpc.Provider>
       </GestureHandlerRootView>
   );
 }
