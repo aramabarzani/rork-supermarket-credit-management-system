@@ -710,7 +710,7 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     });
   }, [notifications]);
 
-  return useMemo(() => ({
+  return {
     notifications,
     isLoading,
     unreadCount,
@@ -736,31 +736,5 @@ export const [NotificationProvider, useNotifications] = createContextHook(() => 
     deleteManagerRule,
     checkManagerRules,
     getNotificationsForUser,
-  }), [
-    notifications,
-    isLoading,
-    unreadCount,
-    settings,
-    templates,
-    notificationLogs,
-    managerRules,
-    addNotification,
-    markAsRead,
-    markAllAsRead,
-    removeNotification,
-    clearAll,
-    sendNotification,
-    updateSettings,
-    sendDebtNotification,
-    sendPaymentNotification,
-    sendHighDebtWarning,
-    sendReceiptNotification,
-    sendManagerAlert,
-    sendCustomerAlert,
-    addManagerRule,
-    updateManagerRule,
-    deleteManagerRule,
-    checkManagerRules,
-    getNotificationsForUser,
-  ]);
+  };
 });
