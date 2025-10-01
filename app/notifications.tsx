@@ -15,11 +15,9 @@ export default function NotificationsScreen() {
     settings,
     markAsRead,
     markAllAsRead,
-    deleteNotification,
-    clearAllNotifications,
+    removeNotification,
+    clearAll,
     updateSettings,
-    getUnreadNotifications,
-    getNotificationsByType,
   } = useNotifications();
 
   const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'settings'>('all');
@@ -33,13 +31,13 @@ export default function NotificationsScreen() {
   };
 
   const handleNotificationDismiss = async (notificationId: string) => {
-    await deleteNotification(notificationId);
+    await removeNotification(notificationId);
   };
 
   const getFilteredNotifications = () => {
     switch (activeTab) {
       case 'unread':
-        return getUnreadNotifications();
+        return notifications.filter(n => !n.isRead);
       case 'all':
       default:
         return notifications;
@@ -152,7 +150,7 @@ export default function NotificationsScreen() {
 
         <TouchableOpacity
           style={styles.clearButton}
-          onPress={clearAllNotifications}
+          onPress={clearAll}
         >
           <X size={20} color="#EF4444" />
           <Text style={styles.clearButtonText}>
@@ -164,9 +162,9 @@ export default function NotificationsScreen() {
   };
 
   const renderStats = () => {
-    const overdueNotifications = getNotificationsByType('debt_overdue').length;
-    const highDebtNotifications = getNotificationsByType('high_debt_warning').length;
-    const paymentNotifications = getNotificationsByType('payment_received').length;
+    const overdueNotifications = notifications.filter(n => n.type === 'debt_overdue').length;
+    const highDebtNotifications = notifications.filter(n => n.type === 'high_debt_warning').length;
+    const paymentNotifications = notifications.filter(n => n.type === 'payment_received').length;
 
     return (
       <View style={styles.statsContainer}>
