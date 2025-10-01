@@ -432,24 +432,28 @@ export default function RootLayout() {
                                       <TenantProvider>
                                         <StoreRequestProvider>
                                           <SupportProvider>
-                                            <AuthProvider>
-                                <SecurityProvider>
-                                  <CustomerSettingsProvider>
-                                    <MessagingProvider>
-                                      <DebtProvider>
-                                        <ReceiptProvider>
-                                          <UsersProvider>
-                                            <NotificationProvider>
-                                              <RootLayoutNav />
-                                              <SessionTimeoutWarning />
-                                            </NotificationProvider>
-                                          </UsersProvider>
-                                        </ReceiptProvider>
-                                      </DebtProvider>
-                                    </MessagingProvider>
-                                  </CustomerSettingsProvider>
-                                </SecurityProvider>
-                                            </AuthProvider>
+                                            <FAQProvider>
+                                              <VoiceInputProvider>
+                                                <AuthProvider>
+                                                  <SecurityProvider>
+                                                    <CustomerSettingsProvider>
+                                                      <MessagingProvider>
+                                                        <DebtProvider>
+                                                          <ReceiptProvider>
+                                                            <UsersProvider>
+                                                              <NotificationProvider>
+                                                                <RootLayoutNav />
+                                                                <SessionTimeoutWarning />
+                                                              </NotificationProvider>
+                                                            </UsersProvider>
+                                                          </ReceiptProvider>
+                                                        </DebtProvider>
+                                                      </MessagingProvider>
+                                                    </CustomerSettingsProvider>
+                                                  </SecurityProvider>
+                                                </AuthProvider>
+                                              </VoiceInputProvider>
+                                            </FAQProvider>
                                           </SupportProvider>
                                         </StoreRequestProvider>
                                       </TenantProvider>
