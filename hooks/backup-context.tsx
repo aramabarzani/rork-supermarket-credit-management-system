@@ -12,18 +12,21 @@ export const [BackupContext, useBackup] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
   });
   const statsQuery = trpc.backup.getStats.useQuery(undefined, {
     retry: false,
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
   });
   const recordsQuery = trpc.backup.getRecords.useQuery({}, {
     retry: false,
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
   });
 
   useEffect(() => {

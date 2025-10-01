@@ -18,6 +18,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
     onError: (err: Error) => {
       console.error('[System Config] Failed to fetch config:', err.message);
       setError('کێشە لە پەیوەندی بە سێرڤەر. تکایە دووبارە هەوڵ بدەرەوە.');
@@ -31,6 +32,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
     onError: (err: Error) => {
       console.error('[System Config] Failed to fetch password policy:', err.message);
     },
@@ -44,6 +46,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
       staleTime: 60000,
       refetchOnWindowFocus: false,
       refetchOnMount: false,
+      enabled: false,
       onError: (err: Error) => {
         console.error('[System Config] Failed to fetch notification settings:', err.message);
       },
@@ -56,6 +59,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
     onError: (err: Error) => {
       console.error('[System Config] Failed to fetch backup settings:', err.message);
     },
@@ -68,6 +72,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
     onError: (err: Error) => {
       console.error('[System Config] Failed to fetch limit settings:', err.message);
     },

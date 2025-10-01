@@ -13,11 +13,12 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
   });
   const formByIdQuery = trpc.forms.getById.useQuery(
     { id: selectedForm?.id || '' },
     { 
-      enabled: !!selectedForm?.id,
+      enabled: false,
       retry: false,
       staleTime: 60000,
       refetchOnWindowFocus: false,
@@ -29,6 +30,7 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     staleTime: 60000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    enabled: false,
   });
 
   useEffect(() => {
