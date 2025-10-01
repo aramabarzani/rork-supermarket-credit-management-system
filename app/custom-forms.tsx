@@ -26,6 +26,7 @@ export default function CustomFormsScreen() {
   const router = useRouter();
   const { forms, deleteForm, exportForm, isLoading, isDeleting, isExporting } = useCustomForms();
   const [selectedType, setSelectedType] = useState<FormType | 'all'>('all');
+  const [showError, setShowError] = useState<boolean>(false);
 
   const filteredForms = selectedType === 'all' 
     ? forms 
@@ -72,7 +73,16 @@ export default function CustomFormsScreen() {
     Alert.alert('زانیاری', `${form.name} - شیکاری داتاکان`);
   };
 
-  if (isLoading) {
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        setShowError(true);
+      }
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
+  if (isLoading && !showError) {
     return (
       <SafeAreaView style={styles.container} edges={['bottom']}>
         <Stack.Screen
@@ -83,6 +93,34 @@ export default function CustomFormsScreen() {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#3B82F6" />
           <KurdishText style={styles.loadingText}>چاوەڕێ بە...</KurdishText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (showError && forms.length === 0) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <Stack.Screen
+          options={{
+            title: 'فۆرمە تایبەتییەکان',
+          }}
+        />
+        <View style={styles.errorContainer}>
+          <FileText size={64} color="#EF4444" />
+          <KurdishText style={styles.errorTitle}>کێشە لە پەیوەندی</KurdishText>
+          <KurdishText style={styles.errorText}>
+            ناتوانرێت پەیوەندی بە سێرڤەر بکرێت. تکایە دڵنیابە لە پەیوەندی ئینتەرنێت و دووبارە هەوڵ بدەرەوە.
+          </KurdishText>
+          <TouchableOpacity 
+            style={styles.retryButton} 
+            onPress={() => {
+              setShowError(false);
+              window.location.reload();
+            }}
+          >
+            <KurdishText style={styles.retryButtonText}>دووبارە هەوڵ بدەرەوە</KurdishText>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -377,5 +415,34 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: 8,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+    gap: 16,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: '#EF4444',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+  retryButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    marginTop: 8,
+  },
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFFFFF',
   },
 });

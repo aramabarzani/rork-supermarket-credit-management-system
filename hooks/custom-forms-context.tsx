@@ -8,12 +8,24 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
   const [isCreatingForm, setIsCreatingForm] = useState<boolean>(false);
   const [isEditingForm, setIsEditingForm] = useState<boolean>(false);
 
-  const formsQuery = trpc.forms.getAll.useQuery();
+  const formsQuery = trpc.forms.getAll.useQuery(undefined, {
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 30000,
+  });
   const formByIdQuery = trpc.forms.getById.useQuery(
     { id: selectedForm?.id || '' },
-    { enabled: !!selectedForm?.id }
+    { 
+      enabled: !!selectedForm?.id,
+      retry: 1,
+      retryDelay: 1000,
+    }
   );
-  const submissionsQuery = trpc.forms.getSubmissions.useQuery();
+  const submissionsQuery = trpc.forms.getSubmissions.useQuery(undefined, {
+    retry: 1,
+    retryDelay: 1000,
+    staleTime: 30000,
+  });
 
   const createFormMutation = trpc.forms.create.useMutation({
     onSuccess: () => {
@@ -23,6 +35,7 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     },
     onError: (error) => {
       console.error('❌ هەڵە لە دروستکردنی فۆرم:', error.message);
+      alert('هەڵە لە دروستکردنی فۆرم. تکایە دووبارە هەوڵ بدەرەوە.');
     },
   });
 
@@ -48,6 +61,7 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
     },
     onError: (error) => {
       console.error('❌ هەڵە لە سڕینەوەی فۆرم:', error.message);
+      alert('هەڵە لە سڕینەوەی فۆرم. تکایە دووبارە هەوڵ بدەرەوە.');
     },
   });
 
@@ -103,9 +117,11 @@ export const [CustomFormsProvider, useCustomForms] = createContextHook(() => {
   const exportFormMutation = trpc.forms.export.useMutation({
     onSuccess: (data) => {
       console.log('✅ داتای فۆرم هەناردەکرا:', data.fileName);
+      alert(`داتای فۆرم هەناردەکرا: ${data.fileName}`);
     },
     onError: (error) => {
       console.error('❌ هەڵە لە هەناردەکردنی داتا:', error.message);
+      alert('هەڵە لە هەناردەکردنی داتا. تکایە دووبارە هەوڵ بدەرەوە.');
     },
   });
 
