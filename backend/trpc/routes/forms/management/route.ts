@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { protectedProcedure } from '../../../create-context';
+import { publicProcedure } from '../../../create-context';
 import type { CustomForm, FormSubmission, FormAnalytics } from '../../../../../types/custom-forms';
 
 const fieldSchema = z.object({
@@ -30,7 +30,7 @@ const fieldSchema = z.object({
 let customForms: CustomForm[] = [];
 let formSubmissions: FormSubmission[] = [];
 
-export const getFormsProcedure = protectedProcedure
+export const getFormsProcedure = publicProcedure
   .input(z.object({
     type: z.enum(['debt', 'payment', 'customer', 'employee', 'custom']).optional(),
     isActive: z.boolean().optional(),
@@ -51,7 +51,7 @@ export const getFormsProcedure = protectedProcedure
     );
   });
 
-export const getFormByIdProcedure = protectedProcedure
+export const getFormByIdProcedure = publicProcedure
   .input(z.object({
     id: z.string(),
   }))
@@ -63,7 +63,7 @@ export const getFormByIdProcedure = protectedProcedure
     return form;
   });
 
-export const createFormProcedure = protectedProcedure
+export const createFormProcedure = publicProcedure
   .input(z.object({
     name: z.string(),
     description: z.string().optional(),
@@ -88,7 +88,7 @@ export const createFormProcedure = protectedProcedure
     return newForm;
   });
 
-export const updateFormProcedure = protectedProcedure
+export const updateFormProcedure = publicProcedure
   .input(z.object({
     id: z.string(),
     name: z.string().optional(),
@@ -116,7 +116,7 @@ export const updateFormProcedure = protectedProcedure
     return updatedForm;
   });
 
-export const deleteFormProcedure = protectedProcedure
+export const deleteFormProcedure = publicProcedure
   .input(z.object({
     id: z.string(),
   }))
@@ -135,7 +135,7 @@ export const deleteFormProcedure = protectedProcedure
     return { success: true, deletedForm };
   });
 
-export const addFieldProcedure = protectedProcedure
+export const addFieldProcedure = publicProcedure
   .input(z.object({
     formId: z.string(),
     field: fieldSchema,
@@ -153,7 +153,7 @@ export const addFieldProcedure = protectedProcedure
     return customForms[formIndex];
   });
 
-export const removeFieldProcedure = protectedProcedure
+export const removeFieldProcedure = publicProcedure
   .input(z.object({
     formId: z.string(),
     fieldId: z.string(),
@@ -176,7 +176,7 @@ export const removeFieldProcedure = protectedProcedure
     return customForms[formIndex];
   });
 
-export const updateFieldProcedure = protectedProcedure
+export const updateFieldProcedure = publicProcedure
   .input(z.object({
     formId: z.string(),
     fieldId: z.string(),
@@ -203,7 +203,7 @@ export const updateFieldProcedure = protectedProcedure
     return customForms[formIndex];
   });
 
-export const submitFormProcedure = protectedProcedure
+export const submitFormProcedure = publicProcedure
   .input(z.object({
     formId: z.string(),
     data: z.record(z.string(), z.unknown()),
@@ -232,7 +232,7 @@ export const submitFormProcedure = protectedProcedure
     return submission;
   });
 
-export const getSubmissionsProcedure = protectedProcedure
+export const getSubmissionsProcedure = publicProcedure
   .input(z.object({
     formId: z.string().optional(),
     relatedEntityId: z.string().optional(),
@@ -263,7 +263,7 @@ export const getSubmissionsProcedure = protectedProcedure
     );
   });
 
-export const getFormAnalyticsProcedure = protectedProcedure
+export const getFormAnalyticsProcedure = publicProcedure
   .input(z.object({
     formId: z.string(),
   }))
@@ -321,7 +321,7 @@ export const getFormAnalyticsProcedure = protectedProcedure
     return analytics;
   });
 
-export const exportFormDataProcedure = protectedProcedure
+export const exportFormDataProcedure = publicProcedure
   .input(z.object({
     formId: z.string(),
     format: z.enum(['excel', 'pdf', 'json', 'csv']),

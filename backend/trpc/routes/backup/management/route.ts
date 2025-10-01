@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { protectedProcedure } from '../../../create-context';
+import { publicProcedure } from '../../../create-context';
 import type { BackupConfig, BackupRecord, BackupStats, BackupReport } from '@/types/backup';
 
 const mockBackupRecords: BackupRecord[] = [
@@ -50,11 +50,11 @@ const mockBackupConfig: BackupConfig = {
   updatedAt: new Date().toISOString(),
 };
 
-export const getBackupConfigProcedure = protectedProcedure.query(async () => {
+export const getBackupConfigProcedure = publicProcedure.query(async () => {
   return mockBackupConfig;
 });
 
-export const updateBackupConfigProcedure = protectedProcedure
+export const updateBackupConfigProcedure = publicProcedure
   .input(
     z.object({
       frequency: z.enum(['realtime', 'custom', 'monthly', 'yearly', 'manual']),
@@ -73,7 +73,7 @@ export const updateBackupConfigProcedure = protectedProcedure
     return updatedConfig;
   });
 
-export const getBackupRecordsProcedure = protectedProcedure
+export const getBackupRecordsProcedure = publicProcedure
   .input(
     z.object({
       limit: z.number().optional(),
@@ -103,7 +103,7 @@ export const getBackupRecordsProcedure = protectedProcedure
     };
   });
 
-export const createBackupProcedure = protectedProcedure
+export const createBackupProcedure = publicProcedure
   .input(
     z.object({
       destination: z.enum(['local', 'google-drive', 'dropbox', 'onedrive', 'internal-server', 'usb']),
@@ -125,7 +125,7 @@ export const createBackupProcedure = protectedProcedure
     return newBackup;
   });
 
-export const getBackupStatsProcedure = protectedProcedure.query(async () => {
+export const getBackupStatsProcedure = publicProcedure.query(async () => {
   const stats: BackupStats = {
     totalBackups: mockBackupRecords.length,
     successfulBackups: mockBackupRecords.filter(r => r.status === 'completed').length,
@@ -150,7 +150,7 @@ export const getBackupStatsProcedure = protectedProcedure.query(async () => {
   return stats;
 });
 
-export const restoreBackupProcedure = protectedProcedure
+export const restoreBackupProcedure = publicProcedure
   .input(
     z.object({
       backupId: z.string(),
@@ -175,7 +175,7 @@ export const restoreBackupProcedure = protectedProcedure
     };
   });
 
-export const generateBackupReportProcedure = protectedProcedure
+export const generateBackupReportProcedure = publicProcedure
   .input(
     z.object({
       period: z.enum(['monthly', 'yearly']),
@@ -200,7 +200,7 @@ export const generateBackupReportProcedure = protectedProcedure
     return report;
   });
 
-export const verifyBackupProcedure = protectedProcedure
+export const verifyBackupProcedure = publicProcedure
   .input(z.object({ backupId: z.string() }))
   .mutation(async ({ input }) => {
     return {
@@ -211,7 +211,7 @@ export const verifyBackupProcedure = protectedProcedure
     };
   });
 
-export const deleteBackupProcedure = protectedProcedure
+export const deleteBackupProcedure = publicProcedure
   .input(z.object({ backupId: z.string() }))
   .mutation(async ({ input }) => {
     return {

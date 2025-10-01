@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { protectedProcedure } from '../../create-context';
+import { publicProcedure } from '../../../create-context';
 import type { SystemConfiguration } from '@/types/system-config';
 
 const mockSystemConfig: SystemConfiguration = {
@@ -31,12 +31,12 @@ const mockSystemConfig: SystemConfiguration = {
   updatedAt: new Date().toISOString(),
 };
 
-export const getSystemConfigProcedure = protectedProcedure.query(async () => {
+export const getSystemConfigProcedure = publicProcedure.query(async () => {
   console.log('[System Config] Fetching system configuration');
   return mockSystemConfig;
 });
 
-export const updateSystemConfigProcedure = protectedProcedure
+export const updateSystemConfigProcedure = publicProcedure
   .input(
     z.object({
       maxEmployees: z.number().optional(),
@@ -88,7 +88,7 @@ export const updateSystemConfigProcedure = protectedProcedure
     return updatedConfig;
   });
 
-export const getPasswordPolicyProcedure = protectedProcedure.query(async () => {
+export const getPasswordPolicyProcedure = publicProcedure.query(async () => {
   console.log('[System Config] Fetching password policy');
   return {
     minLength: mockSystemConfig.passwordMinLength,
@@ -98,7 +98,7 @@ export const getPasswordPolicyProcedure = protectedProcedure.query(async () => {
   };
 });
 
-export const updatePasswordPolicyProcedure = protectedProcedure
+export const updatePasswordPolicyProcedure = publicProcedure
   .input(
     z.object({
       minLength: z.number().min(6).max(32),
@@ -115,7 +115,7 @@ export const updatePasswordPolicyProcedure = protectedProcedure
     };
   });
 
-export const getNotificationSettingsProcedure = protectedProcedure.query(
+export const getNotificationSettingsProcedure = publicProcedure.query(
   async () => {
     console.log('[System Config] Fetching notification settings');
     return {
@@ -126,7 +126,7 @@ export const getNotificationSettingsProcedure = protectedProcedure.query(
   }
 );
 
-export const updateNotificationSettingsProcedure = protectedProcedure
+export const updateNotificationSettingsProcedure = publicProcedure
   .input(
     z.object({
       enabledTypes: z.array(z.enum(['sms', 'email', 'app', 'whatsapp'])),
@@ -142,7 +142,7 @@ export const updateNotificationSettingsProcedure = protectedProcedure
     };
   });
 
-export const getBackupSettingsProcedure = protectedProcedure.query(async () => {
+export const getBackupSettingsProcedure = publicProcedure.query(async () => {
   console.log('[System Config] Fetching backup settings');
   return {
     frequency: mockSystemConfig.backupFrequency,
@@ -152,7 +152,7 @@ export const getBackupSettingsProcedure = protectedProcedure.query(async () => {
   };
 });
 
-export const updateBackupSettingsProcedure = protectedProcedure
+export const updateBackupSettingsProcedure = publicProcedure
   .input(
     z.object({
       frequency: z.enum(['daily', 'weekly', 'monthly']),
@@ -167,7 +167,7 @@ export const updateBackupSettingsProcedure = protectedProcedure
     };
   });
 
-export const getLimitSettingsProcedure = protectedProcedure.query(async () => {
+export const getLimitSettingsProcedure = publicProcedure.query(async () => {
   console.log('[System Config] Fetching limit settings');
   return {
     maxEmployees: mockSystemConfig.maxEmployees,
@@ -178,7 +178,7 @@ export const getLimitSettingsProcedure = protectedProcedure.query(async () => {
   };
 });
 
-export const updateLimitSettingsProcedure = protectedProcedure
+export const updateLimitSettingsProcedure = publicProcedure
   .input(
     z.object({
       maxEmployees: z.number().min(1),
@@ -196,7 +196,7 @@ export const updateLimitSettingsProcedure = protectedProcedure
     };
   });
 
-export const resetSystemConfigProcedure = protectedProcedure.mutation(
+export const resetSystemConfigProcedure = publicProcedure.mutation(
   async () => {
     console.log('[System Config] Resetting system configuration to defaults');
     return {

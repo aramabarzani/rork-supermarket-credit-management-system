@@ -8,6 +8,7 @@ import {
   TextInput,
   Modal,
   Alert,
+  Platform,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { trpc } from '@/lib/trpc';
@@ -239,10 +240,18 @@ export default function OwnerDashboardScreen() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {error && (
           <View style={styles.errorBanner}>
-            <AlertCircle size={20} color="#dc2626" />
+            <AlertCircle size={24} color="#dc2626" />
             <View style={styles.errorBannerContent}>
-              <Text style={styles.errorBannerTitle}>کێشەی پەیوەندی</Text>
-              <Text style={styles.errorBannerText}>ناتوانرێت پەیوەندی بە سێرڤەرەوە بکرێت</Text>
+              <Text style={styles.errorBannerTitle}>سێرڤەری Backend کارناکات</Text>
+              <Text style={styles.errorBannerText}>
+                بۆ کارکردنی سیستەم، پێویستە سێرڤەری backend دەستپێبکرێت.
+              </Text>
+              <Text style={styles.errorBannerCommand}>
+                bun run backend/hono.ts
+              </Text>
+              <Text style={styles.errorBannerNote}>
+                دوای دەستپێکردنی سێرڤەر، دوگمەی &quot;هەوڵدانەوە&quot; دابگرە.
+              </Text>
             </View>
             <TouchableOpacity onPress={() => refetch()} style={styles.errorBannerButton}>
               <Text style={styles.errorBannerButtonText}>هەوڵدانەوە</Text>
@@ -912,8 +921,26 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   errorBannerText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#7f1d1d',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  errorBannerCommand: {
+    fontSize: 13,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    color: '#1f2937',
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  errorBannerNote: {
+    fontSize: 12,
+    color: '#991b1b',
+    fontStyle: 'italic',
   },
   errorBannerButton: {
     backgroundColor: '#dc2626',

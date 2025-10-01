@@ -1,5 +1,5 @@
 import { createTRPCReact } from "@trpc/react-query";
-import { httpLink } from "@trpc/client";
+import { httpLink, TRPCClientError } from "@trpc/client";
 import type { AppRouter } from "@/backend/trpc/app-router";
 import superjson from "superjson";
 import { Platform } from "react-native";
@@ -30,6 +30,7 @@ const trpcUrl = `${baseUrl}/api/trpc`;
 
 console.log('[tRPC] Initialized with base URL:', baseUrl);
 console.log('[tRPC] Full tRPC endpoint:', trpcUrl);
+console.log('[tRPC] ⚠️  Make sure backend server is running: bun run backend/hono.ts');
 
 export const trpcClient = trpc.createClient({
   links: [
@@ -83,10 +84,11 @@ export const trpcClient = trpc.createClient({
           
           return response;
         } catch (error) {
-          if (error instanceof TypeError && error.message === 'Network request failed') {
-            console.error('[tRPC] Network error - Backend may not be accessible');
+          if (error instanceof TypeError && (error.message === 'Network request failed' || error.message === 'Failed to fetch')) {
+            console.error('[tRPC] ❌ Network error - Backend server is not accessible');
             console.error('[tRPC] Attempted URL:', url);
             console.error('[tRPC] Base URL:', baseUrl);
+            console.error('[tRPC] 💡 Solution: Start the backend server with: bun run backend/hono.ts');
           } else {
             console.error('[tRPC] Fetch error:', error);
           }
@@ -96,3 +98,25 @@ export const trpcClient = trpc.createClient({
     }),
   ],
 });
+
+export function isTRPCNetworkError(error: unknown): boolean {
+  if (error instanceof TRPCClientError) {
+    return error.message.includes('Network request failed') || 
+           error.message.includes('Failed to fetch') ||
+           error.message.includes('fetch failed');
+  }
+  return false;
+}
+
+export function getTRPCErrorMessage(error: unknown): string {
+  if (error instanceof TRPCClientError) {
+    if (isTRPCNetworkError(error)) {
+      return 'سێرڤەر بەردەست نییە. تکایە دڵنیابە لەوەی سێرڤەری backend کارپێکراوە.';
+    }
+    return error.message;
+  }
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return 'هەڵەیەکی نەزانراو ڕوویدا';
+}
