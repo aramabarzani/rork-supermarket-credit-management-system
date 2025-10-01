@@ -341,6 +341,12 @@ function RootLayoutNav() {
           title: "بەڕێوەبردنی فرۆشگاکان",
         }} 
       />
+      <Stack.Screen 
+        name="global-search" 
+        options={{ 
+          title: "گەڕانی گشتی",
+        }} 
+      />
 
     </Stack>
   );
