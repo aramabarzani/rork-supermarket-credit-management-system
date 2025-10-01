@@ -630,19 +630,42 @@ export default function OwnerDashboardScreen() {
 
       <Modal visible={showNotificationsModal} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>ئاگادارکردنەوەکانی ئابوونە</Text>
-              <TouchableOpacity onPress={() => setShowSettingsModal(true)}>
-                <Settings size={24} color="#3b82f6" />
+          <View style={[styles.modalContent, styles.notificationsModalContent]}>
+            <View style={styles.notificationsModalHeader}>
+              <View style={styles.notificationsHeaderLeft}>
+                <View style={styles.notificationIconWrapper}>
+                  <Bell size={28} color="#3b82f6" />
+                </View>
+                <View>
+                  <Text style={styles.notificationsModalTitle}>ئاگادارکردنەوەکانی ئابوونە</Text>
+                  <Text style={styles.notificationsModalSubtitle}>
+                    {unreadNotificationsCount > 0 
+                      ? `${unreadNotificationsCount} ئاگادارکردنەوەی نوێ` 
+                      : 'هەموو ئاگادارکردنەوەکان خوێندراونەتەوە'}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                style={styles.settingsIconButton}
+                onPress={() => setShowSettingsModal(true)}
+              >
+                <Settings size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.notificationsList}>
+            <ScrollView 
+              style={styles.notificationsList}
+              showsVerticalScrollIndicator={false}
+            >
               {subscriptionNotifications.length === 0 ? (
                 <View style={styles.emptyNotifications}>
-                  <Bell size={48} color="#9ca3af" />
-                  <Text style={styles.emptyNotificationsText}>هیچ ئاگادارکردنەوەیەک نییە</Text>
+                  <View style={styles.emptyNotificationIconWrapper}>
+                    <Bell size={64} color="#d1d5db" />
+                  </View>
+                  <Text style={styles.emptyNotificationsTitle}>هیچ ئاگادارکردنەوەیەک نییە</Text>
+                  <Text style={styles.emptyNotificationsSubtext}>
+                    کاتێک ئابوونەیەک نزیک دەبێتەوە لە بەسەرچوون، لێرە دەیبینیت
+                  </Text>
                 </View>
               ) : (
                 subscriptionNotifications.map((notification) => (
@@ -653,8 +676,14 @@ export default function OwnerDashboardScreen() {
                       !notification.read && styles.notificationItemUnread,
                     ]}
                     onPress={() => markNotificationAsRead(notification.id)}
+                    activeOpacity={0.7}
                   >
-                    <View style={styles.notificationIcon}>
+                    <View style={[
+                      styles.notificationIconContainer,
+                      notification.type === 'expired' 
+                        ? styles.notificationIconExpired 
+                        : styles.notificationIconWarning
+                    ]}>
                       {notification.type === 'expired' ? (
                         <XCircle size={24} color="#ef4444" />
                       ) : (
@@ -662,23 +691,32 @@ export default function OwnerDashboardScreen() {
                       )}
                     </View>
                     <View style={styles.notificationContent}>
-                      <Text style={styles.notificationTitle}>{notification.title}</Text>
+                      <View style={styles.notificationTitleRow}>
+                        <Text style={styles.notificationTitle}>{notification.title}</Text>
+                        {!notification.read && (
+                          <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>نوێ</Text>
+                          </View>
+                        )}
+                      </View>
                       <Text style={styles.notificationMessage}>{notification.message}</Text>
-                      <Text style={styles.notificationDate}>
-                        {new Date(notification.sentAt).toLocaleDateString('ar-IQ')}
-                      </Text>
+                      <View style={styles.notificationFooter}>
+                        <Clock size={14} color="#9ca3af" />
+                        <Text style={styles.notificationDate}>
+                          {new Date(notification.sentAt).toLocaleDateString('ar-IQ')}
+                        </Text>
+                      </View>
                     </View>
-                    {!notification.read && <View style={styles.unreadDot} />}
                   </TouchableOpacity>
                 ))
               )}
             </ScrollView>
 
             <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
+              style={styles.closeNotificationsButton}
               onPress={() => setShowNotificationsModal(false)}
             >
-              <Text style={styles.modalButtonText}>داخستن</Text>
+              <Text style={styles.closeNotificationsButtonText}>داخستن</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1327,11 +1365,68 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 4,
   },
   notificationBadgeText: {
     color: '#fff',
     fontSize: 11,
     fontWeight: '700',
+  },
+  notificationsModalContent: {
+    maxHeight: '85%',
+    paddingBottom: 16,
+  },
+  notificationsModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: '#f3f4f6',
+  },
+  notificationsHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    flex: 1,
+  },
+  notificationIconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#eff6ff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  notificationsModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
+    letterSpacing: 0.3,
+  },
+  notificationsModalSubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  settingsIconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1340,30 +1435,82 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   notificationsList: {
-    maxHeight: 400,
+    flex: 1,
+    marginBottom: 16,
   },
   emptyNotifications: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyNotificationIconWrapper: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#f9fafb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#e5e7eb',
+    borderStyle: 'dashed' as const,
+  },
+  emptyNotificationsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
   },
   emptyNotificationsText: {
     fontSize: 16,
     color: '#6b7280',
     marginTop: 12,
   },
+  emptyNotificationsSubtext: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
   notificationItem: {
     flexDirection: 'row',
     padding: 16,
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
     marginBottom: 12,
-    gap: 12,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   notificationItemUnread: {
-    backgroundColor: '#eff6ff',
-    borderWidth: 1,
+    backgroundColor: '#f0f9ff',
+    borderWidth: 2,
     borderColor: '#3b82f6',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  notificationIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  notificationIconWarning: {
+    backgroundColor: '#fef3c7',
+  },
+  notificationIconExpired: {
+    backgroundColor: '#fee2e2',
   },
   notificationIcon: {
     marginTop: 2,
@@ -1371,21 +1518,46 @@ const styles = StyleSheet.create({
   notificationContent: {
     flex: 1,
   },
+  notificationTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
   notificationTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 4,
+    flex: 1,
+    letterSpacing: 0.2,
+  },
+  newBadge: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  newBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
   },
   notificationMessage: {
     fontSize: 14,
     color: '#4b5563',
     lineHeight: 20,
-    marginBottom: 8,
+    marginBottom: 10,
+  },
+  notificationFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   notificationDate: {
     fontSize: 12,
     color: '#9ca3af',
+    fontWeight: '500',
   },
   unreadDot: {
     width: 8,
@@ -1393,6 +1565,19 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#3b82f6',
     marginTop: 8,
+  },
+  closeNotificationsButton: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  closeNotificationsButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    letterSpacing: 0.3,
   },
   settingRow: {
     flexDirection: 'row',
