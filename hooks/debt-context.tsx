@@ -1,6 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Debt, Payment, SearchFilters, PaymentFilters } from '@/types/debt';
+import { safeStorage } from '@/utils/storage';
+import { useAuth } from '@/hooks/auth-context';
 
 type BalanceDiscrepancy = {
   type: 'overpayment' | 'negative_balance';
@@ -133,18 +135,124 @@ const samplePayments: Payment[] = [
   }
 ];
 
+const DEBTS_STORAGE_KEY = 'debts';
+const PAYMENTS_STORAGE_KEY = 'payments';
+
 export const [DebtProvider, useDebts] = createContextHook(() => {
-  const [debts] = useState<Debt[]>(sampleDebts);
-  const [payments] = useState<Payment[]>(samplePayments);
-  const [isLoading] = useState(false);
+  const { user } = useAuth();
+  const [debts, setDebts] = useState<Debt[]>(sampleDebts);
+  const [payments, setPayments] = useState<Payment[]>(samplePayments);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const addDebt = useCallback(async () => {
-    console.log('DebtProvider: addDebt called');
+  useEffect(() => {
+    loadData();
   }, []);
 
-  const addPayment = useCallback(async () => {
-    console.log('DebtProvider: addPayment called');
+  const loadData = async () => {
+    try {
+      setIsLoading(true);
+      const storedDebts = await safeStorage.getItem<Debt[]>(DEBTS_STORAGE_KEY, sampleDebts);
+      const storedPayments = await safeStorage.getItem<Payment[]>(PAYMENTS_STORAGE_KEY, samplePayments);
+      
+      if (storedDebts) setDebts(storedDebts);
+      if (storedPayments) setPayments(storedPayments);
+    } catch (error) {
+      console.error('Error loading debt data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const saveDebts = useCallback(async (newDebts: Debt[]) => {
+    setDebts(newDebts);
+    await safeStorage.setItem(DEBTS_STORAGE_KEY, newDebts);
   }, []);
+
+  const savePayments = useCallback(async (newPayments: Payment[]) => {
+    setPayments(newPayments);
+    await safeStorage.setItem(PAYMENTS_STORAGE_KEY, newPayments);
+  }, []);
+
+  const addDebt = useCallback(async (debtData: {
+    customerId: string;
+    customerName: string;
+    amount: number;
+    remainingAmount: number;
+    description: string;
+    category: string;
+    notes?: string;
+    status: 'active' | 'paid' | 'partial';
+    dueDate?: string;
+  }) => {
+    try {
+      const newDebt: Debt = {
+        id: `debt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        ...debtData,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.id || 'unknown',
+        createdByName: user?.name || 'نەناسراو',
+        receiptNumber: `R${Date.now().toString().slice(-6)}`,
+      };
+
+      const updatedDebts = [...debts, newDebt];
+      await saveDebts(updatedDebts);
+      
+      console.log('Debt added successfully:', newDebt.id);
+      return newDebt;
+    } catch (error) {
+      console.error('Error adding debt:', error);
+      throw error;
+    }
+  }, [debts, user, saveDebts]);
+
+  const addPayment = useCallback(async (paymentData: {
+    debtId: string;
+    amount: number;
+    notes?: string;
+  }) => {
+    try {
+      const debt = debts.find(d => d.id === paymentData.debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      if (paymentData.amount > debt.remainingAmount) {
+        throw new Error('Payment amount exceeds remaining debt');
+      }
+
+      const newPayment: Payment = {
+        id: `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        debtId: paymentData.debtId,
+        amount: paymentData.amount,
+        paymentDate: new Date().toISOString(),
+        receivedBy: user?.id || 'unknown',
+        receivedByName: user?.name || 'نەناسراو',
+        notes: paymentData.notes,
+      };
+
+      const updatedPayments = [...payments, newPayment];
+      await savePayments(updatedPayments);
+
+      const newRemainingAmount = debt.remainingAmount - paymentData.amount;
+      const updatedDebts = debts.map(d => {
+        if (d.id === paymentData.debtId) {
+          return {
+            ...d,
+            remainingAmount: newRemainingAmount,
+            status: newRemainingAmount === 0 ? ('paid' as const) : d.status,
+          };
+        }
+        return d;
+      });
+      await saveDebts(updatedDebts);
+
+      console.log('Payment added successfully:', newPayment.id);
+      return newPayment;
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      throw error;
+    }
+  }, [debts, payments, user, saveDebts, savePayments]);
 
   const getSummary = useCallback(() => {
     const totalDebts = debts.reduce((sum, debt) => sum + debt.amount, 0);
