@@ -339,6 +339,162 @@ function RootLayoutNav() {
           title: "گەڕانی گشتی",
         }} 
       />
+      <Stack.Screen 
+        name="customer-detail/[id]" 
+        options={{ 
+          title: "وردەکاریەکانی کڕیار",
+        }} 
+      />
+      <Stack.Screen 
+        name="edit-employee" 
+        options={{ 
+          title: "دەستکاری کارمەند",
+        }} 
+      />
+      <Stack.Screen 
+        name="employee-permissions" 
+        options={{ 
+          title: "دەسەڵاتەکانی کارمەند",
+        }} 
+      />
+      <Stack.Screen 
+        name="vip-customers-report" 
+        options={{ 
+          title: "ڕاپۆرتی کڕیارە VIP ەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="advanced-reports" 
+        options={{ 
+          title: "ڕاپۆرتی پێشکەوتوو",
+        }} 
+      />
+      <Stack.Screen 
+        name="location-reports" 
+        options={{ 
+          title: "ڕاپۆرتی شوێن",
+        }} 
+      />
+      <Stack.Screen 
+        name="inactive-users-report" 
+        options={{ 
+          title: "ڕاپۆرتی بەکارهێنەرە ناچالاکەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="role-management" 
+        options={{ 
+          title: "بەڕێوەبردنی ڕۆڵەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin-management" 
+        options={{ 
+          title: "بەڕێوەبردنی بەڕێوەبەران",
+        }} 
+      />
+      <Stack.Screen 
+        name="permissions-report" 
+        options={{ 
+          title: "ڕاپۆرتی دەسەڵاتەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="analytics-dashboard" 
+        options={{ 
+          title: "داشبۆردی شیکاری",
+        }} 
+      />
+      <Stack.Screen 
+        name="quick-dashboard" 
+        options={{ 
+          title: "داشبۆردی خێرا",
+        }} 
+      />
+      <Stack.Screen 
+        name="system-updates" 
+        options={{ 
+          title: "نوێکردنەوەکانی سیستەم",
+        }} 
+      />
+      <Stack.Screen 
+        name="impact-analysis" 
+        options={{ 
+          title: "شیکاری کاریگەری",
+        }} 
+      />
+      <Stack.Screen 
+        name="enhanced-security" 
+        options={{ 
+          title: "پاراستنی پێشکەوتوو",
+        }} 
+      />
+      <Stack.Screen 
+        name="security-alerts" 
+        options={{ 
+          title: "ئاگاداریەکانی پاراستن",
+        }} 
+      />
+      <Stack.Screen 
+        name="security-reports" 
+        options={{ 
+          title: "ڕاپۆرتەکانی پاراستن",
+        }} 
+      />
+      <Stack.Screen 
+        name="sharing-management" 
+        options={{ 
+          title: "بەڕێوەبردنی هاوبەشکردن",
+        }} 
+      />
+      <Stack.Screen 
+        name="guidance-management" 
+        options={{ 
+          title: "بەڕێوەبردنی ڕێنمایی",
+        }} 
+      />
+      <Stack.Screen 
+        name="newsletter-management" 
+        options={{ 
+          title: "بەڕێوەبردنی نامەی هەواڵ",
+        }} 
+      />
+      <Stack.Screen 
+        name="onboarding" 
+        options={{ 
+          title: "دەستپێکردن",
+        }} 
+      />
+      <Stack.Screen 
+        name="system-config" 
+        options={{ 
+          title: "ڕێکخستنی سیستەم",
+        }} 
+      />
+      <Stack.Screen 
+        name="internal-messaging" 
+        options={{ 
+          title: "پەیامی ناوخۆیی",
+        }} 
+      />
+      <Stack.Screen 
+        name="tenant-features" 
+        options={{ 
+          title: "تایبەتمەندیەکانی فرۆشگا",
+        }} 
+      />
+      <Stack.Screen 
+        name="customer-qr-management" 
+        options={{ 
+          title: "بەڕێوەبردنی QR کڕیارەکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="scan-customer-qr" 
+        options={{ 
+          title: "سکان کردنی QR کڕیار",
+        }} 
+      />
 
     </Stack>
   );
