@@ -42,7 +42,6 @@ export default function DebtManagementScreen() {
     searchDebts,
     getOverdueDebts,
     getUnpaidDebts,
-    getHighDebtCustomers,
   } = useDebts();
   const { hasPermission } = useAuth();
   
@@ -94,8 +93,8 @@ export default function DebtManagementScreen() {
     return debts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [allDebts, filters, searchDebts, searchQuery]);
 
-  const overdueDebts = getOverdueDebts();
-  const unpaidDebts = getUnpaidDebts();
+  const overdueDebts = useMemo(() => getOverdueDebts(), [getOverdueDebts]);
+  const unpaidDebts = useMemo(() => getUnpaidDebts(), [getUnpaidDebts]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('ckb-IQ', {
