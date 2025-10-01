@@ -44,7 +44,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
 
     await saveRequests([...requests, newRequest]);
     return newRequest;
-  }, [requests]);
+  }, [requests, saveRequests]);
 
   const approveRequest = useCallback(async (id: string, reviewedBy: string, notes?: string) => {
     const updated = requests.map(r =>

@@ -116,6 +116,7 @@ export default function StoreRegistrationScreen() {
         ownerName: formData.ownerName,
         ownerPhone: formData.ownerPhone,
         ownerEmail: formData.ownerEmail,
+        ownerPassword: formData.password,
         address: formData.address,
         city: formData.city,
         plan: formData.plan,

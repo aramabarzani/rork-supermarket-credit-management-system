@@ -30,6 +30,7 @@ import { useStoreRequests } from '@/hooks/store-request-context';
 import { useTenant } from '@/hooks/tenant-context';
 import { useNotifications } from '@/hooks/notification-context';
 import { useAuth } from '@/hooks/auth-context';
+import { useUsers } from '@/hooks/users-context';
 import { SUBSCRIPTION_PLANS } from '@/types/subscription';
 import { StoreRequest } from '@/types/store-request';
 
@@ -38,6 +39,7 @@ export default function StoreRequestsScreen() {
   const { createTenant } = useTenant();
   const { addNotification } = useNotifications();
   const { user } = useAuth();
+  const { addUser } = useUsers();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -110,13 +112,22 @@ export default function StoreRequestsScreen() {
                 expiryDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
               });
 
+              await addUser({
+                name: request.ownerName,
+                phone: request.ownerPhone,
+                email: request.ownerEmail,
+                role: 'owner',
+                password: request.ownerPassword,
+                tenantId: newTenant.id,
+              });
+
               await approveRequest(request.id, user?.name || 'Admin', approvalNotes);
 
               await addNotification({
                 title: 'داواکاریەکەت پەسەندکرا',
                 titleKurdish: 'داواکاریەکەت پەسەندکرا',
-                message: `داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا. دەتوانیت ئێستا بچیتە ژوورەوە بە ژمارەی ${request.ownerPhone}`,
-                messageKurdish: `داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا. دەتوانیت ئێستا بچیتە ژوورەوە بە ژمارەی ${request.ownerPhone}`,
+                message: `داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا. دەتوانیت ئێستا بچیتە ژوورەوە بە ژمارەی مۆبایل ${request.ownerPhone} و وشەی نهێنیەکەت`,
+                messageKurdish: `داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا. دەتوانیت ئێستا بچیتە ژوورەوە بە ژمارەی مۆبایل ${request.ownerPhone} و وشەی نهێنیەکەت`,
                 type: 'store_request_approved',
                 priority: 'high',
                 recipientId: request.ownerPhone,
