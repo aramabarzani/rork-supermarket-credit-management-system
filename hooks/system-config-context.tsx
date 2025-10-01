@@ -43,7 +43,7 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const [error, setError] = useState<string | null>(null);
   const [isHydrated, setIsHydrated] = useState(Platform.OS !== 'web');
   
-  const [config, setConfig] = useState<SystemConfigUpdate | null>(null);
+  const [config, setConfig] = useState<SystemConfigUpdate>({});
   const [passwordPolicy, setPasswordPolicy] = useState<PasswordPolicy>(DEFAULT_PASSWORD_POLICY);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
   const [backupSettings, setBackupSettings] = useState<BackupSettings>(DEFAULT_BACKUP_SETTINGS);
@@ -110,10 +110,10 @@ export const [SystemConfigContext, useSystemConfig] = createContextHook(() => {
   const resetSystemConfig = useCallback(async () => {
     setError(null);
     try {
-      setConfig(null);
+      setConfig({});
       await safeStorage.removeItem('systemConfig');
       console.log('[System Config] Configuration reset successfully');
-      return null;
+      return {};
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Failed to reset configuration';
