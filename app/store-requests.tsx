@@ -100,15 +100,6 @@ export default function StoreRequestsScreen() {
               const plan = SUBSCRIPTION_PLANS[request.plan];
               const duration = plan.duration === -1 ? 365 : plan.duration;
 
-              console.log('[Store Request] Creating tenant with data:', {
-                storeName: request.storeName,
-                storeNameKurdish: request.storeNameKurdish,
-                ownerName: request.ownerName,
-                ownerPhone: request.ownerPhone,
-                address: request.address,
-                city: request.city,
-              });
-
               const newTenant = await createTenant({
                 adminId: request.ownerPhone,
                 adminName: request.ownerName,
@@ -127,8 +118,6 @@ export default function StoreRequestsScreen() {
                 expiryDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
               });
 
-              console.log('[Store Request] Tenant created:', newTenant);
-
               await addUser({
                 name: request.ownerName,
                 phone: request.ownerPhone,
@@ -137,8 +126,6 @@ export default function StoreRequestsScreen() {
                 password: request.ownerPassword,
                 tenantId: newTenant.id,
               });
-
-              console.log('[Store Request] Admin user created');
 
               await approveRequest(request.id, user?.name || 'Admin', approvalNotes);
 

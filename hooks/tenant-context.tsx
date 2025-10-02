@@ -63,11 +63,6 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     if (tenant) {
       setCurrentTenant(tenant);
       await AsyncStorage.setItem('currentTenant', JSON.stringify(tenant));
-      console.log('[Tenant] Active tenant set:', {
-        id: tenant.id,
-        storeName: tenant.storeNameKurdish,
-        ownerName: tenant.ownerName,
-      });
     }
   }, [tenants]);
 
@@ -195,14 +190,7 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
   const updateTenant = useCallback(async (id: string, updates: Partial<Tenant>) => {
     const updated = tenants.map(t => t.id === id ? { ...t, ...updates } : t);
     await saveTenants(updated);
-    
-    if (currentTenant && currentTenant.id === id) {
-      const updatedTenant = { ...currentTenant, ...updates };
-      setCurrentTenant(updatedTenant);
-      await AsyncStorage.setItem('currentTenant', JSON.stringify(updatedTenant));
-      console.log('[Tenant] Current tenant updated:', updatedTenant);
-    }
-  }, [tenants, currentTenant]);
+  }, [tenants]);
 
   const deleteTenant = useCallback(async (id: string) => {
     const updated = tenants.filter(t => t.id !== id);

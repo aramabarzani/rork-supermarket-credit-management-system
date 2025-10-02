@@ -17,14 +17,12 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LogIn, Phone, Lock, Store, Crown, Shield, Users, User as UserIcon } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
-import { useTenant } from '@/hooks/tenant-context';
 
 type RoleType = 'owner' | 'admin' | 'employee' | 'customer' | null;
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
-  const { tenants, setActiveTenant } = useTenant();
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,23 +54,7 @@ export default function LoginScreen() {
       const result = await login({ phone, password });
       
       if (result.success && result.user) {
-        console.log('[Login] Login successful, user role:', result.user.role);
-        console.log('[Login] User tenantId:', result.user.tenantId);
-        
-        if (result.user?.tenantId) {
-          const userTenant = tenants.find(t => t.id === result.user?.tenantId);
-          if (userTenant) {
-            await setActiveTenant(result.user.tenantId);
-            console.log('[Login] Active tenant set:', {
-              id: userTenant.id,
-              storeName: userTenant.storeNameKurdish,
-              ownerName: userTenant.ownerName,
-            });
-          } else {
-            console.warn('[Login] Tenant not found for user:', result.user?.tenantId);
-          }
-        }
-        
+        console.log('Login successful, user role:', result.user.role);
         if (result.user.role === 'owner') {
           router.replace('/owner-dashboard');
         } else if (result.user.role === 'customer') {
