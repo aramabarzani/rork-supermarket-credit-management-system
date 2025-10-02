@@ -30,16 +30,18 @@ import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
 import { useUsability } from '@/hooks/usability-context';
 import { useAuth } from '@/hooks/auth-context';
+import { useSettings } from '@/hooks/settings-context';
 
 export default function UsabilitySettingsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { settings, updateSettings } = useSettings();
   const {
     preferences,
     optimizationSettings,
     performanceAlerts,
     optimizations,
-    changeLanguage,
+    changeLanguage: changeUsabilityLanguage,
     toggleDarkMode,
     changeFontSize,
     updateBiometric,
@@ -111,7 +113,10 @@ export default function UsabilitySettingsScreen() {
                       styles.languageButton,
                       preferences.language === lang.code && styles.languageButtonActive,
                     ]}
-                    onPress={() => changeLanguage(lang.code)}
+                    onPress={() => {
+                      changeUsabilityLanguage(lang.code);
+                      updateSettings({ language: lang.code });
+                    }}
                   >
                     <KurdishText
                       variant="caption"
@@ -141,7 +146,10 @@ export default function UsabilitySettingsScreen() {
                 )}
                 <Switch
                   value={preferences.theme.darkMode}
-                  onValueChange={toggleDarkMode}
+                  onValueChange={(value) => {
+                    toggleDarkMode();
+                    updateSettings({ theme: { ...settings.theme, darkMode: value } });
+                  }}
                   trackColor={{ false: '#D1D5DB', true: '#3B82F6' }}
                   thumbColor={preferences.theme.darkMode ? '#fff' : '#f4f3f4'}
                 />
@@ -165,7 +173,10 @@ export default function UsabilitySettingsScreen() {
                       styles.fontButton,
                       preferences.theme.fontSize === font.size && styles.fontButtonActive,
                     ]}
-                    onPress={() => changeFontSize(font.size)}
+                    onPress={() => {
+                      changeFontSize(font.size);
+                      updateSettings({ theme: { ...settings.theme, fontSize: font.size } });
+                    }}
                   >
                     <KurdishText
                       variant="caption"

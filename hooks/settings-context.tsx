@@ -66,7 +66,7 @@ export interface SystemSettings {
   // Theme settings (131)
   theme: {
     primaryColor: string;
-    fontSize: 'small' | 'medium' | 'large';
+    fontSize: 'small' | 'medium' | 'large' | 'extra-large';
     darkMode: boolean;
   };
   
