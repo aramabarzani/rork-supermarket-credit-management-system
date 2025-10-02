@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -132,7 +131,15 @@ export default function EmployeePermissionsScreen() {
       permissions: [
         PERMISSIONS.VIEW_SETTINGS,
         PERMISSIONS.EDIT_SETTINGS,
-        PERMISSIONS.MANAGE_LICENSE,
+        PERMISSIONS.VIEW_ACTIVITY_LOGS,
+        PERMISSIONS.MANAGE_SESSIONS,
+      ],
+    },
+    {
+      title: 'QR Code',
+      permissions: [
+        PERMISSIONS.GENERATE_CUSTOMER_QR,
+        PERMISSIONS.USE_CUSTOMER_QR,
       ],
     },
   ];
@@ -249,15 +256,15 @@ export default function EmployeePermissionsScreen() {
           </KurdishText>
           
           <View style={styles.selectedPermissions}>
-            {selectedPermissions.slice(0, 5).map((permission) => (
-              <View key={permission} style={styles.permissionTag}>
+            {selectedPermissions.slice(0, 5).map((permission, index) => (
+              <View key={`permission-${permission}-${index}`} style={styles.permissionTag}>
                 <KurdishText variant="caption" color="#1E3A8A">
                   {PERMISSION_LABELS[permission] || permission}
                 </KurdishText>
               </View>
             ))}
             {selectedPermissions.length > 5 && (
-              <View style={styles.permissionTag}>
+              <View key="more-permissions" style={styles.permissionTag}>
                 <KurdishText variant="caption" color="#6B7280">
                   {'+' + (selectedPermissions.length - 5) + ' زیاتر'}
                 </KurdishText>
