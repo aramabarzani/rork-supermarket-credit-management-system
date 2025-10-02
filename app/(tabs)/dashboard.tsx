@@ -704,77 +704,7 @@ export default function DashboardScreen() {
               </Text>
               
               <View style={styles.actionsGrid}>
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/add-debt')}
-                >
-                  <View style={styles.actionIcon}>
-                    <Plus size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>
-                    قەرزی نوێ
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/add-payment')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconGreen]}>
-                    <DollarSign size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>
-                    پارەدان
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/debt-management')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconPurple]}>
-                    <FileText size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>
-                    بەڕێوەبردنی قەرز
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/add-user')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconOrange]}>
-                    <Users size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>
-                    کڕیاری نوێ
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/receipts')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconBlue]}>
-                    <FileText size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>
-                    وەسڵەکان
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/all-features')}
-                >
-                  <View style={[styles.actionIcon, { backgroundColor: '#10B981' }]}>
-                    <Activity size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>
-                    هەموو تایبەتمەندیەکان
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.emptyText}>هیچ کردارێکی خێرا نییە</Text>
               </View>
             </View>
 
