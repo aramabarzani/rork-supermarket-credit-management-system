@@ -11,20 +11,137 @@ import { Stack } from 'expo-router';
 import { MapPin, TrendingUp, TrendingDown } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
-import { trpc } from '@/lib/trpc';
+
 
 export default function LocationReportsScreen() {
   const [selectedCity, setSelectedCity] = useState<string>('هەولێر');
   const [reportType, setReportType] = useState<'debt' | 'payment'>('debt');
+  const [isLoading] = useState(false);
 
-  const debtByCityQuery = trpc.financial.advancedReports.debtByCity.useQuery({});
-  const paymentByCityQuery = trpc.financial.advancedReports.paymentByCity.useQuery({});
-  const debtByLocationQuery = trpc.financial.advancedReports.debtByLocation.useQuery({
-    city: selectedCity,
-  });
-  const paymentByLocationQuery = trpc.financial.advancedReports.paymentByLocation.useQuery({
-    city: selectedCity,
-  });
+  const mockCityData = [
+    {
+      city: 'هەولێر',
+      customerCount: 45,
+      totalAmount: 15000000,
+      totalDebts: 23,
+      totalPayments: 18,
+      averageDebtPerCustomer: 652173,
+      averagePaymentPerCustomer: 833333,
+      topCustomers: [
+        { customerId: '1', customerName: 'ئەحمەد محەمەد', totalDebt: 2500000, totalPaid: 1800000 },
+        { customerId: '2', customerName: 'سارا عەلی', totalDebt: 1800000, totalPaid: 1500000 },
+        { customerId: '3', customerName: 'کەریم ئیبراهیم', totalDebt: 1500000, totalPaid: 1200000 },
+      ],
+      topPayers: [
+        { customerId: '1', customerName: 'ئەحمەد محەمەد', totalDebt: 2500000, totalPaid: 1800000 },
+        { customerId: '2', customerName: 'سارا عەلی', totalDebt: 1800000, totalPaid: 1500000 },
+        { customerId: '3', customerName: 'کەریم ئیبراهیم', totalDebt: 1500000, totalPaid: 1200000 },
+      ],
+    },
+    {
+      city: 'سلێمانی',
+      customerCount: 38,
+      totalAmount: 12000000,
+      totalDebts: 19,
+      totalPayments: 15,
+      averageDebtPerCustomer: 631578,
+      averagePaymentPerCustomer: 800000,
+      topCustomers: [
+        { customerId: '4', customerName: 'ڕەشید حەسەن', totalDebt: 2000000, totalPaid: 1400000 },
+        { customerId: '5', customerName: 'ژیان ئەمین', totalDebt: 1600000, totalPaid: 1100000 },
+      ],
+      topPayers: [
+        { customerId: '4', customerName: 'ڕەشید حەسەن', totalDebt: 2000000, totalPaid: 1400000 },
+        { customerId: '5', customerName: 'ژیان ئەمین', totalDebt: 1600000, totalPaid: 1100000 },
+      ],
+    },
+    {
+      city: 'دهۆک',
+      customerCount: 28,
+      totalAmount: 8500000,
+      totalDebts: 14,
+      totalPayments: 12,
+      averageDebtPerCustomer: 607142,
+      averagePaymentPerCustomer: 708333,
+      topCustomers: [
+        { customerId: '6', customerName: 'بەرزان یوسف', totalDebt: 1500000, totalPaid: 1000000 },
+      ],
+      topPayers: [
+        { customerId: '6', customerName: 'بەرزان یوسف', totalDebt: 1500000, totalPaid: 1000000 },
+      ],
+    },
+  ];
+
+  const mockLocationData: Record<string, any[]> = {
+    'هەولێر': [
+      {
+        location: 'شەقامی ٦٠ مەتری',
+        customerCount: 15,
+        totalAmount: 5000000,
+        totalDebts: 8,
+        totalPayments: 6,
+        averageDebtPerCustomer: 625000,
+        averagePaymentPerCustomer: 833333,
+        topCustomers: [
+          { customerId: '1', customerName: 'ئەحمەد محەمەد', totalDebt: 1200000, totalPaid: 900000 },
+          { customerId: '2', customerName: 'سارا عەلی', totalDebt: 900000, totalPaid: 700000 },
+        ],
+        topPayers: [
+          { customerId: '1', customerName: 'ئەحمەد محەمەد', totalDebt: 1200000, totalPaid: 900000 },
+          { customerId: '2', customerName: 'سارا عەلی', totalDebt: 900000, totalPaid: 700000 },
+        ],
+      },
+      {
+        location: 'شەقامی ١٠٠ مەتری',
+        customerCount: 12,
+        totalAmount: 4000000,
+        totalDebts: 6,
+        totalPayments: 5,
+        averageDebtPerCustomer: 666666,
+        averagePaymentPerCustomer: 800000,
+        topCustomers: [
+          { customerId: '3', customerName: 'کەریم ئیبراهیم', totalDebt: 1000000, totalPaid: 750000 },
+        ],
+        topPayers: [
+          { customerId: '3', customerName: 'کەریم ئیبراهیم', totalDebt: 1000000, totalPaid: 750000 },
+        ],
+      },
+    ],
+    'سلێمانی': [
+      {
+        location: 'سەلیم',
+        customerCount: 20,
+        totalAmount: 6500000,
+        totalDebts: 10,
+        totalPayments: 8,
+        averageDebtPerCustomer: 650000,
+        averagePaymentPerCustomer: 812500,
+        topCustomers: [
+          { customerId: '4', customerName: 'ڕەشید حەسەن', totalDebt: 1500000, totalPaid: 1100000 },
+        ],
+        topPayers: [
+          { customerId: '4', customerName: 'ڕەشید حەسەن', totalDebt: 1500000, totalPaid: 1100000 },
+        ],
+      },
+    ],
+    'دهۆک': [
+      {
+        location: 'نۆهەدرا',
+        customerCount: 15,
+        totalAmount: 4500000,
+        totalDebts: 7,
+        totalPayments: 6,
+        averageDebtPerCustomer: 642857,
+        averagePaymentPerCustomer: 750000,
+        topCustomers: [
+          { customerId: '6', customerName: 'بەرزان یوسف', totalDebt: 1000000, totalPaid: 700000 },
+        ],
+        topPayers: [
+          { customerId: '6', customerName: 'بەرزان یوسف', totalDebt: 1000000, totalPaid: 700000 },
+        ],
+      },
+    ],
+  };
 
   const formatCurrency = (amount: number) => {
     if (typeof amount !== 'number' || isNaN(amount) || amount < 0) return '0 د.ع';
@@ -35,13 +152,7 @@ export default function LocationReportsScreen() {
     }).format(amount);
   };
 
-  const cities = ['هەولێر', 'سلێمانی', 'دهۆک', 'کەرکوک', 'هەڵەبجە'];
-
-  const isLoading =
-    debtByCityQuery.isLoading ||
-    paymentByCityQuery.isLoading ||
-    debtByLocationQuery.isLoading ||
-    paymentByLocationQuery.isLoading;
+  const cities = ['هەولێر', 'سلێمانی', 'دهۆک'];
 
   if (isLoading) {
     return (
@@ -63,9 +174,8 @@ export default function LocationReportsScreen() {
     );
   }
 
-  const cityData = reportType === 'debt' ? debtByCityQuery.data : paymentByCityQuery.data;
-  const locationData =
-    reportType === 'debt' ? debtByLocationQuery.data : paymentByLocationQuery.data;
+  const cityData = mockCityData;
+  const locationData = mockLocationData[selectedCity] || [];
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
