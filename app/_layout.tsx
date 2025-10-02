@@ -30,6 +30,8 @@ import { SystemConfigContext as SystemConfigProvider } from "@/hooks/system-conf
 import { UsabilityProvider } from "@/hooks/usability-context";
 import { VoiceInputContext as VoiceInputProvider } from "@/hooks/voice-input-context";
 import { FAQProvider } from "@/hooks/faq-context";
+import { BlacklistProvider } from "@/hooks/blacklist-context";
+import { PredictionProvider } from "@/hooks/prediction-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
@@ -531,6 +533,24 @@ function RootLayoutNav() {
           title: "WhatsApp و SMS",
         }} 
       />
+      <Stack.Screen 
+        name="blacklist-management" 
+        options={{ 
+          title: "بەڕێوەبردنی لیستی ڕەوش",
+        }} 
+      />
+      <Stack.Screen 
+        name="credit-scoring" 
+        options={{ 
+          title: "سکۆری کڕیار و پێشبینی",
+        }} 
+      />
+      <Stack.Screen 
+        name="customer-history" 
+        options={{ 
+          title: "مێژووی کڕیار",
+        }} 
+      />
 
     </Stack>
   );
@@ -622,10 +642,14 @@ export default function RootLayout() {
                                                   <StoreRequestProvider>
                                                     <SupportProvider>
                                                       <FAQProvider>
-                                                        <VoiceInputProvider>
-                                                          <RootLayoutNav />
-                                                          <SessionTimeoutWarning />
-                                                        </VoiceInputProvider>
+                                                        <BlacklistProvider>
+                                                          <PredictionProvider>
+                                                            <VoiceInputProvider>
+                                                              <RootLayoutNav />
+                                                              <SessionTimeoutWarning />
+                                                            </VoiceInputProvider>
+                                                          </PredictionProvider>
+                                                        </BlacklistProvider>
                                                       </FAQProvider>
                                                     </SupportProvider>
                                                   </StoreRequestProvider>
