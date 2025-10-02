@@ -341,6 +341,11 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
       .slice(0, limit);
   }, [receipts]);
 
+  // Get receipt by ID
+  const getReceiptById = useCallback((receiptId: string) => {
+    return receipts.find(receipt => receipt.id === receiptId);
+  }, [receipts]);
+
   // Generate receipt content from template
   const generateReceiptContent = useCallback((receipt: Receipt, template?: ReceiptTemplate) => {
     const activeTemplate = template || templates.find(t => t.isDefault) || templates[0];
@@ -398,6 +403,7 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
     getReceiptsByCustomer,
     getReceiptsByEmployee,
     getRecentReceipts,
+    getReceiptById,
     generateReceiptContent,
     generateReceiptNumber
   }), [
@@ -419,6 +425,7 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
     getReceiptsByCustomer,
     getReceiptsByEmployee,
     getRecentReceipts,
+    getReceiptById,
     generateReceiptContent,
     generateReceiptNumber
   ]);

@@ -1,423 +1,402 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
+  Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
-import { Smartphone, Mail, Key, Copy } from 'lucide-react-native';
-import { useSecurity } from '@/hooks/security-context';
-import { useAuth } from '@/hooks/auth-context';
+import {
+  Shield,
+  Smartphone,
+  Key,
+  CheckCircle,
+  Copy,
+  QrCode,
+} from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
+import { GradientCard } from '@/components/GradientCard';
+import { useAuth } from '@/hooks/auth-context';
 
 export default function TwoFactorSetupScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { twoFactorAuth, enable2FA, disable2FA } = useSecurity();
-
-  const [selectedMethod, setSelectedMethod] = useState<'sms' | 'email'>('sms');
+  const [step, setStep] = useState<'intro' | 'qr' | 'verify' | 'backup' | 'complete'>('intro');
   const [verificationCode, setVerificationCode] = useState('');
-  const [step, setStep] = useState<'select' | 'verify' | 'backup'>('select');
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
 
-  const handleEnable2FA = () => {
-    if (!user) return;
+  const qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=otpauth://totp/SupermarketCredit:' + user?.phone + '?secret=JBSWY3DPEHPK3PXP&issuer=SupermarketCredit';
 
-    const auth = enable2FA(user.id, selectedMethod);
-    setBackupCodes(auth.backupCodes || []);
-    setStep('verify');
+  const secretKey = 'JBSWY3DPEHPK3PXP';
+
+  const handleCopySecret = () => {
+    Alert.alert('کۆپی کرا', 'کلیلی نهێنی کۆپی کرا');
   };
 
   const handleVerify = () => {
-    if (verificationCode.length === 6) {
-      setStep('backup');
-    } else {
-      Alert.alert('هەڵە', 'تکایە کۆدی ٦ ژمارەیی داخڵ بکە');
+    if (verificationCode.length !== 6) {
+      Alert.alert('هەڵە', 'تکایە کۆدی 6 ژمارەیی داخڵ بکە');
+      return;
     }
+
+    const codes = [
+      'A1B2C3D4',
+      'E5F6G7H8',
+      'I9J0K1L2',
+      'M3N4O5P6',
+      'Q7R8S9T0',
+      'U1V2W3X4',
+      'Y5Z6A7B8',
+      'C9D0E1F2',
+    ];
+    setBackupCodes(codes);
+    setStep('backup');
   };
 
   const handleComplete = () => {
-    Alert.alert(
-      'سەرکەوتوو',
-      'تایبەتمەندی دوو هەنگاو بە سەرکەوتوویی چالاک کرا',
-      [
-        {
-          text: 'باشە',
-          onPress: () => router.back(),
-        },
-      ]
-    );
+    setTwoFactorEnabled(true);
+    setStep('complete');
+    setTimeout(() => {
+      Alert.alert('سەرکەوتوو', 'دوو فاکتەر بە سەرکەوتوویی چالاک کرا', [
+        { text: 'باشە', onPress: () => router.back() }
+      ]);
+    }, 1000);
   };
 
-  const handleDisable = () => {
-    if (!user) return;
-
-    Alert.alert(
-      'ناچالاککردن',
-      'دڵنیایت لە ناچالاککردنی تایبەتمەندی دوو هەنگاو؟',
-      [
-        { text: 'پاشگەزبوونەوە', style: 'cancel' },
-        {
-          text: 'ناچالاک بکە',
-          style: 'destructive',
-          onPress: () => {
-            disable2FA(user.id);
-            router.back();
-          },
-        },
-      ]
-    );
+  const handleCopyBackupCode = (code: string) => {
+    Alert.alert('کۆپی کرا', `کۆدی پاشەکەوت کۆپی کرا: ${code}`);
   };
 
-  if (twoFactorAuth?.enabled && step === 'select') {
-    return (
-      <View style={styles.container}>
-        <Stack.Screen
-          options={{
-            title: 'چوونەژوورەوە بە دوو هەنگاو',
-            headerStyle: { backgroundColor: '#1e40af' },
-            headerTintColor: '#fff',
-          }}
-        />
-
-        <ScrollView style={styles.scrollView}>
-          <View style={styles.enabledCard}>
-            <View style={styles.enabledIcon}>
-              <Key size={48} color="#22c55e" />
-            </View>
-            <KurdishText style={styles.enabledTitle}>
-              تایبەتمەندی دوو هەنگاو چالاکە
-            </KurdishText>
-            <KurdishText style={styles.enabledSubtitle}>
-              ڕێگای پشتڕاستکردنەوە: {twoFactorAuth.method === 'sms' ? 'SMS' : 'ئیمەیڵ'}
-            </KurdishText>
-
-            <TouchableOpacity
-              style={styles.disableButton}
-              onPress={handleDisable}
-            >
-              <KurdishText style={styles.disableButtonText}>
-                ناچالاککردنی دوو هەنگاو
-              </KurdishText>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+  const renderIntro = () => (
+    <View style={styles.stepContainer}>
+      <View style={styles.iconContainer}>
+        <Shield size={64} color="#1E3A8A" />
       </View>
-    );
-  }
+      
+      <KurdishText variant="title" color="#1F2937" style={styles.title}>
+        پاراستنی دوو فاکتەر
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={styles.description}>
+        زیادکردنی قاتێکی تری پاراستن بۆ هەژمارەکەت بە بەکارهێنانی ئەپێکی Authenticator
+      </KurdishText>
+
+      <GradientCard style={styles.infoCard}>
+        <View style={styles.infoRow}>
+          <Smartphone size={24} color="#3B82F6" />
+          <View style={styles.infoContent}>
+            <KurdishText variant="body" color="#1F2937">
+              پێویستە ئەپێکی Authenticator دابەزێنیت
+            </KurdishText>
+            <KurdishText variant="caption" color="#6B7280">
+              وەک Google Authenticator یان Microsoft Authenticator
+            </KurdishText>
+          </View>
+        </View>
+      </GradientCard>
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => setStep('qr')}
+      >
+        <KurdishText variant="body" color="white">
+          دەستپێکردن
+        </KurdishText>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderQRStep = () => (
+    <View style={styles.stepContainer}>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.stepTitle}>
+        هەنگاو 1: سکان کردنی QR Code
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={styles.stepDescription}>
+        ئەپی Authenticator بکەرەوە و QR Code ـەکە سکان بکە
+      </KurdishText>
+
+      <GradientCard style={styles.qrCard}>
+        <Image
+          source={{ uri: qrCodeUrl }}
+          style={styles.qrCode}
+          resizeMode="contain"
+        />
+      </GradientCard>
+
+      <KurdishText variant="caption" color="#6B7280" style={styles.orText}>
+        یان کلیلی نهێنی بە دەست زیاد بکە
+      </KurdishText>
+
+      <GradientCard style={styles.secretCard}>
+        <View style={styles.secretRow}>
+          <KurdishText variant="body" color="#1F2937" style={styles.secretText}>
+            {secretKey}
+          </KurdishText>
+          <TouchableOpacity onPress={handleCopySecret}>
+            <Copy size={20} color="#3B82F6" />
+          </TouchableOpacity>
+        </View>
+      </GradientCard>
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={() => setStep('verify')}
+      >
+        <KurdishText variant="body" color="white">
+          دواتر
+        </KurdishText>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderVerifyStep = () => (
+    <View style={styles.stepContainer}>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.stepTitle}>
+        هەنگاو 2: پشتڕاستکردنەوە
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={styles.stepDescription}>
+        کۆدی 6 ژمارەیی لە ئەپی Authenticator داخڵ بکە
+      </KurdishText>
+
+      <View style={styles.codeInputContainer}>
+        <Key size={24} color="#6B7280" />
+        <TextInput
+          style={styles.codeInput}
+          placeholder="123456"
+          placeholderTextColor="#9CA3AF"
+          value={verificationCode}
+          onChangeText={setVerificationCode}
+          keyboardType="number-pad"
+          maxLength={6}
+          textAlign="center"
+        />
+      </View>
+
+      <TouchableOpacity
+        style={[styles.primaryButton, verificationCode.length !== 6 && styles.disabledButton]}
+        onPress={handleVerify}
+        disabled={verificationCode.length !== 6}
+      >
+        <KurdishText variant="body" color="white">
+          پشتڕاستکردنەوە
+        </KurdishText>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderBackupStep = () => (
+    <View style={styles.stepContainer}>
+      <KurdishText variant="subtitle" color="#1F2937" style={styles.stepTitle}>
+        هەنگاو 3: کۆدەکانی پاشەکەوت
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={styles.stepDescription}>
+        ئەم کۆدانە لە شوێنێکی پارێزراو هەڵبگرە. دەتوانیت بەکاریان بهێنیت ئەگەر دەسگەیەکەت ون بوو
+      </KurdishText>
+
+      <ScrollView style={styles.backupCodesContainer} showsVerticalScrollIndicator={false}>
+        {backupCodes.map((code, index) => (
+          <GradientCard key={index} style={styles.backupCodeCard}>
+            <View style={styles.backupCodeRow}>
+              <KurdishText variant="body" color="#1F2937" style={styles.backupCodeText}>
+                {code}
+              </KurdishText>
+              <TouchableOpacity onPress={() => handleCopyBackupCode(code)}>
+                <Copy size={20} color="#3B82F6" />
+              </TouchableOpacity>
+            </View>
+          </GradientCard>
+        ))}
+      </ScrollView>
+
+      <TouchableOpacity
+        style={styles.primaryButton}
+        onPress={handleComplete}
+      >
+        <KurdishText variant="body" color="white">
+          تەواوکردن
+        </KurdishText>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderComplete = () => (
+    <View style={styles.stepContainer}>
+      <View style={styles.successIconContainer}>
+        <CheckCircle size={80} color="#10B981" />
+      </View>
+      
+      <KurdishText variant="title" color="#1F2937" style={styles.title}>
+        سەرکەوتوو بوو!
+      </KurdishText>
+      
+      <KurdishText variant="body" color="#6B7280" style={styles.description}>
+        دوو فاکتەر بە سەرکەوتوویی چالاک کرا. هەژمارەکەت ئێستا پارێزراوترە
+      </KurdishText>
+
+      <GradientCard style={styles.successCard} colors={['#10B981', '#059669']}>
+        <View style={styles.successRow}>
+          <Shield size={24} color="white" />
+          <KurdishText variant="body" color="white">
+            پاراستنی پێشکەوتوو چالاکە
+          </KurdishText>
+        </View>
+      </GradientCard>
+    </View>
+  );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen
         options={{
-          title: 'چوونەژوورەوە بە دوو هەنگاو',
-          headerStyle: { backgroundColor: '#1e40af' },
-          headerTintColor: '#fff',
+          title: 'ڕێکخستنی دوو فاکتەر',
+          headerStyle: { backgroundColor: '#1E3A8A' },
+          headerTintColor: 'white',
         }}
       />
 
-      <ScrollView style={styles.scrollView}>
-        {step === 'select' && (
-          <>
-            <View style={styles.header}>
-              <KurdishText style={styles.headerTitle}>
-                هەڵبژاردنی ڕێگای پشتڕاستکردنەوە
-              </KurdishText>
-              <KurdishText style={styles.headerSubtitle}>
-                ڕێگایەک هەڵبژێرە بۆ وەرگرتنی کۆدی پشتڕاستکردنەوە
-              </KurdishText>
-            </View>
-
-            <View style={styles.methodsContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.methodCard,
-                  selectedMethod === 'sms' && styles.methodCardSelected,
-                ]}
-                onPress={() => setSelectedMethod('sms')}
-              >
-                <Smartphone size={32} color={selectedMethod === 'sms' ? '#1e40af' : '#6b7280'} />
-                <KurdishText style={[
-                  styles.methodTitle,
-                  selectedMethod === 'sms' && styles.methodTitleSelected,
-                ]}>
-                  SMS
-                </KurdishText>
-                <KurdishText style={styles.methodSubtitle}>
-                  کۆد بە SMS بنێرە
-                </KurdishText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.methodCard,
-                  selectedMethod === 'email' && styles.methodCardSelected,
-                ]}
-                onPress={() => setSelectedMethod('email')}
-              >
-                <Mail size={32} color={selectedMethod === 'email' ? '#1e40af' : '#6b7280'} />
-                <KurdishText style={[
-                  styles.methodTitle,
-                  selectedMethod === 'email' && styles.methodTitleSelected,
-                ]}>
-                  ئیمەیڵ
-                </KurdishText>
-                <KurdishText style={styles.methodSubtitle}>
-                  کۆد بە ئیمەیڵ بنێرە
-                </KurdishText>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={styles.continueButton}
-              onPress={handleEnable2FA}
-            >
-              <KurdishText style={styles.continueButtonText}>
-                بەردەوامبوون
-              </KurdishText>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {step === 'verify' && (
-          <>
-            <View style={styles.header}>
-              <KurdishText style={styles.headerTitle}>
-                پشتڕاستکردنەوەی کۆد
-              </KurdishText>
-              <KurdishText style={styles.headerSubtitle}>
-                کۆدی ٦ ژمارەیی داخڵ بکە کە بۆ {selectedMethod === 'sms' ? 'مۆبایلەکەت' : 'ئیمەیڵەکەت'} نێردرا
-              </KurdishText>
-            </View>
-
-            <View style={styles.verifyContainer}>
-              <TextInput
-                style={styles.codeInput}
-                value={verificationCode}
-                onChangeText={setVerificationCode}
-                keyboardType="number-pad"
-                maxLength={6}
-                placeholder="000000"
-                placeholderTextColor="#9ca3af"
-              />
-
-              <TouchableOpacity
-                style={styles.verifyButton}
-                onPress={handleVerify}
-              >
-                <KurdishText style={styles.verifyButtonText}>
-                  پشتڕاستکردنەوە
-                </KurdishText>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-
-        {step === 'backup' && (
-          <>
-            <View style={styles.header}>
-              <KurdishText style={styles.headerTitle}>
-                کۆدەکانی پاشەکەوت
-              </KurdishText>
-              <KurdishText style={styles.headerSubtitle}>
-                ئەم کۆدانە لە شوێنێکی پارێزراو هەڵبگرە
-              </KurdishText>
-            </View>
-
-            <View style={styles.backupContainer}>
-              {backupCodes.map((code, index) => (
-                <View key={index} style={styles.backupCodeRow}>
-                  <Text style={styles.backupCode}>{code}</Text>
-                  <TouchableOpacity
-                    onPress={() => {
-                      Alert.alert('کۆپی کرا', 'کۆدەکە کۆپی کرا');
-                    }}
-                  >
-                    <Copy size={20} color="#6b7280" />
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={styles.completeButton}
-              onPress={handleComplete}
-            >
-              <KurdishText style={styles.completeButtonText}>
-                تەواوکردن
-              </KurdishText>
-            </TouchableOpacity>
-          </>
-        )}
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {step === 'intro' && renderIntro()}
+        {step === 'qr' && renderQRStep()}
+        {step === 'verify' && renderVerifyStep()}
+        {step === 'backup' && renderBackupStep()}
+        {step === 'complete' && renderComplete()}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F3F4F6',
   },
-  scrollView: {
+  content: {
     flex: 1,
-    padding: 16,
   },
-  header: {
-    marginBottom: 24,
+  stepContainer: {
+    padding: 24,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold' as const,
-    color: '#111827',
-    marginBottom: 8,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  methodsContainer: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 24,
-  },
-  methodCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
+  iconContainer: {
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#e5e7eb',
+    marginBottom: 24,
   },
-  methodCardSelected: {
-    borderColor: '#1e40af',
-    backgroundColor: '#eff6ff',
+  successIconContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
-  methodTitle: {
-    fontSize: 16,
-    fontWeight: '600' as const,
-    color: '#6b7280',
-    marginTop: 12,
-  },
-  methodTitleSelected: {
-    color: '#1e40af',
-  },
-  methodSubtitle: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 4,
+  title: {
     textAlign: 'center',
+    marginBottom: 12,
   },
-  continueButton: {
-    backgroundColor: '#1e40af',
+  description: {
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  stepTitle: {
+    marginBottom: 12,
+  },
+  stepDescription: {
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  infoCard: {
+    marginBottom: 24,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  infoContent: {
+    flex: 1,
+    gap: 4,
+  },
+  qrCard: {
+    alignItems: 'center',
+    padding: 24,
+    marginBottom: 16,
+  },
+  qrCode: {
+    width: 200,
+    height: 200,
+  },
+  orText: {
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  secretCard: {
+    marginBottom: 24,
+  },
+  secretRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  secretText: {
+    fontFamily: 'monospace',
+    letterSpacing: 2,
+  },
+  codeInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  continueButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  verifyContainer: {
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 24,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   codeInput: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    fontSize: 32,
-    fontWeight: 'bold' as const,
-    textAlign: 'center',
+    flex: 1,
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1F2937',
+    paddingVertical: 16,
+    marginLeft: 12,
     letterSpacing: 8,
+  },
+  backupCodesContainer: {
+    maxHeight: 300,
     marginBottom: 24,
-    width: '100%',
-    fontFamily: 'monospace',
   },
-  verifyButton: {
-    backgroundColor: '#1e40af',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    width: '100%',
-  },
-  verifyButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600' as const,
-  },
-  backupContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
+  backupCodeCard: {
+    marginBottom: 12,
   },
   backupCodeRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
   },
-  backupCode: {
-    fontSize: 16,
-    fontWeight: '600' as const,
+  backupCodeText: {
     fontFamily: 'monospace',
-    color: '#111827',
-  },
-  completeButton: {
-    backgroundColor: '#22c55e',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-  },
-  completeButtonText: {
-    color: '#fff',
+    letterSpacing: 2,
     fontSize: 16,
-    fontWeight: '600' as const,
   },
-  enabledCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 32,
-    alignItems: 'center',
+  successCard: {
+    marginTop: 24,
   },
-  enabledIcon: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#dcfce7',
+  successRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 24,
+    gap: 12,
   },
-  enabledTitle: {
-    fontSize: 20,
-    fontWeight: 'bold' as const,
-    color: '#111827',
-    marginBottom: 8,
-  },
-  enabledSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 32,
-  },
-  disableButton: {
-    backgroundColor: '#fee2e2',
+  primaryButton: {
+    backgroundColor: '#1E3A8A',
     borderRadius: 12,
-    padding: 16,
-    width: '100%',
+    paddingVertical: 16,
     alignItems: 'center',
   },
-  disableButtonText: {
-    color: '#dc2626',
-    fontSize: 16,
-    fontWeight: '600' as const,
+  disabledButton: {
+    backgroundColor: '#9CA3AF',
   },
 });

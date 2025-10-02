@@ -89,7 +89,7 @@ const features: Feature[] = [
   { id: '39', title: 'پاراستنی پێشکەوتوو', route: '/enhanced-security', status: 'working', description: 'تایبەتمەندیە پێشکەوتووەکان', category: 'پاراستن' },
   { id: '40', title: 'ئاگاداریەکانی پاراستن', route: '/security-alerts', status: 'working', description: 'ئاگاداریەکانی پاراستن', category: 'پاراستن' },
   { id: '41', title: 'ڕاپۆرتی پاراستن', route: '/security-reports', status: 'working', description: 'ڕاپۆرتەکانی پاراستن', category: 'پاراستن' },
-  { id: '42', title: 'دوو فاکتەر', route: '/two-factor-setup', status: 'missing', description: 'ڕێکخستنی دوو فاکتەر', category: 'پاراستن' },
+  { id: '42', title: 'دوو فاکتەر', route: '/two-factor-setup', status: 'working', description: 'ڕێکخستنی دوو فاکتەر', category: 'پاراستن' },
   
   // ئاگاداریەکان
   { id: '43', title: 'ئاگاداریەکان', route: '/notifications', status: 'working', description: 'بینینی ئاگاداریەکان', category: 'ئاگاداری' },
@@ -98,7 +98,7 @@ const features: Feature[] = [
   
   // وەسڵەکان
   { id: '46', title: 'وەسڵەکان', route: '/receipts', status: 'working', description: 'بەڕێوەبردنی وەسڵەکان', category: 'وەسڵ' },
-  { id: '47', title: 'بینینی وەسڵ', route: '/receipt/1', status: 'missing', description: 'بینینی وەسڵی تایبەت', category: 'وەسڵ' },
+  { id: '47', title: 'بینینی وەسڵ', route: '/receipt/1', status: 'working', description: 'بینینی وەسڵی تایبەت', category: 'وەسڵ' },
   
   // دەسەڵاتەکان
   { id: '48', title: 'دەسەڵاتەکان', route: '/permissions', status: 'working', description: 'بەڕێوەبردنی دەسەڵاتەکان', category: 'دەسەڵات' },
@@ -154,7 +154,7 @@ const features: Feature[] = [
   
   // ڕێنمایی
   { id: '78', title: 'بەڕێوەبردنی ڕێنمایی', route: '/guidance-management', status: 'working', description: 'ڕێنماییەکان', category: 'ڕێنمایی' },
-  { id: '79', title: 'نیوزلێتەر', route: '/newsletter-management', status: 'missing', description: 'بەڕێوەبردنی نیوزلێتەر', category: 'ڕێنمایی' },
+  { id: '79', title: 'نیوزلێتەر', route: '/newsletter-management', status: 'partial', description: 'بەڕێوەبردنی نیوزلێتەر (پشت بە backend دەبەستێت)', category: 'ڕێنمایی' },
   { id: '80', title: 'دەستپێکردن', route: '/onboarding', status: 'working', description: 'دەستپێکردن بۆ بەکارهێنەرانی نوێ', category: 'ڕێنمایی' },
   
   // خاو��ن
