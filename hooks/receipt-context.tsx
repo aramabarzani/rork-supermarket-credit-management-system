@@ -17,7 +17,10 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
     name: 'سوپەرمارکێتی نموونە',
     phone: '+964 750 123 4567',
     address: 'هەولێر، کوردستان، عێراق',
-    email: 'info@example.com'
+    email: 'info@example.com',
+    logoUri: undefined,
+    website: undefined,
+    taxNumber: undefined
   });
   const [receiptCounter, setReceiptCounter] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -180,11 +183,14 @@ export const [ReceiptProvider, useReceipts] = createContextHook(() => {
       console.error('Company name is required');
       return;
     }
-    const sanitizedInfo = {
+    const sanitizedInfo: CompanyInfo = {
       name: newInfo.name.trim(),
       phone: newInfo.phone?.trim() || '',
       address: newInfo.address?.trim() || '',
-      email: newInfo.email?.trim() || ''
+      email: newInfo.email?.trim() || '',
+      logoUri: newInfo.logoUri || undefined,
+      website: newInfo.website?.trim() || undefined,
+      taxNumber: newInfo.taxNumber?.trim() || undefined
     };
     setCompanyInfo(sanitizedInfo);
     await safeStorage.setItem(COMPANY_INFO_STORAGE_KEY, sanitizedInfo);

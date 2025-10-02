@@ -8,7 +8,8 @@ import {
   ScrollView,
   Alert,
   Share,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { Receipt, ReceiptTemplate } from '@/types/debt';
 import { 
@@ -26,6 +27,8 @@ import {
 } from 'lucide-react-native';
 import { useSettings } from '@/hooks/settings-context';
 import { useTenant } from '@/hooks/tenant-context';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 interface ReceiptComponentProps {
   receipt: Receipt;
@@ -90,11 +93,25 @@ export default function ReceiptComponent({
     });
   };
 
-  const handlePrint = () => {
-    if (onPrint) {
-      onPrint(receipt);
-    } else {
-      Alert.alert('چاپکردن', 'تایبەتمەندی چاپکردن لە ئێستادا بەردەست نییە');
+  const handlePrint = async () => {
+    try {
+      const html = generateReceiptHTML();
+      if (Platform.OS === 'web') {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.print();
+        }
+      } else {
+        await Print.printAsync({ html });
+      }
+      if (onPrint) {
+        onPrint(receipt);
+      }
+    } catch (error) {
+      console.error('Error printing receipt:', error);
+      Alert.alert('هەڵە', 'نەتوانرا وەسڵ چاپ بکرێت');
     }
     setShowActions(false);
   };
@@ -134,11 +151,32 @@ export default function ReceiptComponent({
     setShowActions(false);
   };
 
-  const handleDownload = () => {
-    if (onDownload) {
-      onDownload(receipt);
-    } else {
-      Alert.alert('داگرتن', 'تایبەتمەندی داگرتن لە ئێستادا بەردەست نییە');
+  const handleDownload = async () => {
+    try {
+      const html = generateReceiptHTML();
+      if (Platform.OS === 'web') {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+        }
+      } else {
+        const { uri } = await Print.printToFileAsync({ html });
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, {
+            mimeType: 'application/pdf',
+            dialogTitle: `وەسڵی ${receipt.type === 'debt' ? 'قەرز' : 'پارەدان'} - ${receipt.receiptNumber}`
+          });
+        } else {
+          Alert.alert('سەرکەوتوو', 'وەسڵ هەڵگیرا لە: ' + uri);
+        }
+      }
+      if (onDownload) {
+        onDownload(receipt);
+      }
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      Alert.alert('هەڵە', 'نەتوانرا وەسڵ دابەزێندرێت');
     }
     setShowActions(false);
   };
@@ -162,6 +200,173 @@ ${receipt.notes ? `تێبینی: ${receipt.notes}` : ''}
 
 سوپاس بۆ هاوکاریتان
     `.trim();
+  };
+
+  const generateReceiptHTML = () => {
+    const logoHtml = receipt.companyInfo.logoUri 
+      ? `<img src="${receipt.companyInfo.logoUri}" style="width: 80px; height: 80px; object-fit: contain; margin: 0 auto 16px;" />`
+      : '';
+
+    return `
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>وەسڵی ${receipt.type === 'debt' ? 'قەرز' : 'پارەدان'} - ${receipt.receiptNumber}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body {
+            font-family: 'Arial', sans-serif;
+            padding: 20px;
+            background: #fff;
+            color: #1F2937;
+            direction: rtl;
+          }
+          .receipt {
+            max-width: 400px;
+            margin: 0 auto;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 24px;
+            background: #FFFFFF;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 2px dashed #E5E7EB;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+          }
+          .logo { margin-bottom: 16px; }
+          .company-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #1F2937;
+            margin-bottom: 8px;
+          }
+          .company-info {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 4px;
+          }
+          .receipt-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: ${receipt.type === 'debt' ? '#EF4444' : '#10B981'};
+            margin: 16px 0 8px;
+            text-align: center;
+          }
+          .receipt-number {
+            font-size: 16px;
+            color: #6B7280;
+            text-align: center;
+            margin-bottom: 16px;
+          }
+          .details {
+            margin: 16px 0;
+          }
+          .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #F3F4F6;
+          }
+          .detail-label {
+            font-size: 14px;
+            color: #6B7280;
+          }
+          .detail-value {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1F2937;
+          }
+          .amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: ${receipt.type === 'debt' ? '#EF4444' : '#10B981'};
+          }
+          .notes {
+            margin: 16px 0;
+            padding: 12px;
+            background: #F9FAFB;
+            border-radius: 8px;
+          }
+          .notes-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+          }
+          .notes-text {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.5;
+          }
+          .footer {
+            text-align: center;
+            border-top: 2px dashed #E5E7EB;
+            padding-top: 16px;
+            margin-top: 16px;
+          }
+          .footer-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1F2937;
+            margin-bottom: 8px;
+          }
+          .created-by {
+            font-size: 12px;
+            color: #9CA3AF;
+          }
+          @media print {
+            body { padding: 0; }
+            .receipt { border: none; box-shadow: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <div class="header">
+            ${logoHtml}
+            <div class="company-name">${storeInfo.name}</div>
+            ${storeInfo.phone ? `<div class="company-info">${storeInfo.phone}</div>` : ''}
+            ${storeInfo.address ? `<div class="company-info">${storeInfo.address}</div>` : ''}
+            ${receipt.companyInfo.email ? `<div class="company-info">${receipt.companyInfo.email}</div>` : ''}
+          </div>
+          
+          <div class="receipt-title">وەسڵی ${receipt.type === 'debt' ? 'قەرز' : 'پارەدان'}</div>
+          <div class="receipt-number">#${receipt.receiptNumber}</div>
+          
+          <div class="details">
+            <div class="detail-row">
+              <span class="detail-label">بەروار</span>
+              <span class="detail-value">${formatDate(receipt.date)}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">کڕیار</span>
+              <span class="detail-value">${receipt.customerName}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">بڕ</span>
+              <span class="detail-value amount">${formatCurrency(receipt.amount)}</span>
+            </div>
+          </div>
+          
+          ${receipt.notes ? `
+            <div class="notes">
+              <div class="notes-label">تێبینی:</div>
+              <div class="notes-text">${receipt.notes}</div>
+            </div>
+          ` : ''}
+          
+          <div class="footer">
+            <div class="footer-text">سوپاس بۆ هاوکاریتان</div>
+            <div class="created-by">دروستکراو لەلایەن: ${receipt.createdByName}</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
   };
 
   return (
@@ -194,6 +399,15 @@ ${receipt.notes ? `تێبینی: ${receipt.notes}` : ''}
 
       {/* Store Info */}
       <View style={styles.section}>
+        {receipt.companyInfo.logoUri && (
+          <View style={styles.logoContainer}>
+            <Image 
+              source={{ uri: receipt.companyInfo.logoUri }} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+        )}
         <View style={styles.storeHeader}>
           <Store size={24} color="#3B82F6" />
           <Text style={styles.companyName}>{storeInfo.name}</Text>
@@ -203,6 +417,9 @@ ${receipt.notes ? `تێبینی: ${receipt.notes}` : ''}
         )}
         {storeInfo.address && (
           <Text style={styles.companyInfo}>{storeInfo.address}</Text>
+        )}
+        {receipt.companyInfo.email && (
+          <Text style={styles.companyInfo}>{receipt.companyInfo.email}</Text>
         )}
       </View>
 
@@ -472,5 +689,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     fontWeight: '500',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  logo: {
+    width: 80,
+    height: 80,
   },
 });

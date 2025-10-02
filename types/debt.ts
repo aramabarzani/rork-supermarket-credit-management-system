@@ -104,9 +104,12 @@ export interface Receipt {
 export interface CompanyInfo {
   name: string;
   logo?: string;
+  logoUri?: string;
   phone?: string;
   address?: string;
   email?: string;
+  website?: string;
+  taxNumber?: string;
 }
 
 export interface ReceiptTemplate {
