@@ -356,7 +356,7 @@ export default function StoreRegistrationScreen() {
       ]}
     >
       <View style={styles.stepHeader}>
-        <View style={styles.stepIconContainer}>
+        <View style={[styles.stepIconContainer, { backgroundColor: '#d1fae5' }]}>
           <User size={32} color="#10b981" />
         </View>
         <Text style={styles.stepTitle}>زانیاری خاوەن</Text>
@@ -364,7 +364,7 @@ export default function StoreRegistrationScreen() {
       </View>
       
       <View style={styles.inputGroup}>
-        <View style={styles.inputIconContainer}>
+        <View style={[styles.inputIconContainer, { backgroundColor: '#d1fae5' }]}>
           <User size={20} color="#10b981" />
         </View>
         <TextInput
@@ -378,7 +378,7 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.inputIconContainer}>
+        <View style={[styles.inputIconContainer, { backgroundColor: '#d1fae5' }]}>
           <Phone size={20} color="#10b981" />
         </View>
         <TextInput
@@ -393,7 +393,7 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.inputIconContainer}>
+        <View style={[styles.inputIconContainer, { backgroundColor: '#d1fae5' }]}>
           <Mail size={20} color="#10b981" />
         </View>
         <TextInput
@@ -409,7 +409,7 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.inputIconContainer}>
+        <View style={[styles.inputIconContainer, { backgroundColor: '#d1fae5' }]}>
           <Lock size={20} color="#10b981" />
         </View>
         <TextInput
@@ -424,7 +424,7 @@ export default function StoreRegistrationScreen() {
       </View>
 
       <View style={styles.inputGroup}>
-        <View style={styles.inputIconContainer}>
+        <View style={[styles.inputIconContainer, { backgroundColor: '#d1fae5' }]}>
           <Lock size={20} color="#10b981" />
         </View>
         <TextInput
@@ -451,7 +451,7 @@ export default function StoreRegistrationScreen() {
       ]}
     >
       <View style={styles.stepHeader}>
-        <View style={styles.stepIconContainer}>
+        <View style={[styles.stepIconContainer, { backgroundColor: '#fef3c7' }]}>
           <CreditCard size={32} color="#f59e0b" />
         </View>
         <Text style={styles.stepTitle}>هەڵبژاردنی پلان</Text>
