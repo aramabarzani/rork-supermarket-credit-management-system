@@ -1,29 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
 import { Users, UserX, Clock, AlertTriangle } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
-import { trpc } from '@/lib/trpc';
 
 export default function InactiveUsersReportScreen() {
   const [reportType, setReportType] = useState<'customers' | 'employees'>('customers');
   const [minDaysInactive, setMinDaysInactive] = useState<number>(30);
 
-  const inactiveCustomersQuery = trpc.financial.advancedReports.inactiveCustomers.useQuery({
-    minDaysInactive,
-  });
+  const mockInactiveCustomers = useMemo(() => [
+    {
+      customerId: '1',
+      customerName: 'ئاکۆ محمد',
+      daysSinceLastActivity: 45,
+      lastActivityDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+      totalDebt: 5000000,
+      totalPaid: 3000000,
+      remainingDebt: 2000000,
+    },
+    {
+      customerId: '2',
+      customerName: 'سارا احمد',
+      daysSinceLastActivity: 65,
+      lastActivityDate: new Date(Date.now() - 65 * 24 * 60 * 60 * 1000).toISOString(),
+      totalDebt: 8000000,
+      totalPaid: 2000000,
+      remainingDebt: 6000000,
+    },
+    {
+      customerId: '3',
+      customerName: 'کاروان علی',
+      daysSinceLastActivity: 25,
+      lastActivityDate: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+      totalDebt: 3000000,
+      totalPaid: 2500000,
+      remainingDebt: 500000,
+    },
+  ], []);
 
-  const inactiveEmployeesQuery = trpc.financial.advancedReports.inactiveEmployees.useQuery({
-    minDaysInactive,
-  });
+  const mockInactiveEmployees = useMemo(() => [
+    {
+      employeeId: '1',
+      employeeName: 'ڕێبوار حسن',
+      daysSinceLastActivity: 35,
+      lastActivityDate: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+      totalDebtsCreated: 15,
+      totalPaymentsReceived: 8,
+    },
+    {
+      employeeId: '2',
+      employeeName: 'دلنیا کریم',
+      daysSinceLastActivity: 70,
+      lastActivityDate: new Date(Date.now() - 70 * 24 * 60 * 60 * 1000).toISOString(),
+      totalDebtsCreated: 5,
+      totalPaymentsReceived: 2,
+    },
+  ], []);
+
+  const inactiveCustomers = useMemo(() => {
+    return mockInactiveCustomers.filter(c => c.daysSinceLastActivity >= minDaysInactive);
+  }, [mockInactiveCustomers, minDaysInactive]);
+
+  const inactiveEmployees = useMemo(() => {
+    return mockInactiveEmployees.filter(e => e.daysSinceLastActivity >= minDaysInactive);
+  }, [mockInactiveEmployees, minDaysInactive]);
 
   const formatCurrency = (amount: number) => {
     if (typeof amount !== 'number' || isNaN(amount) || amount < 0) return '0 د.ع';
@@ -51,30 +98,7 @@ export default function InactiveUsersReportScreen() {
     { value: 90, label: '٩٠ ڕۆژ' },
   ];
 
-  const isLoading = inactiveCustomersQuery.isLoading || inactiveEmployeesQuery.isLoading;
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <Stack.Screen
-          options={{
-            title: 'کڕیار و کارمەندی بێچالاک',
-            headerStyle: { backgroundColor: '#1E3A8A' },
-            headerTintColor: 'white',
-          }}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E3A8A" />
-          <KurdishText variant="body" color="#6B7280">
-            چاوەڕوان بە...
-          </KurdishText>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const data =
-    reportType === 'customers' ? inactiveCustomersQuery.data : inactiveEmployeesQuery.data;
+  const data = reportType === 'customers' ? inactiveCustomers : inactiveEmployees;
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
