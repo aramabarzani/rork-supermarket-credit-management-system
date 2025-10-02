@@ -551,6 +551,24 @@ function RootLayoutNav() {
           title: "مێژووی کڕیار",
         }} 
       />
+      <Stack.Screen 
+        name="edit-debt/[id]" 
+        options={{ 
+          title: "دەستکاریکردنی قەرز",
+        }} 
+      />
+      <Stack.Screen 
+        name="advanced-debt-management" 
+        options={{ 
+          title: "بەڕێوەبردنی پێشکەوتووی قەرز",
+        }} 
+      />
+      <Stack.Screen 
+        name="all-features" 
+        options={{ 
+          title: "هەموو تایبەتمەندیەکان",
+        }} 
+      />
 
     </Stack>
   );

@@ -131,7 +131,7 @@ export default function SettingsScreen() {
       icon: List,
       title: 'هەموو تایبەتمەندیەکان',
       subtitle: 'بینینی هەموو تایبەتمەندیەکانی سیستەم',
-      onPress: () => router.push('/all-features' as any),
+      onPress: () => router.push('/all-features'),
       color: '#10B981',
     },
   ];
