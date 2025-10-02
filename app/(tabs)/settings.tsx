@@ -79,6 +79,13 @@ export default function SettingsScreen() {
       color: '#F59E0B',
     },
     {
+      icon: Shield,
+      title: 'بەڕێوەبردنی پێشکەوتووی قەرز',
+      subtitle: 'دەستکاری، سڕینەوە، پشکنین و گواستنەوەی قەرزەکان',
+      onPress: () => router.push('/advanced-debt-management'),
+      color: '#7C3AED',
+    },
+    {
       icon: Settings,
       title: 'دەستکاریکردنی ڕووکار',
       subtitle: 'ڕەنگ، فۆنت، مۆد و دیزاین',
