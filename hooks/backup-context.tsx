@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import createContextHook from '@nkzw/create-context-hook';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { safeStorage } from '@/utils/storage';
+import { encryptData, decryptData } from '@/utils/encryption';
 import type { BackupConfig, BackupRecord, BackupDestination, BackupFrequency } from '@/types/backup';
 
 export const [BackupContext, useBackup] = createContextHook(() => {
@@ -57,7 +58,7 @@ export const [BackupContext, useBackup] = createContextHook(() => {
     setConfig(newConfig);
   }, [config]);
 
-  const createBackup = useCallback(async (destination: BackupDestination, type: BackupFrequency = 'manual') => {
+  const createBackup = useCallback(async (destination: BackupDestination, type: BackupFrequency = 'manual', encrypt: boolean = true) => {
     try {
       setIsCreatingBackup(true);
       const startTime = new Date().toISOString();
@@ -90,8 +91,11 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       const backupString = JSON.stringify(backupData);
       const backupSize = new Blob([backupString]).size;
       
+      const dataToStore = encrypt ? encryptData(backupString) : backupString;
+      
       const backupId = Date.now().toString();
-      await safeStorage.setItem(`backup_${backupId}`, backupData);
+      await safeStorage.setItem(`backup_${backupId}`, dataToStore);
+      await safeStorage.setItem(`backup_${backupId}_encrypted`, encrypt);
       
       const newRecord: BackupRecord = {
         id: backupId,
@@ -108,6 +112,7 @@ export const [BackupContext, useBackup] = createContextHook(() => {
           paymentsCount,
           receiptsCount,
         },
+        verificationStatus: 'verified',
       };
       
       const updated = [...records, newRecord];
@@ -118,6 +123,22 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       return newRecord;
     } catch (error) {
       console.error('Error creating backup:', error);
+      
+      const failedRecord: BackupRecord = {
+        id: Date.now().toString(),
+        destination,
+        type,
+        status: 'failed',
+        startTime: new Date().toISOString(),
+        size: 0,
+        createdBy: 'system',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      };
+      
+      const updated = [...records, failedRecord];
+      await AsyncStorage.setItem('backup_records', JSON.stringify(updated));
+      setRecords(updated);
+      
       throw error;
     } finally {
       setIsCreatingBackup(false);
@@ -128,14 +149,36 @@ export const [BackupContext, useBackup] = createContextHook(() => {
     try {
       console.log('Restoring backup:', backupId, options);
       
-      const backupData = await safeStorage.getItem<Record<string, any>>(`backup_${backupId}`, null);
+      const encryptedData = await safeStorage.getItem<string>(`backup_${backupId}`, null);
+      const isEncrypted = await safeStorage.getItem<boolean>(`backup_${backupId}_encrypted`, false);
       
-      if (!backupData) {
+      if (!encryptedData) {
         throw new Error('Backup not found');
       }
       
+      let backupData: Record<string, any>;
+      
+      if (isEncrypted && typeof encryptedData === 'string') {
+        const decrypted = decryptData(encryptedData);
+        backupData = JSON.parse(decrypted);
+      } else if (typeof encryptedData === 'string') {
+        backupData = JSON.parse(encryptedData);
+      } else {
+        backupData = encryptedData as Record<string, any>;
+      }
+      
       for (const [key, value] of Object.entries(backupData)) {
-        await AsyncStorage.setItem(key, JSON.stringify(value));
+        if (options.restoreCustomers && key === 'users') {
+          await AsyncStorage.setItem(key, JSON.stringify(value));
+        } else if (options.restoreDebts && key === 'debts') {
+          await AsyncStorage.setItem(key, JSON.stringify(value));
+        } else if (options.restorePayments && key === 'payments') {
+          await AsyncStorage.setItem(key, JSON.stringify(value));
+        } else if (options.restoreReceipts && key === 'receipts') {
+          await AsyncStorage.setItem(key, JSON.stringify(value));
+        } else if (options.restoreSettings && (key.includes('settings') || key.includes('config'))) {
+          await AsyncStorage.setItem(key, JSON.stringify(value));
+        }
       }
       
       console.log('Backup restored successfully');
@@ -149,13 +192,36 @@ export const [BackupContext, useBackup] = createContextHook(() => {
     try {
       console.log('Verifying backup:', backupId);
       
-      const backupData = await safeStorage.getItem<Record<string, any>>(`backup_${backupId}`, null);
+      const encryptedData = await safeStorage.getItem<string>(`backup_${backupId}`, null);
+      const isEncrypted = await safeStorage.getItem<boolean>(`backup_${backupId}_encrypted`, false);
       
-      if (!backupData) {
+      if (!encryptedData) {
+        const updatedRecords = records.map(r => 
+          r.id === backupId ? { ...r, verificationStatus: 'failed' as const } : r
+        );
+        await AsyncStorage.setItem('backup_records', JSON.stringify(updatedRecords));
+        setRecords(updatedRecords);
         return { isValid: false, error: 'Backup not found' };
       }
       
+      let backupData: Record<string, any>;
+      
+      if (isEncrypted && typeof encryptedData === 'string') {
+        const decrypted = decryptData(encryptedData);
+        backupData = JSON.parse(decrypted);
+      } else if (typeof encryptedData === 'string') {
+        backupData = JSON.parse(encryptedData);
+      } else {
+        backupData = encryptedData as Record<string, any>;
+      }
+      
       const hasRequiredKeys = ['users', 'debts', 'payments'].every(key => key in backupData);
+      
+      const updatedRecords = records.map(r => 
+        r.id === backupId ? { ...r, verificationStatus: hasRequiredKeys ? 'verified' as const : 'failed' as const } : r
+      );
+      await AsyncStorage.setItem('backup_records', JSON.stringify(updatedRecords));
+      setRecords(updatedRecords);
       
       return {
         isValid: hasRequiredKeys,
@@ -163,11 +229,18 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       };
     } catch (error) {
       console.error('Error verifying backup:', error);
+      const updatedRecords = records.map(r => 
+        r.id === backupId ? { ...r, verificationStatus: 'failed' as const } : r
+      );
+      await AsyncStorage.setItem('backup_records', JSON.stringify(updatedRecords));
+      setRecords(updatedRecords);
       return { isValid: false, error: 'Verification failed' };
     }
-  }, []);
+  }, [records]);
 
   const deleteBackup = useCallback(async (backupId: string) => {
+    await safeStorage.removeItem(`backup_${backupId}`);
+    await safeStorage.removeItem(`backup_${backupId}_encrypted`);
     const updated = records.filter(r => r.id !== backupId);
     await AsyncStorage.setItem('backup_records', JSON.stringify(updated));
     setRecords(updated);
