@@ -43,6 +43,8 @@ export default function StoreRegistrationScreen() {
   const totalSteps = 3;
 
   React.useEffect(() => {
+    fadeAnim.setValue(0);
+    slideAnim.setValue(50);
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -55,7 +57,7 @@ export default function StoreRegistrationScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [fadeAnim, slideAnim]);
+  }, [currentStep]);
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
