@@ -18,7 +18,23 @@ export const [BackupContext, useBackup] = createContextHook(() => {
         AsyncStorage.getItem('backup_records'),
       ]);
       
-      if (configData) setConfig(JSON.parse(configData));
+      if (configData) {
+        setConfig(JSON.parse(configData));
+      } else {
+        const defaultConfig: BackupConfig = {
+          id: Date.now().toString(),
+          frequency: 'daily',
+          destination: ['google-drive'],
+          scheduledTime: '02:00',
+          autoVerify: true,
+          enabled: false,
+          retentionDays: 30,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        await AsyncStorage.setItem('backup_config', JSON.stringify(defaultConfig));
+        setConfig(defaultConfig);
+      }
       if (recordsData) setRecords(JSON.parse(recordsData));
     } catch (error) {
       console.error('[Backup] Failed to load data:', error);
@@ -32,7 +48,11 @@ export const [BackupContext, useBackup] = createContextHook(() => {
   }, [loadData]);
 
   const updateConfig = useCallback(async (updates: Partial<BackupConfig>) => {
-    const newConfig = { ...config, ...updates } as BackupConfig;
+    const newConfig = { 
+      ...config, 
+      ...updates,
+      updatedAt: new Date().toISOString() 
+    } as BackupConfig;
     await AsyncStorage.setItem('backup_config', JSON.stringify(newConfig));
     setConfig(newConfig);
   }, [config]);
@@ -46,10 +66,21 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       const allData = await AsyncStorage.multiGet(allKeys);
       
       const backupData: Record<string, any> = {};
+      let customersCount = 0;
+      let debtsCount = 0;
+      let paymentsCount = 0;
+      let receiptsCount = 0;
+      
       for (const [key, value] of allData) {
         if (value) {
           try {
-            backupData[key] = JSON.parse(value);
+            const parsed = JSON.parse(value);
+            backupData[key] = parsed;
+            
+            if (key === 'users' && Array.isArray(parsed)) customersCount = parsed.length;
+            if (key === 'debts' && Array.isArray(parsed)) debtsCount = parsed.length;
+            if (key === 'payments' && Array.isArray(parsed)) paymentsCount = parsed.length;
+            if (key === 'receipts' && Array.isArray(parsed)) receiptsCount = parsed.length;
           } catch {
             backupData[key] = value;
           }
@@ -59,10 +90,11 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       const backupString = JSON.stringify(backupData);
       const backupSize = new Blob([backupString]).size;
       
-      await safeStorage.setItem(`backup_${Date.now()}`, backupData);
+      const backupId = Date.now().toString();
+      await safeStorage.setItem(`backup_${backupId}`, backupData);
       
       const newRecord: BackupRecord = {
-        id: Date.now().toString(),
+        id: backupId,
         destination,
         type,
         status: 'completed',
@@ -70,6 +102,12 @@ export const [BackupContext, useBackup] = createContextHook(() => {
         endTime: new Date().toISOString(),
         size: backupSize,
         createdBy: 'system',
+        metadata: {
+          customersCount,
+          debtsCount,
+          paymentsCount,
+          receiptsCount,
+        },
       };
       
       const updated = [...records, newRecord];
@@ -77,6 +115,7 @@ export const [BackupContext, useBackup] = createContextHook(() => {
       setRecords(updated);
       
       console.log('Backup created successfully:', newRecord.id);
+      return newRecord;
     } catch (error) {
       console.error('Error creating backup:', error);
       throw error;

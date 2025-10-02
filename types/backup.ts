@@ -1,4 +1,4 @@
-export type BackupFrequency = 'realtime' | 'custom' | 'monthly' | 'yearly' | 'manual';
+export type BackupFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'manual';
 
 export type BackupDestination = 
   | 'local'
@@ -15,8 +15,10 @@ export interface BackupConfig {
   frequency: BackupFrequency;
   destination: BackupDestination[];
   scheduledTime?: string;
+  scheduledDays?: number[];
   autoVerify: boolean;
   enabled: boolean;
+  retentionDays: number;
   createdAt: string;
   updatedAt: string;
 }

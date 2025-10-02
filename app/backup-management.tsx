@@ -21,6 +21,10 @@ import {
   Settings,
   FileText,
   Trash2,
+  Calendar,
+  Users,
+  CreditCard,
+  Receipt,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { BackupContext, useBackup } from '@/hooks/backup-context';
@@ -82,6 +86,7 @@ function BackupManagementContent() {
   const [selectedDestination, setSelectedDestination] = useState<BackupDestination>('google-drive');
   const [showRestoreModal, setShowRestoreModal] = useState<boolean>(false);
   const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<BackupRecord | null>(null);
+  const [showScheduleModal, setShowScheduleModal] = useState<boolean>(false);
 
   const handleCreateBackup = async () => {
     try {
@@ -151,8 +156,22 @@ function BackupManagementContent() {
     if (!config) return;
     try {
       await updateConfig({ enabled });
+      if (enabled) {
+        Alert.alert('سەرکەوتوو', 'باکاپی خۆکار چالاککرا');
+      }
     } catch {
       Alert.alert('هەڵە', 'کێشە لە نوێکردنەوەی ڕێکخستنەکان');
+    }
+  };
+
+  const handleUpdateSchedule = async (frequency: 'daily' | 'weekly' | 'monthly', time: string) => {
+    if (!config) return;
+    try {
+      await updateConfig({ frequency, scheduledTime: time });
+      setShowScheduleModal(false);
+      Alert.alert('سەرکەوتوو', 'خشتەی باکاپ نوێکرایەوە');
+    } catch {
+      Alert.alert('هەڵە', 'کێشە لە نوێکردنەوەی خشتە');
     }
   };
 
@@ -204,12 +223,27 @@ function BackupManagementContent() {
         </View>
 
         {config?.enabled && (
-          <View style={styles.infoBox}>
-            <Clock size={16} color="#6B7280" />
-            <KurdishText style={styles.infoText}>
-              باکاپی داهاتوو: {config.scheduledTime || 'دیارینەکراوە'}
-            </KurdishText>
-          </View>
+          <>
+            <View style={styles.infoBox}>
+              <Clock size={16} color="#6B7280" />
+              <KurdishText style={styles.infoText}>
+                کات: {config.scheduledTime || '02:00'}
+              </KurdishText>
+            </View>
+            <View style={styles.infoBox}>
+              <Calendar size={16} color="#6B7280" />
+              <KurdishText style={styles.infoText}>
+                دووبارەبوونەوە: {config.frequency === 'daily' ? 'ڕۆژانە' : config.frequency === 'weekly' ? 'هەفتانە' : 'مانگانە'}
+              </KurdishText>
+            </View>
+            <TouchableOpacity
+              style={styles.scheduleButton}
+              onPress={() => setShowScheduleModal(true)}
+            >
+              <Settings size={16} color="#4F46E5" />
+              <KurdishText style={styles.scheduleButtonText}>گۆڕینی خشتە</KurdishText>
+            </TouchableOpacity>
+          </>
         )}
       </View>
 
@@ -306,6 +340,22 @@ function BackupManagementContent() {
                 <KurdishText style={styles.backupDetailText}>
                   بەروار: {formatDate(record.startTime)}
                 </KurdishText>
+                {record.metadata && (
+                  <View style={styles.metadataRow}>
+                    <View style={styles.metadataItem}>
+                      <Users size={12} color="#6B7280" />
+                      <KurdishText style={styles.metadataText}>{record.metadata.customersCount || 0}</KurdishText>
+                    </View>
+                    <View style={styles.metadataItem}>
+                      <CreditCard size={12} color="#6B7280" />
+                      <KurdishText style={styles.metadataText}>{record.metadata.debtsCount || 0}</KurdishText>
+                    </View>
+                    <View style={styles.metadataItem}>
+                      <Receipt size={12} color="#6B7280" />
+                      <KurdishText style={styles.metadataText}>{record.metadata.paymentsCount || 0}</KurdishText>
+                    </View>
+                  </View>
+                )}
               </View>
 
               {record.status === 'completed' && (
@@ -358,6 +408,40 @@ function BackupManagementContent() {
                 <KurdishText style={styles.modalButtonConfirmText}>گەڕاندنەوە</KurdishText>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      )}
+
+      {showScheduleModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <KurdishText style={styles.modalTitle}>خشتەی باکاپ</KurdishText>
+            <View style={styles.scheduleOptions}>
+              <TouchableOpacity
+                style={styles.scheduleOption}
+                onPress={() => handleUpdateSchedule('daily', config?.scheduledTime || '02:00')}
+              >
+                <KurdishText style={styles.scheduleOptionText}>ڕۆژانە</KurdishText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.scheduleOption}
+                onPress={() => handleUpdateSchedule('weekly', config?.scheduledTime || '02:00')}
+              >
+                <KurdishText style={styles.scheduleOptionText}>هەفتانە</KurdishText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.scheduleOption}
+                onPress={() => handleUpdateSchedule('monthly', config?.scheduledTime || '02:00')}
+              >
+                <KurdishText style={styles.scheduleOptionText}>مانگانە</KurdishText>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.modalButtonCancel}
+              onPress={() => setShowScheduleModal(false)}
+            >
+              <KurdishText style={styles.modalButtonCancelText}>داخستن</KurdishText>
+            </TouchableOpacity>
           </View>
         </View>
       )}
@@ -655,5 +739,49 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: '#FFFFFF',
+  },
+  scheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EEF2FF',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 8,
+  },
+  scheduleButtonText: {
+    fontSize: 14,
+    color: '#4F46E5',
+    fontWeight: '600' as const,
+  },
+  metadataRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 8,
+  },
+  metadataItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  metadataText: {
+    fontSize: 12,
+    color: '#6B7280',
+  },
+  scheduleOptions: {
+    gap: 12,
+    marginVertical: 16,
+  },
+  scheduleOption: {
+    backgroundColor: '#F3F4F6',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  scheduleOptionText: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '600' as const,
   },
 });

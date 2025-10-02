@@ -1,125 +1,105 @@
-export type TimeRange = 'daily' | 'weekly' | 'monthly' | 'yearly';
-
-export type CustomerRating = 'VIP' | 'Normal';
-
-export type EmployeeLevel = 'senior' | 'mid' | 'junior';
-
-export interface DebtEvaluation {
-  totalDebt: number;
-  averageDebt: number;
-  maxDebt: number;
-  minDebt: number;
-  debtCount: number;
-  period: TimeRange;
-  startDate: string;
-  endDate: string;
-}
-
-export interface PaymentEvaluation {
-  totalPayment: number;
-  averagePayment: number;
-  maxPayment: number;
-  minPayment: number;
-  paymentCount: number;
-  period: TimeRange;
-  startDate: string;
-  endDate: string;
-}
-
-export interface CustomerEvaluation {
+export interface PredictiveAnalytics {
   customerId: string;
   customerName: string;
-  totalDebt: number;
-  totalPayment: number;
-  remainingDebt: number;
-  paymentRate: number;
-  rating: CustomerRating;
-  lastActivityDate: string;
+  predictions: {
+    nextPaymentDate: string;
+    nextPaymentAmount: number;
+    paymentProbability: number;
+    riskLevel: 'low' | 'medium' | 'high';
+    recommendedAction: string;
+  };
+  historicalData: {
+    averagePaymentAmount: number;
+    averagePaymentDelay: number;
+    totalPayments: number;
+    totalDebts: number;
+    paymentFrequency: number;
+  };
+  trends: {
+    paymentTrend: 'improving' | 'stable' | 'declining';
+    debtTrend: 'increasing' | 'stable' | 'decreasing';
+    engagementScore: number;
+  };
 }
 
-export interface EmployeeEvaluation {
-  employeeId: string;
-  employeeName: string;
-  totalDebtsCreated: number;
-  totalPaymentsProcessed: number;
-  totalAmountHandled: number;
-  activityCount: number;
-  level: EmployeeLevel;
-  lastActivityDate: string;
+export interface DebtForecast {
+  period: 'week' | 'month' | 'quarter' | 'year';
+  startDate: string;
+  endDate: string;
+  predictions: {
+    expectedNewDebts: number;
+    expectedPayments: number;
+    expectedBalance: number;
+    confidence: number;
+  };
+  breakdown: {
+    date: string;
+    expectedDebts: number;
+    expectedPayments: number;
+    balance: number;
+  }[];
 }
 
-export interface SystemStatistics {
-  totalCustomers: number;
-  totalEmployees: number;
-  totalDebts: number;
-  totalPayments: number;
-  totalDebtAmount: number;
-  totalPaymentAmount: number;
-  remainingDebtAmount: number;
-  vipCustomers: number;
-  normalCustomers: number;
-  activeCustomers: number;
-  inactiveCustomers: number;
+export interface CustomerSegment {
+  id: string;
+  name: string;
+  criteria: {
+    minDebt?: number;
+    maxDebt?: number;
+    minPaymentRate?: number;
+    maxPaymentRate?: number;
+    riskLevel?: ('low' | 'medium' | 'high')[];
+  };
+  customers: string[];
+  statistics: {
+    totalCustomers: number;
+    totalDebt: number;
+    averageDebt: number;
+    paymentRate: number;
+  };
 }
 
-export interface DebtTrendData {
-  date: string;
-  amount: number;
-  count: number;
+export interface PaymentPattern {
+  customerId: string;
+  pattern: {
+    preferredDays: number[];
+    preferredTimeOfMonth: 'early' | 'mid' | 'late';
+    averageAmount: number;
+    frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'irregular';
+  };
+  reliability: {
+    onTimePaymentRate: number;
+    missedPaymentCount: number;
+    averageDelay: number;
+  };
 }
 
-export interface PaymentTrendData {
-  date: string;
-  amount: number;
-  count: number;
+export interface AnalyticsInsight {
+  id: string;
+  type: 'warning' | 'opportunity' | 'info' | 'success';
+  title: string;
+  description: string;
+  priority: 'low' | 'medium' | 'high';
+  actionable: boolean;
+  suggestedAction?: string;
+  relatedCustomers?: string[];
+  createdAt: string;
 }
 
-export interface CustomerStatsByRating {
-  rating: CustomerRating;
-  count: number;
-  totalDebt: number;
-  totalPayment: number;
-  averageDebt: number;
-}
-
-export interface EmployeeStatsByLevel {
-  level: EmployeeLevel;
-  count: number;
-  totalDebtsCreated: number;
-  totalPaymentsProcessed: number;
-  averagePerformance: number;
-}
-
-export interface LocationStats {
-  city: string;
-  location?: string;
-  totalDebt: number;
-  totalPayment: number;
-  customerCount: number;
-}
-
-export interface ComparisonData {
+export interface CashFlowForecast {
   period: string;
-  debt: number;
-  payment: number;
-  difference: number;
-}
-
-export interface SystemUsageStats {
-  date: string;
-  totalLogins: number;
-  activeUsers: number;
-  debtsCreated: number;
-  paymentsProcessed: number;
-  averageSessionDuration: number;
-}
-
-export interface AnalyticsFilter {
-  startDate?: string;
-  endDate?: string;
-  period?: TimeRange;
-  city?: string;
-  location?: string;
-  rating?: CustomerRating;
-  level?: EmployeeLevel;
+  startDate: string;
+  endDate: string;
+  forecast: {
+    expectedIncome: number;
+    expectedExpenses: number;
+    netCashFlow: number;
+    confidence: number;
+  };
+  daily: {
+    date: string;
+    income: number;
+    expenses: number;
+    balance: number;
+  }[];
 }
