@@ -1,6 +1,6 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Debt, Payment, SearchFilters, PaymentFilters } from '@/types/debt';
+import { Debt, Payment, SearchFilters, PaymentFilters, DebtHistory } from '@/types/debt';
 import { safeStorage } from '@/utils/storage';
 import { useAuth } from '@/hooks/auth-context';
 
@@ -137,11 +137,13 @@ const samplePayments: Payment[] = [
 
 const DEBTS_STORAGE_KEY = 'debts';
 const PAYMENTS_STORAGE_KEY = 'payments';
+const DEBT_HISTORY_STORAGE_KEY = 'debt_history';
 
 export const [DebtProvider, useDebts] = createContextHook(() => {
   const { user } = useAuth();
   const [debts, setDebts] = useState<Debt[]>(sampleDebts);
   const [payments, setPayments] = useState<Payment[]>(samplePayments);
+  const [debtHistory, setDebtHistory] = useState<DebtHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -153,10 +155,12 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       setIsLoading(true);
       const storedDebts = await safeStorage.getItem<Debt[]>(DEBTS_STORAGE_KEY, sampleDebts);
       const storedPayments = await safeStorage.getItem<Payment[]>(PAYMENTS_STORAGE_KEY, samplePayments);
+      const storedHistory = await safeStorage.getItem<DebtHistory[]>(DEBT_HISTORY_STORAGE_KEY, []);
       
       if (storedDebts) setDebts(storedDebts);
       if (storedPayments) setPayments(storedPayments);
-    } catch (error) {
+      if (storedHistory) setDebtHistory(storedHistory);
+    } catch {
       
     } finally {
       setIsLoading(false);
@@ -172,6 +176,22 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
     setPayments(newPayments);
     await safeStorage.setItem(PAYMENTS_STORAGE_KEY, newPayments);
   }, []);
+
+  const saveHistory = useCallback(async (newHistory: DebtHistory[]) => {
+    setDebtHistory(newHistory);
+    await safeStorage.setItem(DEBT_HISTORY_STORAGE_KEY, newHistory);
+  }, []);
+
+  const addHistoryEntry = useCallback(async (entry: Omit<DebtHistory, 'id' | 'performedAt'>) => {
+    const newEntry: DebtHistory = {
+      ...entry,
+      id: `history-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      performedAt: new Date().toISOString(),
+    };
+    const updatedHistory = [...debtHistory, newEntry];
+    await saveHistory(updatedHistory);
+    return newEntry;
+  }, [debtHistory, saveHistory]);
 
   const addDebt = useCallback(async (debtData: {
     customerId: string;
@@ -197,11 +217,19 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       const updatedDebts = [...debts, newDebt];
       await saveDebts(updatedDebts);
       
+      await addHistoryEntry({
+        debtId: newDebt.id,
+        action: 'created',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        notes: `قەرزی نوێ درووستکرا بۆ ${newDebt.customerName}`,
+      });
+      
       return newDebt;
     } catch (error) {
       throw error;
     }
-  }, [debts, user, saveDebts]);
+  }, [debts, user, saveDebts, addHistoryEntry]);
 
   const addPayment = useCallback(async (paymentData: {
     debtId: string;
@@ -244,11 +272,20 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       });
       await saveDebts(updatedDebts);
 
+      await addHistoryEntry({
+        debtId: paymentData.debtId,
+        action: 'payment_added',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        notes: `پارەدانی ${paymentData.amount} دینار`,
+        metadata: { paymentId: newPayment.id },
+      });
+
       return newPayment;
     } catch (error) {
       throw error;
     }
-  }, [debts, payments, user, saveDebts, savePayments]);
+  }, [debts, payments, user, saveDebts, savePayments, addHistoryEntry]);
 
   const getSummary = useCallback(() => {
     const totalDebts = debts.reduce((sum, debt) => sum + debt.amount, 0);
@@ -798,12 +835,190 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
     return payments.filter(payment => customerDebtIds.includes(payment.debtId));
   }, [debts, payments]);
 
+  const updateDebt = useCallback(async (debtId: string, updates: Partial<Debt>) => {
+    try {
+      const debt = debts.find(d => d.id === debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const changes: DebtHistory['changes'] = [];
+      Object.keys(updates).forEach(key => {
+        const oldValue = debt[key as keyof Debt];
+        const newValue = updates[key as keyof Debt];
+        if (oldValue !== newValue) {
+          changes.push({
+            field: key,
+            oldValue,
+            newValue,
+          });
+        }
+      });
+
+      const updatedDebt: Debt = {
+        ...debt,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+        updatedBy: user?.id || 'unknown',
+        updatedByName: user?.name || 'نەناسراو',
+      };
+
+      const updatedDebts = debts.map(d => d.id === debtId ? updatedDebt : d);
+      await saveDebts(updatedDebts);
+
+      if (changes.length > 0) {
+        await addHistoryEntry({
+          debtId,
+          action: 'updated',
+          performedBy: user?.id || 'unknown',
+          performedByName: user?.name || 'نەناسراو',
+          changes,
+          notes: `دەستکاریکرا بۆ ${debt.customerName}`,
+        });
+      }
+
+      return updatedDebt;
+    } catch (error) {
+      throw error;
+    }
+  }, [debts, user, saveDebts, addHistoryEntry]);
+
+  const deleteDebt = useCallback(async (debtId: string, reason?: string) => {
+    try {
+      const debt = debts.find(d => d.id === debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      if (debt.remainingAmount < debt.amount) {
+        throw new Error('ناتوانیت قەرزێک بسڕیتەوە کە پارەدانی لەسەر کراوە');
+      }
+
+      const updatedDebts = debts.filter(d => d.id !== debtId);
+      await saveDebts(updatedDebts);
+
+      await addHistoryEntry({
+        debtId,
+        action: 'deleted',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        notes: reason || `قەرز سڕایەوە بۆ ${debt.customerName}`,
+      });
+
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }, [debts, user, saveDebts, addHistoryEntry]);
+
+  const splitDebt = useCallback(async (debtId: string, splits: { amount: number; description?: string }[]) => {
+    try {
+      const debt = debts.find(d => d.id === debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const totalSplitAmount = splits.reduce((sum, split) => sum + split.amount, 0);
+      if (totalSplitAmount !== debt.remainingAmount) {
+        throw new Error('کۆی بڕەکان دەبێ یەکسان بن لەگەڵ بڕی ماوەی قەرزەکە');
+      }
+
+      const newDebts: Debt[] = splits.map((split, index) => ({
+        id: `debt-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+        customerId: debt.customerId,
+        customerName: debt.customerName,
+        amount: split.amount,
+        remainingAmount: split.amount,
+        description: split.description || `${debt.description} - بەشی ${index + 1}`,
+        category: debt.category,
+        notes: `پشکنین لە قەرزی ${debt.receiptNumber}`,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.id || 'unknown',
+        createdByName: user?.name || 'نەناسراو',
+        status: 'active' as const,
+        dueDate: debt.dueDate,
+        receiptNumber: `${debt.receiptNumber}-${index + 1}`,
+        city: debt.city,
+        location: debt.location,
+        isVIP: debt.isVIP,
+      }));
+
+      const updatedDebts = [...debts.filter(d => d.id !== debtId), ...newDebts];
+      await saveDebts(updatedDebts);
+
+      await addHistoryEntry({
+        debtId,
+        action: 'split',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        notes: `قەرز پشکنین کرا بۆ ${splits.length} بەش`,
+        metadata: { splitInto: newDebts.map(d => d.id) },
+      });
+
+      return newDebts;
+    } catch (error) {
+      throw error;
+    }
+  }, [debts, user, saveDebts, addHistoryEntry]);
+
+  const transferDebt = useCallback(async (debtId: string, newCustomerId: string, newCustomerName: string, reason?: string) => {
+    try {
+      const debt = debts.find(d => d.id === debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const oldCustomerName = debt.customerName;
+      const updatedDebt: Debt = {
+        ...debt,
+        customerId: newCustomerId,
+        customerName: newCustomerName,
+        updatedAt: new Date().toISOString(),
+        updatedBy: user?.id || 'unknown',
+        updatedByName: user?.name || 'نەناسراو',
+        notes: `${debt.notes || ''} - گواستراوە لە ${oldCustomerName}`,
+      };
+
+      const updatedDebts = debts.map(d => d.id === debtId ? updatedDebt : d);
+      await saveDebts(updatedDebts);
+
+      await addHistoryEntry({
+        debtId,
+        action: 'transferred',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        changes: [
+          { field: 'customerId', oldValue: debt.customerId, newValue: newCustomerId },
+          { field: 'customerName', oldValue: oldCustomerName, newValue: newCustomerName },
+        ],
+        notes: reason || `قەرز گواستراوە لە ${oldCustomerName} بۆ ${newCustomerName}`,
+        metadata: { transferredTo: newCustomerId, transferredToName: newCustomerName },
+      });
+
+      return updatedDebt;
+    } catch (error) {
+      throw error;
+    }
+  }, [debts, user, saveDebts, addHistoryEntry]);
+
+  const getDebtHistory = useCallback((debtId: string) => {
+    return debtHistory.filter(h => h.debtId === debtId).sort((a, b) => 
+      new Date(b.performedAt).getTime() - new Date(a.performedAt).getTime()
+    );
+  }, [debtHistory]);
+
   return useMemo(() => ({
     debts,
     payments,
+    debtHistory,
     isLoading,
     addDebt,
     addPayment,
+    updateDebt,
+    deleteDebt,
+    splitDebt,
+    transferDebt,
+    getDebtHistory,
     getSummary,
     getHighDebtCustomers,
     getOverdueDebts,
@@ -818,11 +1033,10 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
     searchAllData,
     getCustomerDebts,
     getPaymentsByCustomer,
-    // Financial reporting functions (Section 13: 241-260)
     getIrregularPaymentReport,
     getBestPayingCustomers,
     getFinancialHealthReport,
     exportFinancialData,
     checkBalanceDiscrepancies,
-  }), [debts, payments, isLoading, addDebt, addPayment, getSummary, getHighDebtCustomers, getOverdueDebts, getUnpaidDebts, getMonthlyPaymentReport, getYearlyPaymentReport, searchDebts, searchPayments, getNewDebts, getNewPayments, getDebtsByAmountRange, searchAllData, getCustomerDebts, getPaymentsByCustomer, getIrregularPaymentReport, getBestPayingCustomers, getFinancialHealthReport, exportFinancialData, checkBalanceDiscrepancies]);
+  }), [debts, payments, debtHistory, isLoading, addDebt, addPayment, updateDebt, deleteDebt, splitDebt, transferDebt, getDebtHistory, getSummary, getHighDebtCustomers, getOverdueDebts, getUnpaidDebts, getMonthlyPaymentReport, getYearlyPaymentReport, searchDebts, searchPayments, getNewDebts, getNewPayments, getDebtsByAmountRange, searchAllData, getCustomerDebts, getPaymentsByCustomer, getIrregularPaymentReport, getBestPayingCustomers, getFinancialHealthReport, exportFinancialData, checkBalanceDiscrepancies]);
 });

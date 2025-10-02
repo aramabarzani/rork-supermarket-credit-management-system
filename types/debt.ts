@@ -16,6 +16,9 @@ export interface Debt {
   city?: string; // شار
   location?: string; // شوێن
   isVIP?: boolean; // قەرزی کڕیاری VIP
+  updatedAt?: string;
+  updatedBy?: string;
+  updatedByName?: string;
 }
 
 export interface Payment {
@@ -131,4 +134,26 @@ export interface ReceiptFilters {
   minAmount?: number;
   maxAmount?: number;
   amountRange?: 'small' | 'medium' | 'large';
+}
+
+export interface DebtHistory {
+  id: string;
+  debtId: string;
+  action: 'created' | 'updated' | 'deleted' | 'split' | 'transferred' | 'payment_added';
+  performedBy: string;
+  performedByName: string;
+  performedAt: string;
+  changes?: {
+    field: string;
+    oldValue: any;
+    newValue: any;
+  }[];
+  notes?: string;
+  metadata?: {
+    transferredTo?: string;
+    transferredToName?: string;
+    splitInto?: string[];
+    paymentId?: string;
+    [key: string]: any;
+  };
 }
