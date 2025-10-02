@@ -326,6 +326,15 @@ export default function DashboardScreen() {
           >
             {/* Header */}
             <View style={[styles.header, currentIsTablet && styles.tabletHeader]}>
+              {/* Business Name Display */}
+              {currentTenant && (
+                <View style={styles.businessNameContainer}>
+                  <KurdishText style={[styles.businessName, currentIsTablet && styles.tabletBusinessName]}>
+                    {currentTenant.storeNameKurdish || currentTenant.storeName}
+                  </KurdishText>
+                </View>
+              )}
+              
               <View style={styles.headerContent}>
                 <View style={styles.userInfo}>
                   <KurdishText style={[styles.welcomeText, currentIsTablet && styles.tabletWelcomeText]}>
@@ -914,6 +923,30 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     paddingBottom: 10,
+  },
+  businessNameContainer: {
+    backgroundColor: '#1E3A8A',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginHorizontal: -20,
+    marginTop: -20,
+    marginBottom: 16,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  businessName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  tabletBusinessName: {
+    fontSize: 26,
   },
   headerContent: {
     flexDirection: 'row',
