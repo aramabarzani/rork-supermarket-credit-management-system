@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Platform, View, Text } from "react-native";
+import { StyleSheet, Platform, View, Text, LogBox } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { AuthProvider } from "@/hooks/auth-context";
@@ -33,6 +33,12 @@ import { FAQProvider } from "@/hooks/faq-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
+
+// Ignore specific warnings
+LogBox.ignoreLogs([
+  'source.uri should not be an empty string',
+  'VirtualizedLists should never be nested',
+]);
 
 // Only prevent auto hide on native platforms
 if (Platform.OS !== 'web') {

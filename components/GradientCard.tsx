@@ -20,10 +20,14 @@ export const GradientCard: React.FC<GradientCardProps> = ({
     strong: 0.25,
   };
 
+  const safeColors = (Array.isArray(colors) && colors.length > 0 && colors.every(c => typeof c === 'string' && c.length > 0)
+    ? colors
+    : ['#1E3A8A', '#3B82F6']) as [string, string, ...string[]];
+
   return (
     <View style={[styles.container, style]} {...props}>
       <LinearGradient
-        colors={colors}
+        colors={safeColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.gradient, { opacity: opacities[intensity] }]}
