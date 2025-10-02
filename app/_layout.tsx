@@ -495,6 +495,36 @@ function RootLayoutNav() {
           title: "سکان کردنی QR کڕیار",
         }} 
       />
+      <Stack.Screen 
+        name="customer-dashboard" 
+        options={{ 
+          title: "داشبۆردی کڕیار",
+        }} 
+      />
+      <Stack.Screen 
+        name="debt-categories-management" 
+        options={{ 
+          title: "بەڕێوەبردنی مۆری قەرز",
+        }} 
+      />
+      <Stack.Screen 
+        name="predictive-analytics" 
+        options={{ 
+          title: "شیکاری پێشبینی",
+        }} 
+      />
+      <Stack.Screen 
+        name="customer-map" 
+        options={{ 
+          title: "نەخشەی کڕیاران",
+        }} 
+      />
+      <Stack.Screen 
+        name="whatsapp-sms-integration" 
+        options={{ 
+          title: "WhatsApp و SMS",
+        }} 
+      />
 
     </Stack>
   );
