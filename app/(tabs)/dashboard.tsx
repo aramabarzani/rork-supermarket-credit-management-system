@@ -697,55 +697,6 @@ export default function DashboardScreen() {
               </View>
             </View>
 
-            {/* Quick Actions */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                کردارە خێراکان
-              </Text>
-              
-              <View style={styles.actionsGrid}>
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/add-debt')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconBlue]}>
-                    <Plus size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>زیادکردنی قەرز</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/add-payment')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconGreen]}>
-                    <DollarSign size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>زیادکردنی پارەدان</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/(tabs)/customers')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconOrange]}>
-                    <Users size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>کڕیارەکان</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity 
-                  style={styles.actionButton}
-                  onPress={() => router.push('/(tabs)/reports')}
-                >
-                  <View style={[styles.actionIcon, styles.actionIconPurple]}>
-                    <FileText size={24} color="white" />
-                  </View>
-                  <Text style={styles.actionText}>ڕاپۆرتەکان</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
             {/* Summary Stats */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>

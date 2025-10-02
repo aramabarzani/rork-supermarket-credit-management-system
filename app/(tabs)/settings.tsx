@@ -49,92 +49,121 @@ export default function SettingsScreen() {
     return new Date(dateString).toLocaleDateString('ckb-IQ');
   };
 
-  const menuItems = [
+  const menuSections = [
     {
-      icon: Users,
-      title: 'بەڕێوەبردنی کارمەندەکان',
-      subtitle: `${employees.length} کارمەند`,
-      onPress: () => router.push('/employees'),
-      color: '#3B82F6',
+      title: 'بەڕێوەبردنی کارمەندان',
+      items: [
+        {
+          icon: Users,
+          title: 'کارمەندەکان',
+          subtitle: `${employees.length} کارمەند`,
+          onPress: () => router.push('/employees'),
+          color: '#3B82F6',
+        },
+        {
+          icon: Shield,
+          title: 'دەسەڵاتەکان',
+          subtitle: 'بەڕێوەبردنی دەسەڵاتی کارمەندەکان',
+          onPress: () => router.push('/permissions'),
+          color: '#10B981',
+        },
+      ],
     },
     {
-      icon: QrCode,
-      title: 'بەڕێوەبردنی QR Code',
-      subtitle: 'دروستکردن و بەڕێوەبردنی QR Code بۆ کڕیارەکان',
-      onPress: () => router.push('/customer-qr-management'),
-      color: '#8B5CF6',
+      title: 'بەڕێوەبردنی قەرز',
+      items: [
+        {
+          icon: Shield,
+          title: 'بەڕێوەبردنی پێشکەوتووی قەرز',
+          subtitle: 'دەستکاری، سڕینەوە، پشکنین و گواستنەوەی قەرزەکان',
+          onPress: () => router.push('/advanced-debt-management'),
+          color: '#7C3AED',
+        },
+        {
+          icon: Tag,
+          title: 'مۆرەکانی قەرز',
+          subtitle: 'زیادکردن، دەستکاری و سڕینەوەی مۆرەکانی قەرز',
+          onPress: () => router.push('/debt-categories-management'),
+          color: '#F59E0B',
+        },
+      ],
     },
     {
-      icon: Camera,
-      title: 'سکان کردنی QR Code',
-      subtitle: 'سکان کردنی QR Code کڕیارەکان',
-      onPress: () => router.push('/scan-customer-qr'),
-      color: '#06B6D4',
+      title: 'QR Code',
+      items: [
+        {
+          icon: QrCode,
+          title: 'بەڕێوەبردنی QR',
+          subtitle: 'دروستکردن و بەڕێوەبردنی QR Code بۆ کڕیارەکان',
+          onPress: () => router.push('/customer-qr-management'),
+          color: '#8B5CF6',
+        },
+        {
+          icon: Camera,
+          title: 'سکان کردنی QR',
+          subtitle: 'سکان کردنی QR Code کڕیارەکان',
+          onPress: () => router.push('/scan-customer-qr'),
+          color: '#06B6D4',
+        },
+      ],
     },
     {
-      icon: Tag,
-      title: 'بەڕێوەبردنی مۆرەکانی قەرز',
-      subtitle: 'زیادکردن، دەستکاری و سڕینەوەی مۆرەکانی قەرز',
-      onPress: () => router.push('/debt-categories-management'),
-      color: '#F59E0B',
+      title: 'پاراستن',
+      items: [
+        {
+          icon: Shield,
+          title: 'بەڕێوەبردنی پاراستن',
+          subtitle: 'ڕێکخستنی پاراستن، تۆماری چوونەژوورەوە و چالاکی',
+          onPress: () => router.push('/security-management'),
+          color: '#EF4444',
+        },
+      ],
     },
     {
-      icon: Shield,
-      title: 'بەڕێوەبردنی پێشکەوتووی قەرز',
-      subtitle: 'دەستکاری، سڕینەوە، پشکنین و گواستنەوەی قەرزەکان',
-      onPress: () => router.push('/advanced-debt-management'),
-      color: '#7C3AED',
+      title: 'ڕێکخستنەکان',
+      items: [
+        {
+          icon: Settings,
+          title: 'ڕێکخستنی سیستەم',
+          subtitle: 'زمان، پارە، ئاگاداری و هیتر',
+          onPress: () => router.push('/system-settings'),
+          color: '#8B5CF6',
+        },
+        {
+          icon: Settings,
+          title: 'دەستکاریکردنی ڕووکار',
+          subtitle: 'ڕەنگ، فۆنت، مۆد و دیزاین',
+          onPress: () => router.push('/ui-customization'),
+          color: '#EC4899',
+        },
+        {
+          icon: Zap,
+          title: 'ڕێکخستنی بەکارهێنان',
+          subtitle: 'زمان، ڕووکار، پاراستن، کارایی و ئاپتیمایزکردن',
+          onPress: () => router.push('/usability-settings'),
+          color: '#06B6D4',
+        },
+      ],
     },
     {
-      icon: Settings,
-      title: 'دەستکاریکردنی ڕووکار',
-      subtitle: 'ڕەنگ، فۆنت، مۆد و دیزاین',
-      onPress: () => router.push('/ui-customization'),
-      color: '#EC4899',
+      title: 'تایبەتی',
+      items: [
+        {
+          icon: Key,
+          title: 'پرۆفایلی بەکارهێنەر',
+          subtitle: 'نوێکردنەوەی زانیاری و گۆڕینی وشەی نهێنی',
+          onPress: () => router.push('/profile'),
+          color: '#F59E0B',
+        },
+        {
+          icon: MessageCircle,
+          title: 'کێشەکان و پشتگیری',
+          subtitle: 'بەڕێوەبردنی کێشەکان و چارەسەرکردن',
+          onPress: () => router.push('/support-issues'),
+          color: '#EC4899',
+        },
+      ],
     },
-    {
-      icon: Shield,
-      title: 'دەسەڵاتەکان',
-      subtitle: 'بەڕێوەبردنی دەسەڵاتی کارمەندەکان',
-      onPress: () => router.push('/permissions'),
-      color: '#10B981',
-    },
-    {
-      icon: Shield,
-      title: 'بەڕێوەبردنی پاراستن',
-      subtitle: 'ڕێکخستنی پاراستن، تۆماری چوونەژوورەوە و چالاکی',
-      onPress: () => router.push('/security-management'),
-      color: '#EF4444',
-    },
-    {
-      icon: MessageCircle,
-      title: 'کێشەکان و پشتگیری',
-      subtitle: 'بەڕێوەبردنی کێشەکان و چارەسەرکردن',
-      onPress: () => router.push('/support-issues'),
-      color: '#EC4899',
-    },
-    {
-      icon: Key,
-      title: 'پرۆفایلی بەکارهێنەر',
-      subtitle: 'نوێکردنەوەی زانیاری و گۆڕینی وشەی نهێنی',
-      onPress: () => router.push('/profile'),
-      color: '#F59E0B',
-    },
-    {
-      icon: Settings,
-      title: 'ڕێکخستنی سیستەم',
-      subtitle: 'زمان، پارە، ئاگاداری و هیتر',
-      onPress: () => router.push('/system-settings'),
-      color: '#8B5CF6',
-    },
-    {
-      icon: Zap,
-      title: 'ڕێکخستنی بەکارهێنان',
-      subtitle: 'زمان، ڕووکار، پاراستن، کارایی و ئاپتیمایزکردن',
-      onPress: () => router.push('/usability-settings'),
-      color: '#06B6D4',
-    },
-
   ];
 
   return (
@@ -195,39 +224,41 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {/* Menu Items */}
-        <View style={styles.section}>
-          <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
-            ڕێکخستنەکان
-          </KurdishText>
-          
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.title}
-              onPress={item.onPress}
-              style={styles.menuItem}
-            >
-              <GradientCard colors={[item.color, item.color]} intensity="light">
-                <View style={styles.menuContent}>
-                  <View style={styles.menuLeft}>
-                    <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
-                      <item.icon size={24} color={item.color} />
+        {/* Menu Sections */}
+        {menuSections.map((section, sectionIndex) => (
+          <View key={sectionIndex} style={styles.section}>
+            <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+              {section.title}
+            </KurdishText>
+            
+            {section.items.map((item) => (
+              <TouchableOpacity
+                key={item.title}
+                onPress={item.onPress}
+                style={styles.menuItem}
+              >
+                <GradientCard colors={[item.color, item.color]} intensity="light">
+                  <View style={styles.menuContent}>
+                    <View style={styles.menuLeft}>
+                      <View style={[styles.iconContainer, { backgroundColor: item.color + '20' }]}>
+                        <item.icon size={24} color={item.color} />
+                      </View>
+                      <View>
+                        <KurdishText variant="body" color="#1F2937">
+                          {item.title}
+                        </KurdishText>
+                        <KurdishText variant="caption" color="#6B7280">
+                          {item.subtitle}
+                        </KurdishText>
+                      </View>
                     </View>
-                    <View>
-                      <KurdishText variant="body" color="#1F2937">
-                        {item.title}
-                      </KurdishText>
-                      <KurdishText variant="caption" color="#6B7280">
-                        {item.subtitle}
-                      </KurdishText>
-                    </View>
+                    <ChevronRight size={20} color="#9CA3AF" />
                   </View>
-                  <ChevronRight size={20} color="#9CA3AF" />
-                </View>
-              </GradientCard>
-            </TouchableOpacity>
-          ))}
-        </View>
+                </GradientCard>
+              </TouchableOpacity>
+            ))}
+          </View>
+        ))}
 
         {/* User Info */}
         <View style={styles.section}>
