@@ -169,8 +169,8 @@ export default function EmployeePermissionsScreen() {
               </View>
             </View>
 
-            {group.permissions.map((permission, permIndex) => (
-              <View key={`${groupIndex}-${permission}-${permIndex}`} style={styles.permissionRow}>
+            {group.permissions.map((permission) => (
+              <View key={`${groupIndex}-${permission}`} style={styles.permissionRow}>
                 <View style={styles.permissionInfo}>
                   <KurdishText variant="body" color="#1F2937">
                     {PERMISSION_LABELS[permission] || permission}
@@ -256,15 +256,15 @@ export default function EmployeePermissionsScreen() {
           </KurdishText>
           
           <View style={styles.selectedPermissions}>
-            {selectedPermissions.slice(0, 5).map((permission, index) => (
-              <View key={`permission-${permission}-${index}`} style={styles.permissionTag}>
+            {selectedPermissions.slice(0, 5).map((permission) => (
+              <View key={`selected-permission-${permission}`} style={styles.permissionTag}>
                 <KurdishText variant="caption" color="#1E3A8A">
                   {PERMISSION_LABELS[permission] || permission}
                 </KurdishText>
               </View>
             ))}
             {selectedPermissions.length > 5 && (
-              <View key="more-permissions" style={styles.permissionTag}>
+              <View key="more-permissions-tag" style={styles.permissionTag}>
                 <KurdishText variant="caption" color="#6B7280">
                   {'+' + (selectedPermissions.length - 5) + ' زیاتر'}
                 </KurdishText>

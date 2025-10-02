@@ -218,7 +218,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
               await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
               await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
             } catch (clearError) {
-              // Silent error
+              
             }
             setUsers(sampleUsers);
           }
@@ -264,18 +264,17 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             throw new Error('Invalid data structure');
           }
         } catch (parseError) {
-          console.error('Error parsing users:', parseError);
           try {
             await AsyncStorage.removeItem('users');
             await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
           } catch (storageError) {
-            console.error('Error resetting users storage:', storageError);
+            
           }
           setUsers(sampleUsers);
         }
       }
     } catch (error) {
-      console.error('Error loading users:', error);
+      
     } finally {
       setIsLoading(false);
     }
@@ -295,12 +294,11 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             setActivityLogs(parsed);
           }
         } catch (parseError) {
-          console.error('Error parsing activity logs:', parseError);
           await AsyncStorage.removeItem('activityLogs');
         }
       }
     } catch (error) {
-      console.error('Error loading activity logs:', error);
+      
     }
   };
 
@@ -314,12 +312,11 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             setUserSessions(parsed);
           }
         } catch (parseError) {
-          console.error('Error parsing user sessions:', parseError);
           await AsyncStorage.removeItem('userSessions');
         }
       }
     } catch (error) {
-      console.error('Error loading user sessions:', error);
+      
     }
   };
 
@@ -333,12 +330,11 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             setEmployeeStats(parsed);
           }
         } catch (parseError) {
-          console.error('Error parsing employee stats:', parseError);
           await AsyncStorage.removeItem('employeeStats');
         }
       }
     } catch (error) {
-      console.error('Error loading employee stats:', error);
+      
     }
   };
 
@@ -352,12 +348,11 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             setEmployeeSchedules(parsed);
           }
         } catch (parseError) {
-          console.error('Error parsing employee schedules:', parseError);
           await AsyncStorage.removeItem('employeeSchedules');
         }
       }
     } catch (error) {
-      console.error('Error loading employee schedules:', error);
+      
     }
   };
 
@@ -371,12 +366,11 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             setCustomRoles(parsed);
           }
         } catch (parseError) {
-          console.error('Error parsing custom roles:', parseError);
           await AsyncStorage.removeItem('customRoles');
         }
       }
     } catch (error) {
-      console.error('Error loading custom roles:', error);
+      
     }
   };
 
@@ -390,24 +384,21 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             setRoleAssignments(parsed);
           }
         } catch (parseError) {
-          console.error('Error parsing role assignments:', parseError);
           await AsyncStorage.removeItem('roleAssignments');
         }
       }
     } catch (error) {
-      console.error('Error loading role assignments:', error);
+      
     }
   };
 
   const saveUsers = async (updatedUsers: User[]) => {
     try {
       if (!Array.isArray(updatedUsers)) {
-        console.error('UsersContext: Invalid users data - not an array');
         throw new Error('Invalid users data: must be an array');
       }
       
       if (updatedUsers.length === 0) {
-        console.error('UsersContext: Cannot save empty users array');
         throw new Error('Cannot save empty users array');
       }
       
@@ -420,7 +411,6 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       );
       
       if (!validUsers) {
-        console.error('UsersContext: Users array contains invalid user objects');
         throw new Error('Invalid users data structure');
       }
       
@@ -428,20 +418,16 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       try {
         jsonString = JSON.stringify(updatedUsers);
       } catch (stringifyError) {
-        console.error('UsersContext: JSON.stringify failed:', stringifyError);
         throw new Error('Failed to serialize users data');
       }
       
       if (!jsonString || jsonString === 'undefined' || jsonString === 'null' || jsonString.length < 2) {
-        console.error('UsersContext: Invalid JSON serialization result');
         throw new Error('Invalid JSON serialization');
       }
       
       await AsyncStorage.setItem('users', jsonString);
       setUsers(updatedUsers);
-      console.log('UsersContext: Saved users successfully:', updatedUsers.length);
     } catch (error) {
-      console.error('UsersContext: Error saving users:', error);
       throw error;
     }
   };
@@ -451,7 +437,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await AsyncStorage.setItem('activityLogs', JSON.stringify(logs));
       setActivityLogs(logs);
     } catch (error) {
-      console.error('Error saving activity logs:', error);
+      
     }
   };
 
@@ -460,7 +446,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await AsyncStorage.setItem('userSessions', JSON.stringify(sessions));
       setUserSessions(sessions);
     } catch (error) {
-      console.error('Error saving user sessions:', error);
+      
     }
   };
 
@@ -469,7 +455,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await AsyncStorage.setItem('employeeStats', JSON.stringify(stats));
       setEmployeeStats(stats);
     } catch (error) {
-      console.error('Error saving employee stats:', error);
+      
     }
   };
 
@@ -478,7 +464,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await AsyncStorage.setItem('employeeSchedules', JSON.stringify(schedules));
       setEmployeeSchedules(schedules);
     } catch (error) {
-      console.error('Error saving employee schedules:', error);
+      
     }
   };
 
@@ -487,7 +473,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await AsyncStorage.setItem('customRoles', JSON.stringify(roles));
       setCustomRoles(roles);
     } catch (error) {
-      console.error('Error saving custom roles:', error);
+      
     }
   };
 
@@ -496,7 +482,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await AsyncStorage.setItem('roleAssignments', JSON.stringify(assignments));
       setRoleAssignments(assignments);
     } catch (error) {
-      console.error('Error saving role assignments:', error);
+      
     }
   };
 
@@ -558,8 +544,6 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       resourceType: 'user',
       resourceId: newUser.id,
     });
-
-    console.log('User added successfully:', newUser);
   }, [users, employeeStats, employeeSchedules]);
 
   // 222. Edit employee information
@@ -799,8 +783,6 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       resourceType: 'user',
       resourceId: newAdmin.id,
     });
-
-    console.log('Admin added successfully:', newAdmin);
   }, [users]);
 
   // 622. Remove admin

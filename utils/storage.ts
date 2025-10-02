@@ -16,13 +16,11 @@ export const safeStorage = {
       
       if (Platform.OS === 'web') {
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-          console.warn('localStorage not available, returning default value');
           return defaultValue;
         }
         try {
           item = localStorage.getItem(key);
         } catch (storageError) {
-          console.warn('localStorage access failed:', storageError);
           return defaultValue;
         }
       } else {
@@ -36,7 +34,6 @@ export const safeStorage = {
       const trimmedItem = item.trim();
       
       if (!trimmedItem.startsWith('[') && !trimmedItem.startsWith('{') && !trimmedItem.startsWith('"')) {
-        console.warn(`Invalid JSON format for key ${key}, removing corrupted data`);
         await safeStorage.removeItem(key);
         return defaultValue;
       }
@@ -44,12 +41,10 @@ export const safeStorage = {
       try {
         return JSON.parse(trimmedItem) as T;
       } catch (parseError) {
-        console.warn(`Invalid JSON for key ${key}:`, parseError);
         await safeStorage.removeItem(key);
         return defaultValue;
       }
     } catch (error) {
-      console.error(`Error parsing storage item ${key}:`, error);
       await safeStorage.removeItem(key);
       return defaultValue;
     }
@@ -61,14 +56,12 @@ export const safeStorage = {
   setItem: async <T>(key: string, value: T): Promise<boolean> => {
     try {
       if (value === null || value === undefined) {
-        console.warn(`Attempting to store null/undefined for key ${key}`);
         return false;
       }
       
       const jsonValue = JSON.stringify(value);
       
       if (!jsonValue || jsonValue === 'undefined' || jsonValue === 'null') {
-        console.warn(`Invalid JSON serialization for key ${key}`);
         return false;
       }
       
@@ -83,7 +76,6 @@ export const safeStorage = {
       
       return true;
     } catch (error) {
-      console.error(`Error setting storage item ${key}:`, error);
       return false;
     }
   },
@@ -105,7 +97,6 @@ export const safeStorage = {
       
       return true;
     } catch (error) {
-      console.error(`Error removing storage item ${key}:`, error);
       return false;
     }
   },
@@ -127,7 +118,6 @@ export const safeStorage = {
       
       return true;
     } catch (error) {
-      console.error('Error clearing storage:', error);
       return false;
     }
   },
@@ -170,7 +160,6 @@ export const safeStorage = {
       
       return result;
     } catch (error) {
-      console.error('Error getting multiple storage items:', error);
       return {};
     }
   }

@@ -78,23 +78,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    console.log('AuthProvider: Loading stored auth...');
-    
     const loadAuth = async () => {
       try {
         const storedUser = await safeStorage.getItem<User>('user');
         if (storedUser && storedUser.id && storedUser.name) {
-          console.log('AuthProvider: Found stored user:', storedUser.name);
           setUser(storedUser);
         } else {
-          console.log('AuthProvider: No stored user, user must login');
           setUser(null);
         }
       } catch (error) {
-        console.error('AuthProvider: Error loading stored user:', error);
         setUser(null);
       } finally {
-        console.log('AuthProvider: Setting isLoading to false');
         setIsLoading(false);
         setIsInitialized(true);
       }
@@ -105,13 +99,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
-      console.log('AuthProvider: Login attempt for:', credentials.phone);
-      
       let allUsers: User[] = [...DEMO_USERS];
       try {
         const storedUsers = await safeStorage.getItem<User[]>('users', null);
         if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
-          console.log('AuthProvider: Loaded users from storage:', storedUsers.length);
           const mergedUsers = [...DEMO_USERS];
           storedUsers.forEach(storedUser => {
             const existingIndex = mergedUsers.findIndex(u => u.id === storedUser.id);
@@ -123,36 +114,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           });
           allUsers = mergedUsers;
         } else {
-          console.log('AuthProvider: No stored users, using demo users');
           await safeStorage.setItem('users', allUsers);
         }
       } catch (error) {
-        console.error('AuthProvider: Error loading users:', error);
-        console.log('AuthProvider: Using demo users');
         await safeStorage.setItem('users', allUsers);
       }
-      
-      console.log('AuthProvider: Searching for user with phone:', credentials.phone);
-      console.log('AuthProvider: Available users:', allUsers.map(u => ({ phone: u.phone, role: u.role, name: u.name })));
       
       const foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
       );
       
-      console.log('AuthProvider: Found user:', foundUser ? `${foundUser.name} (${foundUser.role})` : 'Not found');
-      
       if (foundUser) {
         if (!foundUser.isActive) {
-          console.log('AuthProvider: User account is inactive');
           return { success: false, error: 'حسابەکەت ناچالاککراوە. پەیوەندی بە بەڕێوەبەر بکە' };
         }
         
         if (foundUser.lockedUntil && new Date(foundUser.lockedUntil) > new Date()) {
-          console.log('AuthProvider: User account is locked');
           return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
         }
         
-        console.log('AuthProvider: Login successful for:', foundUser.name, 'Role:', foundUser.role);
         const updatedUser = {
           ...foundUser,
           lastLoginAt: new Date().toISOString(),
@@ -170,24 +150,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return { success: true, user: updatedUser };
       }
       
-      console.log('AuthProvider: Invalid credentials');
       return { success: false, error: 'ژمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
     } catch (error) {
-      console.error('AuthProvider: Login error:', error);
       return { success: false, error: 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە' };
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      console.log('AuthProvider: Logging out');
-      
-
-      
       setUser(null);
       safeStorage.removeItem('user');
     } catch (error) {
-      console.error('AuthProvider: Logout error:', error);
+      
     }
   }, []);
 

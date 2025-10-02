@@ -157,7 +157,7 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       if (storedDebts) setDebts(storedDebts);
       if (storedPayments) setPayments(storedPayments);
     } catch (error) {
-      console.error('Error loading debt data:', error);
+      
     } finally {
       setIsLoading(false);
     }
@@ -197,10 +197,8 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       const updatedDebts = [...debts, newDebt];
       await saveDebts(updatedDebts);
       
-      console.log('Debt added successfully:', newDebt.id);
       return newDebt;
     } catch (error) {
-      console.error('Error adding debt:', error);
       throw error;
     }
   }, [debts, user, saveDebts]);
@@ -246,10 +244,8 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       });
       await saveDebts(updatedDebts);
 
-      console.log('Payment added successfully:', newPayment.id);
       return newPayment;
     } catch (error) {
-      console.error('Error adding payment:', error);
       throw error;
     }
   }, [debts, payments, user, saveDebts, savePayments]);
