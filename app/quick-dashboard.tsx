@@ -16,6 +16,21 @@ import {
   FileText,
   Download,
   Mail,
+  UserPlus,
+  CreditCard,
+  Receipt,
+  Bell,
+  Settings,
+  BarChart3,
+  Shield,
+  MapPin,
+  MessageSquare,
+  QrCode,
+  Camera,
+  Tag,
+  AlertCircle,
+  Calendar,
+  TrendingUpIcon,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -186,41 +201,161 @@ export default function QuickDashboardScreen() {
             <View style={styles.actionsGrid}>
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleGenerateQuickReport('debt')}
+                onPress={() => router.push('/add-user')}
               >
-                <FileText size={24} color="#007AFF" />
+                <UserPlus size={24} color="#007AFF" />
                 <KurdishText style={styles.actionText}>
-                  ڕاپۆرتی قەرز
+                  زیادکردنی کڕیار
                 </KurdishText>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleGenerateQuickReport('payment')}
+                onPress={() => router.push('/add-debt')}
               >
-                <FileText size={24} color="#4CAF50" />
+                <CreditCard size={24} color="#FF3B30" />
                 <KurdishText style={styles.actionText}>
-                  ڕاپۆرتی پارەدان
+                  زیادکردنی قەرز
                 </KurdishText>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleGenerateQuickReport('customer')}
+                onPress={() => router.push('/add-payment')}
               >
-                <Users size={24} color="#FF9800" />
+                <DollarSign size={24} color="#34C759" />
                 <KurdishText style={styles.actionText}>
-                  ڕاپۆرتی کڕیار
+                  زیادکردنی پارەدان
                 </KurdishText>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.actionButton}
-                onPress={() => handleGenerateQuickReport('financial')}
+                onPress={() => router.push('/receipts')}
               >
-                <DollarSign size={24} color="#9C27B0" />
+                <Receipt size={24} color="#5856D6" />
                 <KurdishText style={styles.actionText}>
-                  ڕاپۆرتی دارایی
+                  پسوڵەکان
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/debt-management')}
+              >
+                <FileText size={24} color="#FF9500" />
+                <KurdishText style={styles.actionText}>
+                  بەڕێوەبردنی قەرز
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/payments')}
+              >
+                <TrendingDown size={24} color="#32ADE6" />
+                <KurdishText style={styles.actionText}>
+                  پارەدانەکان
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/notifications')}
+              >
+                <Bell size={24} color="#FF2D55" />
+                <KurdishText style={styles.actionText}>
+                  ئاگادارکردنەوەکان
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/customer-analytics')}
+              >
+                <BarChart3 size={24} color="#AF52DE" />
+                <KurdishText style={styles.actionText}>
+                  شیکاری کڕیار
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/financial-dashboard')}
+              >
+                <TrendingUpIcon size={24} color="#00C7BE" />
+                <KurdishText style={styles.actionText}>
+                  داشبۆردی دارایی
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/customer-map')}
+              >
+                <MapPin size={24} color="#FF6482" />
+                <KurdishText style={styles.actionText}>
+                  نەخشەی کڕیارەکان
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/scan-customer-qr')}
+              >
+                <Camera size={24} color="#30D158" />
+                <KurdishText style={styles.actionText}>
+                  سکانی QR Code
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/customer-qr-management')}
+              >
+                <QrCode size={24} color="#64D2FF" />
+                <KurdishText style={styles.actionText}>
+                  بەڕێوەبردنی QR
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/blacklist-management')}
+              >
+                <AlertCircle size={24} color="#FF453A" />
+                <KurdishText style={styles.actionText}>
+                  لیستی ڕەش
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/credit-scoring')}
+              >
+                <Shield size={24} color="#FFD60A" />
+                <KurdishText style={styles.actionText}>
+                  خاڵی قەرز
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/predictive-analytics')}
+              >
+                <TrendingUp size={24} color="#BF5AF2" />
+                <KurdishText style={styles.actionText}>
+                  پێشبینی شیکاری
+                </KurdishText>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => router.push('/whatsapp-sms-integration')}
+              >
+                <MessageSquare size={24} color="#25D366" />
+                <KurdishText style={styles.actionText}>
+                  WhatsApp/SMS
                 </KurdishText>
               </TouchableOpacity>
             </View>
