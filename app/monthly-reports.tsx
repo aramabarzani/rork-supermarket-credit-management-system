@@ -53,7 +53,7 @@ export default function MonthlyReportsScreen() {
     'کانوونی یەکەم',
   ];
 
-  const monthlyData = useMemo(() => {
+  const monthlyData = useMemo<MonthData[]>(() => {
     const monthNames = [
       'کانوونی دووەم',
       'شوبات',

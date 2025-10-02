@@ -20,7 +20,7 @@ import {
   QrCode,
   Camera,
   Tag,
-  List,
+
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -127,13 +127,7 @@ export default function SettingsScreen() {
       onPress: () => router.push('/usability-settings'),
       color: '#06B6D4',
     },
-    {
-      icon: List,
-      title: 'هەموو تایبەتمەندیەکان',
-      subtitle: 'بینینی هەموو تایبەتمەندیەکانی سیستەم',
-      onPress: () => router.push('/all-features'),
-      color: '#10B981',
-    },
+
   ];
 
   return (
