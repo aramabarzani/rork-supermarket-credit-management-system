@@ -19,6 +19,7 @@ import {
   Zap,
   QrCode,
   Camera,
+  Tag,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
@@ -68,6 +69,13 @@ export default function SettingsScreen() {
       subtitle: 'سکان کردنی QR Code کڕیارەکان',
       onPress: () => router.push('/scan-customer-qr'),
       color: '#06B6D4',
+    },
+    {
+      icon: Tag,
+      title: 'بەڕێوەبردنی مۆرەکانی قەرز',
+      subtitle: 'زیادکردن، دەستکاری و سڕینەوەی مۆرەکانی قەرز',
+      onPress: () => router.push('/debt-categories-management'),
+      color: '#F59E0B',
     },
     {
       icon: Settings,
