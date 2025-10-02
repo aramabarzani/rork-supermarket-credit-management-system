@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
@@ -19,27 +18,74 @@ import {
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
-import { trpc } from '@/lib/trpc';
+import { useDebts } from '@/hooks/debt-context';
 
 export default function AdvancedReportsScreen() {
   const [selectedPeriod, setSelectedPeriod] = useState<'month' | 'year'>('month');
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const { debts, payments } = useDebts();
 
-  const debtByPeriodQuery = trpc.financial.advancedReports.debtByPeriod.useQuery({
-    period: selectedPeriod,
-    month: selectedPeriod === 'month' ? selectedMonth : undefined,
-    year: selectedYear,
-  });
+  const filteredDebts = useMemo(() => {
+    return debts.filter((debt) => {
+      const debtDate = new Date(debt.createdAt);
+      const debtYear = debtDate.getFullYear();
+      const debtMonth = debtDate.getMonth() + 1;
 
-  const paymentByPeriodQuery = trpc.financial.advancedReports.paymentByPeriod.useQuery({
-    period: selectedPeriod,
-    month: selectedPeriod === 'month' ? selectedMonth : undefined,
-    year: selectedYear,
-  });
+      if (selectedPeriod === 'month') {
+        return debtYear === selectedYear && debtMonth === selectedMonth;
+      }
+      return debtYear === selectedYear;
+    });
+  }, [debts, selectedPeriod, selectedMonth, selectedYear]);
 
-  const customerByLevelQuery = trpc.financial.advancedReports.customerByLevel.useQuery({});
-  const employeeByLevelQuery = trpc.financial.advancedReports.employeeByLevel.useQuery({});
+  const filteredPayments = useMemo(() => {
+    return payments.filter((payment) => {
+      const paymentDate = new Date(payment.paymentDate);
+      const paymentYear = paymentDate.getFullYear();
+      const paymentMonth = paymentDate.getMonth() + 1;
+
+      if (selectedPeriod === 'month') {
+        return paymentYear === selectedYear && paymentMonth === selectedMonth;
+      }
+      return paymentYear === selectedYear;
+    });
+  }, [payments, selectedPeriod, selectedMonth, selectedYear]);
+
+  const debtByPeriodData = useMemo(() => {
+    const totalAmount = filteredDebts.reduce((sum, debt) => sum + debt.amount, 0);
+    const categories = Object.entries(
+      filteredDebts.reduce((acc, debt) => {
+        const category = debt.category || 'هیچ';
+        if (!acc[category]) {
+          acc[category] = { count: 0, amount: 0 };
+        }
+        acc[category].count++;
+        acc[category].amount += debt.amount;
+        return acc;
+      }, {} as Record<string, { count: number; amount: number }>)
+    ).map(([category, data]) => ({
+      category,
+      count: data.count,
+      amount: data.amount,
+    }));
+
+    return {
+      totalDebts: filteredDebts.length,
+      totalAmount,
+      averageAmount: filteredDebts.length > 0 ? totalAmount / filteredDebts.length : 0,
+      categories,
+    };
+  }, [filteredDebts]);
+
+  const paymentByPeriodData = useMemo(() => {
+    const totalAmount = filteredPayments.reduce((sum, payment) => sum + payment.amount, 0);
+    return {
+      totalPayments: filteredPayments.length,
+      totalAmount,
+      averageAmount: filteredPayments.length > 0 ? totalAmount / filteredPayments.length : 0,
+    };
+  }, [filteredPayments]);
 
   const formatCurrency = (amount: number) => {
     if (typeof amount !== 'number' || isNaN(amount) || amount < 0) return '0 د.ع';
@@ -66,28 +112,6 @@ export default function AdvancedReportsScreen() {
   ];
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
-
-  const isLoading = debtByPeriodQuery.isLoading || paymentByPeriodQuery.isLoading;
-
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <Stack.Screen
-          options={{
-            title: 'ڕاپۆرتە پێشکەوتووەکان',
-            headerStyle: { backgroundColor: '#1E3A8A' },
-            headerTintColor: 'white',
-          }}
-        />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E3A8A" />
-          <KurdishText variant="body" color="#6B7280">
-            چاوەڕوان بە...
-          </KurdishText>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -202,7 +226,7 @@ export default function AdvancedReportsScreen() {
                 کۆی قەرزەکان
               </KurdishText>
               <KurdishText variant="body" color="#1F2937">
-                {debtByPeriodQuery.data?.totalDebts || 0}
+                {debtByPeriodData.totalDebts}
               </KurdishText>
             </View>
             <View style={styles.statRow}>
@@ -210,7 +234,7 @@ export default function AdvancedReportsScreen() {
                 کۆی بڕ
               </KurdishText>
               <KurdishText variant="body" color="#EF4444">
-                {formatCurrency(debtByPeriodQuery.data?.totalAmount || 0)}
+                {formatCurrency(debtByPeriodData.totalAmount)}
               </KurdishText>
             </View>
             <View style={[styles.statRow, { borderBottomWidth: 0 }]}>
@@ -218,18 +242,18 @@ export default function AdvancedReportsScreen() {
                 ناوەند
               </KurdishText>
               <KurdishText variant="body" color="#1F2937">
-                {formatCurrency(debtByPeriodQuery.data?.averageAmount || 0)}
+                {formatCurrency(debtByPeriodData.averageAmount)}
               </KurdishText>
             </View>
           </GradientCard>
 
-          {debtByPeriodQuery.data?.categories && debtByPeriodQuery.data.categories.length > 0 && (
+          {debtByPeriodData.categories && debtByPeriodData.categories.length > 0 && (
             <View style={styles.categorySection}>
               <KurdishText variant="body" color="#1F2937" style={{ marginBottom: 12 }}>
                 قەرز بە پێی جۆر
               </KurdishText>
               <GradientCard>
-                {debtByPeriodQuery.data.categories.map((cat, index) => (
+                {debtByPeriodData.categories.map((cat, index) => (
                   <View key={cat.category} style={styles.categoryRow}>
                     <View style={styles.categoryInfo}>
                       <View
@@ -275,7 +299,7 @@ export default function AdvancedReportsScreen() {
                 کۆی پارەدانەکان
               </KurdishText>
               <KurdishText variant="body" color="#1F2937">
-                {paymentByPeriodQuery.data?.totalPayments || 0}
+                {paymentByPeriodData.totalPayments}
               </KurdishText>
             </View>
             <View style={styles.statRow}>
@@ -283,7 +307,7 @@ export default function AdvancedReportsScreen() {
                 کۆی بڕ
               </KurdishText>
               <KurdishText variant="body" color="#10B981">
-                {formatCurrency(paymentByPeriodQuery.data?.totalAmount || 0)}
+                {formatCurrency(paymentByPeriodData.totalAmount)}
               </KurdishText>
             </View>
             <View style={[styles.statRow, { borderBottomWidth: 0 }]}>
@@ -291,7 +315,7 @@ export default function AdvancedReportsScreen() {
                 ناوەند
               </KurdishText>
               <KurdishText variant="body" color="#1F2937">
-                {formatCurrency(paymentByPeriodQuery.data?.averageAmount || 0)}
+                {formatCurrency(paymentByPeriodData.averageAmount)}
               </KurdishText>
             </View>
           </GradientCard>
@@ -306,26 +330,11 @@ export default function AdvancedReportsScreen() {
           </View>
 
           <GradientCard>
-            {customerByLevelQuery.data?.map((level, index) => (
-              <View key={level.level} style={styles.levelRow}>
-                <View style={styles.levelInfo}>
-                  <KurdishText variant="body" color="#1F2937">
-                    {level.level}
-                  </KurdishText>
-                  <KurdishText variant="caption" color="#6B7280">
-                    {level.customerCount} کڕیار
-                  </KurdishText>
-                </View>
-                <View style={styles.levelStats}>
-                  <KurdishText variant="caption" color="#EF4444">
-                    قەرز: {formatCurrency(level.totalDebt)}
-                  </KurdishText>
-                  <KurdishText variant="caption" color="#10B981">
-                    پارەدان: {formatCurrency(level.totalPaid)}
-                  </KurdishText>
-                </View>
-              </View>
-            ))}
+            <View style={{ padding: 16, alignItems: 'center' }}>
+              <KurdishText variant="body" color="#6B7280">
+                هیچ زانیاریەک نییە
+              </KurdishText>
+            </View>
           </GradientCard>
         </View>
 
@@ -338,26 +347,11 @@ export default function AdvancedReportsScreen() {
           </View>
 
           <GradientCard>
-            {employeeByLevelQuery.data?.map((employee, index) => (
-              <View key={employee.employeeId} style={styles.employeeRow}>
-                <View style={styles.employeeInfo}>
-                  <KurdishText variant="body" color="#1F2937">
-                    {employee.employeeName}
-                  </KurdishText>
-                  <KurdishText variant="caption" color="#6B7280">
-                    {employee.level} - {employee.debtsCreated} قەرز، {employee.paymentsReceived} پارەدان
-                  </KurdishText>
-                </View>
-                <View style={styles.employeeStats}>
-                  <KurdishText variant="caption" color="#EF4444">
-                    {formatCurrency(employee.totalDebtAmount)}
-                  </KurdishText>
-                  <KurdishText variant="caption" color="#10B981">
-                    {formatCurrency(employee.totalPaymentAmount)}
-                  </KurdishText>
-                </View>
-              </View>
-            ))}
+            <View style={{ padding: 16, alignItems: 'center' }}>
+              <KurdishText variant="body" color="#6B7280">
+                هیچ زانیاریەک نییە
+              </KurdishText>
+            </View>
           </GradientCard>
         </View>
 
@@ -437,12 +431,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F3F4F6',
-  },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
   },
   periodSelector: {
     flexDirection: 'row',
@@ -539,36 +527,6 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-  },
-  levelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  levelInfo: {
-    flex: 1,
-  },
-  levelStats: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  employeeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  employeeInfo: {
-    flex: 1,
-  },
-  employeeStats: {
-    alignItems: 'flex-end',
-    gap: 4,
   },
   reportGrid: {
     gap: 12,
