@@ -4,372 +4,383 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  TextInput,
+  Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
-import { 
-  BarChart3, 
-  Search, 
-  Calendar,
+import {
   TrendingUp,
   TrendingDown,
-  Download,
   DollarSign,
-  Clock,
-  Target,
   Users,
+  Download,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
 import { useDebts } from '@/hooks/debt-context';
-import { useAuth } from '@/hooks/auth-context';
-import { PERMISSIONS } from '@/constants/permissions';
 
-interface MonthlyReport {
+const { width } = Dimensions.get('window');
+
+type MonthData = {
   month: string;
   year: number;
   totalDebts: number;
   totalPayments: number;
+  newCustomers: number;
+  activeCustomers: number;
   netChange: number;
-  debtCount: number;
-  paymentCount: number;
-  averageDebt: number;
-  averagePayment: number;
-  topCategories: { category: string; amount: number }[];
-}
+};
 
 export default function MonthlyReportsScreen() {
-  const { debts, payments, filterDebtsByDate, getPaymentsByDateRange } = useDebts();
-  const { hasPermission } = useAuth();
+  const { debts } = useDebts();
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
 
-  const monthlyReports = useMemo((): MonthlyReport[] => {
-    const reports: MonthlyReport[] = [];
+  const months = [
+    'کانوونی دووەم',
+    'شوبات',
+    'ئازار',
+    'نیسان',
+    'ئایار',
+    'حوزەیران',
+    'تەمموز',
+    'ئاب',
+    'ئەیلوول',
+    'تشرینی یەکەم',
+    'تشرینی دووەم',
+    'کانوونی یەکەم',
+  ];
+
+  const monthlyData = useMemo(() => {
+    const monthNames = [
+      'کانوونی دووەم',
+      'شوبات',
+      'ئازار',
+      'نیسان',
+      'ئایار',
+      'حوزەیران',
+      'تەمموز',
+      'ئاب',
+      'ئەیلوول',
+      'تشرینی یەکەم',
+      'تشرینی دووەم',
+      'کانوونی یەکەم',
+    ];
     
-    for (let month = 0; month < 12; month++) {
-      const startDate = new Date(selectedYear, month, 1);
-      const endDate = new Date(selectedYear, month + 1, 0);
-      
-      const monthDebts = filterDebtsByDate(
-        startDate.toISOString(),
-        endDate.toISOString()
-      );
-      
-      const monthPayments = getPaymentsByDateRange(
-        startDate.toISOString(),
-        endDate.toISOString()
-      );
-      
-      const totalDebts = monthDebts.reduce((sum, debt) => sum + debt.amount, 0);
-      const totalPayments = monthPayments.reduce((sum, payment) => sum + payment.amount, 0);
-      
-      // Calculate category breakdown
-      const categoryMap = new Map<string, number>();
-      monthDebts.forEach(debt => {
-        const existing = categoryMap.get(debt.category) || 0;
-        categoryMap.set(debt.category, existing + debt.amount);
+    const data: MonthData[] = [];
+    
+    for (let i = 0; i < 12; i++) {
+      const monthDebts = debts.filter(debt => {
+        const debtDate = new Date(debt.createdAt);
+        return debtDate.getMonth() === i && debtDate.getFullYear() === selectedYear;
       });
-      
-      const topCategories = Array.from(categoryMap.entries())
-        .map(([category, amount]) => ({ category, amount }))
-        .sort((a, b) => b.amount - a.amount)
-        .slice(0, 3);
-      
-      reports.push({
-        month: startDate.toLocaleDateString('ckb-IQ', { month: 'long' }),
+
+      const totalDebts = monthDebts.reduce((sum, debt) => sum + debt.amount, 0);
+      const totalPayments = monthDebts.reduce((sum, debt) => sum + (debt.amount - debt.remainingAmount), 0);
+      const uniqueCustomers = new Set(monthDebts.map(d => d.customerId));
+
+      data.push({
+        month: monthNames[i],
         year: selectedYear,
         totalDebts,
         totalPayments,
-        netChange: totalPayments - totalDebts,
-        debtCount: monthDebts.length,
-        paymentCount: monthPayments.length,
-        averageDebt: monthDebts.length > 0 ? totalDebts / monthDebts.length : 0,
-        averagePayment: monthPayments.length > 0 ? totalPayments / monthPayments.length : 0,
-        topCategories,
+        newCustomers: uniqueCustomers.size,
+        activeCustomers: uniqueCustomers.size,
+        netChange: totalDebts - totalPayments,
       });
     }
-    
-    return reports.reverse(); // Show most recent first
-  }, [selectedYear, debts, payments, filterDebtsByDate, getPaymentsByDateRange]);
 
-  const filteredReports = useMemo(() => {
-    if (!searchQuery) return monthlyReports;
-    
-    const query = searchQuery.toLowerCase();
-    return monthlyReports.filter(report =>
-      report.month.toLowerCase().includes(query) ||
-      report.topCategories.some(cat => cat.category.toLowerCase().includes(query))
-    );
-  }, [monthlyReports, searchQuery]);
+    return data;
+  }, [debts, selectedYear]);
+
+  const currentMonthData = monthlyData[selectedMonth];
 
   const yearlyTotals = useMemo(() => {
-    return monthlyReports.reduce(
-      (acc, report) => ({
-        totalDebts: acc.totalDebts + report.totalDebts,
-        totalPayments: acc.totalPayments + report.totalPayments,
-        debtCount: acc.debtCount + report.debtCount,
-        paymentCount: acc.paymentCount + report.paymentCount,
-      }),
-      { totalDebts: 0, totalPayments: 0, debtCount: 0, paymentCount: 0 }
-    );
-  }, [monthlyReports]);
+    return {
+      totalDebts: monthlyData.reduce((sum, m) => sum + m.totalDebts, 0),
+      totalPayments: monthlyData.reduce((sum, m) => sum + m.totalPayments, 0),
+      netChange: monthlyData.reduce((sum, m) => sum + m.netChange, 0),
+      avgMonthlyDebts: monthlyData.reduce((sum, m) => sum + m.totalDebts, 0) / 12,
+    };
+  }, [monthlyData]);
+
+  const handlePreviousMonth = () => {
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear(selectedYear - 1);
+    } else {
+      setSelectedMonth(selectedMonth - 1);
+    }
+  };
+
+  const handleNextMonth = () => {
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear(selectedYear + 1);
+    } else {
+      setSelectedMonth(selectedMonth + 1);
+    }
+  };
 
   const formatCurrency = (amount: number) => {
-    if (typeof amount !== 'number' || isNaN(amount) || amount < 0) return '0 د.ع';
-    return new Intl.NumberFormat('ckb-IQ', {
-      style: 'currency',
-      currency: 'IQD',
-      minimumFractionDigits: 0,
-    }).format(amount);
+    return new Intl.NumberFormat('en-US').format(amount);
   };
-
-  const handleExportReport = () => {
-    console.log(`Exporting monthly reports for ${selectedYear}...`);
-  };
-
-  const availableYears = useMemo(() => {
-    const years = new Set<number>();
-    debts.forEach(debt => {
-      years.add(new Date(debt.createdAt).getFullYear());
-    });
-    payments.forEach(payment => {
-      years.add(new Date(payment.paymentDate).getFullYear());
-    });
-    return Array.from(years).sort((a, b) => b - a);
-  }, [debts, payments]);
-
-  if (!hasPermission(PERMISSIONS.VIEW_REPORTS)) {
-    return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <Stack.Screen options={{ title: 'ڕاپۆرتی مانگانە' }} />
-        <View style={styles.noPermissionContainer}>
-          <BarChart3 size={64} color="#9CA3AF" />
-          <KurdishText variant="title" color="#6B7280">
-            دەسەڵاتت نییە
-          </KurdishText>
-          <KurdishText variant="body" color="#9CA3AF">
-            تۆ دەسەڵاتی بینینی ڕاپۆرتەکانت نییە
-          </KurdishText>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
-      <Stack.Screen options={{ title: 'ڕاپۆرتی مانگانە' }} />
+      <Stack.Screen
+        options={{
+          title: 'ڕاپۆرتی مانگانە',
+          headerStyle: { backgroundColor: '#1E3A8A' },
+          headerTintColor: 'white',
+        }}
+      />
+
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Yearly Summary */}
-        <View style={styles.yearlySection}>
-          <View style={styles.sectionHeader}>
-            <KurdishText variant="subtitle" color="#1F2937">
-              کورتەی ساڵی {selectedYear}
-            </KurdishText>
-            <TouchableOpacity onPress={handleExportReport}>
-              <Download size={20} color="#6B7280" />
-            </TouchableOpacity>
-          </View>
+        {/* Month Selector */}
+        <View style={styles.monthSelector}>
+          <TouchableOpacity onPress={handleNextMonth} style={styles.monthButton}>
+            <ChevronLeft size={24} color="#1E3A8A" />
+          </TouchableOpacity>
           
+          <View style={styles.monthDisplay}>
+            <KurdishText variant="title" color="#1F2937">
+              {months[selectedMonth]}
+            </KurdishText>
+            <KurdishText variant="body" color="#6B7280">
+              {selectedYear.toString()}
+            </KurdishText>
+          </View>
+
+          <TouchableOpacity onPress={handlePreviousMonth} style={styles.monthButton}>
+            <ChevronRight size={24} color="#1E3A8A" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Current Month Stats */}
+        <View style={styles.section}>
+          <View style={styles.sectionTitleContainer}>
+            <KurdishText variant="subtitle" color="#1F2937">
+              ئاماری مانگی
+            </KurdishText>
+            <KurdishText variant="subtitle" color="#1F2937">
+              {months[selectedMonth]}
+            </KurdishText>
+          </View>
+
           <View style={styles.statsGrid}>
-            <GradientCard style={styles.statCard} colors={['#10B981', '#059669']}>
-              <View style={styles.statContent}>
+            <GradientCard style={styles.statCard}>
+              <View style={styles.statIcon}>
+                <DollarSign size={24} color="#EF4444" />
+              </View>
+              <KurdishText variant="caption" color="#6B7280">
+                کۆی قەرز
+              </KurdishText>
+              <View style={styles.amountRow}>
+                <KurdishText variant="subtitle" color="#1F2937">
+                  {formatCurrency(currentMonthData.totalDebts)}
+                </KurdishText>
+                <KurdishText variant="caption" color="#6B7280">
+                  IQD
+                </KurdishText>
+              </View>
+            </GradientCard>
+
+            <GradientCard style={styles.statCard}>
+              <View style={styles.statIcon}>
                 <TrendingUp size={24} color="#10B981" />
+              </View>
+              <KurdishText variant="caption" color="#6B7280">
+                کۆی پارەدان
+              </KurdishText>
+              <View style={styles.amountRow}>
+                <KurdishText variant="subtitle" color="#1F2937">
+                  {formatCurrency(currentMonthData.totalPayments)}
+                </KurdishText>
+                <KurdishText variant="caption" color="#6B7280">
+                  IQD
+                </KurdishText>
+              </View>
+            </GradientCard>
+
+            <GradientCard style={styles.statCard}>
+              <View style={styles.statIcon}>
+                <Users size={24} color="#3B82F6" />
+              </View>
+              <KurdishText variant="caption" color="#6B7280">
+                کڕیاری چالاک
+              </KurdishText>
+              <KurdishText variant="subtitle" color="#1F2937">
+                {currentMonthData.activeCustomers}
+              </KurdishText>
+            </GradientCard>
+
+            <GradientCard style={styles.statCard}>
+              <View style={styles.statIcon}>
+                {currentMonthData.netChange >= 0 ? (
+                  <TrendingUp size={24} color="#10B981" />
+                ) : (
+                  <TrendingDown size={24} color="#EF4444" />
+                )}
+              </View>
+              <KurdishText variant="caption" color="#6B7280">
+                گۆڕانی خاڵیص
+              </KurdishText>
+              <View style={styles.amountRow}>
+                <KurdishText 
+                  variant="subtitle" 
+                  color={currentMonthData.netChange >= 0 ? '#10B981' : '#EF4444'}
+                >
+                  {formatCurrency(Math.abs(currentMonthData.netChange))}
+                </KurdishText>
+                <KurdishText variant="caption" color="#6B7280">
+                  IQD
+                </KurdishText>
+              </View>
+            </GradientCard>
+          </View>
+        </View>
+
+        {/* Yearly Summary */}
+        <View style={styles.section}>
+          <View style={styles.sectionTitleContainer}>
+            <KurdishText variant="subtitle" color="#1F2937">
+              پوختەی ساڵانە -
+            </KurdishText>
+            <KurdishText variant="subtitle" color="#1F2937">
+              {selectedYear.toString()}
+            </KurdishText>
+          </View>
+
+          <GradientCard>
+            <View style={styles.yearlyRow}>
+              <KurdishText variant="body" color="#6B7280">
+                کۆی گشتی قەرز
+              </KurdishText>
+              <View style={styles.amountRow}>
                 <KurdishText variant="body" color="#1F2937">
                   {formatCurrency(yearlyTotals.totalDebts)}
                 </KurdishText>
                 <KurdishText variant="caption" color="#6B7280">
-                  کۆی قەرزەکان
+                  IQD
                 </KurdishText>
               </View>
-            </GradientCard>
+            </View>
 
-            <GradientCard style={styles.statCard} colors={['#3B82F6', '#2563EB']}>
-              <View style={styles.statContent}>
-                <TrendingDown size={24} color="#3B82F6" />
+            <View style={styles.yearlyRow}>
+              <KurdishText variant="body" color="#6B7280">
+                کۆی گشتی پارەدان
+              </KurdishText>
+              <View style={styles.amountRow}>
                 <KurdishText variant="body" color="#1F2937">
                   {formatCurrency(yearlyTotals.totalPayments)}
                 </KurdishText>
                 <KurdishText variant="caption" color="#6B7280">
-                  کۆی پارەدانەکان
+                  IQD
                 </KurdishText>
               </View>
-            </GradientCard>
+            </View>
 
-            <GradientCard style={styles.statCard} colors={['#8B5CF6', '#7C3AED']}>
-              <View style={styles.statContent}>
-                <Target size={24} color="#8B5CF6" />
-                <KurdishText variant="body" color="#1F2937">
-                  {yearlyTotals.debtCount}
+            <View style={styles.yearlyRow}>
+              <KurdishText variant="body" color="#6B7280">
+                گۆڕانی خاڵیص
+              </KurdishText>
+              <View style={styles.amountRow}>
+                <KurdishText 
+                  variant="body" 
+                  color={yearlyTotals.netChange >= 0 ? '#10B981' : '#EF4444'}
+                >
+                  {formatCurrency(Math.abs(yearlyTotals.netChange))}
                 </KurdishText>
                 <KurdishText variant="caption" color="#6B7280">
-                  ژمارەی قەرزەکان
+                  IQD
                 </KurdishText>
               </View>
-            </GradientCard>
+            </View>
 
-            <GradientCard style={styles.statCard} colors={['#F59E0B', '#D97706']}>
-              <View style={styles.statContent}>
-                <DollarSign size={24} color="#F59E0B" />
+            <View style={styles.yearlyRow}>
+              <KurdishText variant="body" color="#6B7280">
+                مامناوەندی مانگانە
+              </KurdishText>
+              <View style={styles.amountRow}>
                 <KurdishText variant="body" color="#1F2937">
-                  {formatCurrency(yearlyTotals.totalPayments - yearlyTotals.totalDebts)}
+                  {formatCurrency(yearlyTotals.avgMonthlyDebts)}
                 </KurdishText>
                 <KurdishText variant="caption" color="#6B7280">
-                  گۆڕانی خاڵی
+                  IQD
                 </KurdishText>
               </View>
-            </GradientCard>
-          </View>
+            </View>
+          </GradientCard>
         </View>
 
-        {/* Controls */}
-        <GradientCard style={styles.controlsCard}>
-          <View style={styles.searchContainer}>
-            <View style={styles.searchInputContainer}>
-              <Search size={20} color="#6B7280" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="گەڕان لە مانگەکان..."
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                textAlign="right"
-              />
-            </View>
-          </View>
+        {/* Monthly Breakdown */}
+        <View style={styles.section}>
+          <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
+            وردەکاریەکانی مانگەکان
+          </KurdishText>
 
-          <View style={styles.yearSelector}>
-            <KurdishText variant="caption" color="#6B7280">
-              ساڵ:
-            </KurdishText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.yearChips}>
-                {availableYears.map(year => (
-                  <TouchableOpacity
-                    key={year}
-                    style={[
-                      styles.yearChip,
-                      selectedYear === year && styles.yearChipSelected,
-                    ]}
-                    onPress={() => setSelectedYear(year)}
-                  >
-                    <KurdishText 
-                      variant="caption" 
-                      color={selectedYear === year ? 'white' : '#6B7280'}
-                    >
-                      {year}
+          {monthlyData.map((data, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => setSelectedMonth(index)}
+            >
+              <GradientCard 
+                style={[
+                  styles.monthCard,
+                  selectedMonth === index && styles.monthCardActive
+                ]}
+              >
+                <View style={styles.monthCardHeader}>
+                  <View>
+                    <KurdishText variant="body" color="#1F2937">
+                      {data.month}
                     </KurdishText>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
-          </View>
-        </GradientCard>
-
-        {/* Monthly Reports */}
-        <View style={styles.reportsContainer}>
-          <View style={styles.sectionHeader}>
-            <KurdishText variant="subtitle" color="#1F2937">
-              ڕاپۆرتی مانگانە ({filteredReports.length})
-            </KurdishText>
-          </View>
-
-          {filteredReports.map((report, index) => (
-            <GradientCard key={`${report.year}-${index}`} style={styles.reportCard}>
-              <View style={styles.reportHeader}>
-                <View style={styles.monthInfo}>
-                  <KurdishText variant="subtitle" color="#1F2937">
-                    {report.month} {report.year}
-                  </KurdishText>
-                  <KurdishText variant="caption" color="#6B7280">
-                    {report.debtCount} قەرز • {report.paymentCount} پارەدان
-                  </KurdishText>
-                </View>
-                <View style={styles.netChange}>
-                  <KurdishText 
-                    variant="title" 
-                    color={report.netChange >= 0 ? '#10B981' : '#EF4444'}
-                  >
-                    {report.netChange >= 0 ? '+' : ''}{formatCurrency(Math.abs(report.netChange))}
-                  </KurdishText>
-                  <KurdishText variant="caption" color="#6B7280">
-                    گۆڕانی خاڵی
-                  </KurdishText>
-                </View>
-              </View>
-
-              <View style={styles.reportStats}>
-                <View style={styles.statRow}>
-                  <KurdishText variant="body" color="#6B7280">
-                    کۆی قەرزەکان
-                  </KurdishText>
-                  <KurdishText variant="body" color="#1F2937">
-                    {formatCurrency(report.totalDebts)}
-                  </KurdishText>
-                </View>
-                <View style={styles.statRow}>
-                  <KurdishText variant="body" color="#6B7280">
-                    کۆی پارەدانەکان
-                  </KurdishText>
-                  <KurdishText variant="body" color="#1F2937">
-                    {formatCurrency(report.totalPayments)}
-                  </KurdishText>
-                </View>
-                <View style={styles.statRow}>
-                  <KurdishText variant="body" color="#6B7280">
-                    ناوەندی قەرز
-                  </KurdishText>
-                  <KurdishText variant="body" color="#1F2937">
-                    {formatCurrency(report.averageDebt)}
-                  </KurdishText>
-                </View>
-                <View style={[styles.statRow, { borderBottomWidth: 0 }]}>
-                  <KurdishText variant="body" color="#6B7280">
-                    ناوەندی پارەدان
-                  </KurdishText>
-                  <KurdishText variant="body" color="#1F2937">
-                    {formatCurrency(report.averagePayment)}
-                  </KurdishText>
-                </View>
-              </View>
-
-              {report.topCategories.length > 0 && (
-                <View style={styles.categoriesSection}>
-                  <KurdishText variant="body" color="#1F2937">
-                    جۆرە سەرەکیەکان:
-                  </KurdishText>
-                  {report.topCategories.map((category, catIndex) => (
-                    <View key={category.category} style={styles.categoryRow}>
-                      <View style={styles.categoryInfo}>
-                        <View style={[
-                          styles.categoryDot, 
-                          { backgroundColor: ['#10B981', '#3B82F6', '#F59E0B'][catIndex] }
-                        ]} />
-                        <KurdishText variant="caption" color="#1F2937">
-                          {category.category}
-                        </KurdishText>
-                      </View>
+                    <View style={styles.customerCount}>
                       <KurdishText variant="caption" color="#6B7280">
-                        {formatCurrency(category.amount)}
+                        {data.activeCustomers.toString()}
+                      </KurdishText>
+                      <KurdishText variant="caption" color="#6B7280">
+                        کڕیار
                       </KurdishText>
                     </View>
-                  ))}
+                  </View>
+                  <View style={styles.monthCardStats}>
+                    <View style={styles.monthCardStat}>
+                      <KurdishText variant="caption" color="#EF4444">
+                        قەرز
+                      </KurdishText>
+                      <KurdishText variant="caption" color="#1F2937">
+                        {formatCurrency(data.totalDebts)}
+                      </KurdishText>
+                    </View>
+                    <View style={styles.monthCardStat}>
+                      <KurdishText variant="caption" color="#10B981">
+                        پارەدان
+                      </KurdishText>
+                      <KurdishText variant="caption" color="#1F2937">
+                        {formatCurrency(data.totalPayments)}
+                      </KurdishText>
+                    </View>
+                  </View>
                 </View>
-              )}
-            </GradientCard>
+              </GradientCard>
+            </TouchableOpacity>
           ))}
+        </View>
 
-          {filteredReports.length === 0 && (
-            <GradientCard style={styles.emptyCard}>
-              <View style={styles.emptyContent}>
-                <Calendar size={48} color="#9CA3AF" />
-                <KurdishText variant="body" color="#6B7280">
-                  هیچ ڕاپۆرتێک نەدۆزرایەوە
-                </KurdishText>
-              </View>
+        {/* Export Options */}
+        <View style={styles.section}>
+          <TouchableOpacity>
+            <GradientCard style={styles.exportCard}>
+              <Download size={24} color="#1E3A8A" />
+              <KurdishText variant="body" color="#1E3A8A">
+                داگرتنی ڕاپۆرت
+              </KurdishText>
             </GradientCard>
-          )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -381,21 +392,41 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F3F4F6',
   },
-  noPermissionContainer: {
-    flex: 1,
+  monthSelector: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-    gap: 16,
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
   },
-  yearlySection: {
+  monthButton: {
+    padding: 8,
+  },
+  monthDisplay: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  section: {
     padding: 16,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  sectionTitle: {
     marginBottom: 12,
+  },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    gap: 4,
+    marginBottom: 12,
+  },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  customerCount: {
+    flexDirection: 'row',
+    gap: 4,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -403,111 +434,52 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   statCard: {
-    flex: 1,
-    minWidth: '45%',
+    width: (width - 48) / 2,
     padding: 16,
-  },
-  statContent: {
-    alignItems: 'center',
     gap: 8,
   },
-  controlsCard: {
-    margin: 16,
-    marginTop: 0,
-  },
-  searchContainer: {
-    marginBottom: 16,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  statIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: '#F3F4F6',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1F2937',
-    textAlign: 'right',
-  },
-  yearSelector: {
-    gap: 8,
-  },
-  yearChips: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  yearChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#F3F4F6',
-  },
-  yearChipSelected: {
-    backgroundColor: '#1E3A8A',
-  },
-  reportsContainer: {
-    padding: 16,
-    paddingTop: 0,
-    gap: 12,
-  },
-  reportCard: {
-    padding: 16,
-  },
-  reportHeader: {
+  yearlyRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
   },
-  monthInfo: {
-    flex: 1,
+  monthCard: {
+    marginBottom: 12,
   },
-  netChange: {
+  monthCardActive: {
+    borderWidth: 2,
+    borderColor: '#1E3A8A',
+  },
+  monthCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  monthCardStats: {
+    gap: 8,
     alignItems: 'flex-end',
   },
-  reportStats: {
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 16,
+  monthCardStat: {
+    alignItems: 'flex-end',
+    gap: 2,
   },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  categoriesSection: {
-    gap: 8,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  categoryInfo: {
+  exportCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  categoryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  emptyCard: {
-    padding: 32,
-  },
-  emptyContent: {
-    alignItems: 'center',
-    gap: 16,
+    justifyContent: 'center',
+    gap: 12,
+    padding: 16,
   },
 });
