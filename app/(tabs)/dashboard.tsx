@@ -42,6 +42,8 @@ import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useUsers } from '@/hooks/users-context';
 import { useNotifications } from '@/hooks/notification-context';
+import { useSettings } from '@/hooks/settings-context';
+import { useTenant } from '@/hooks/tenant-context';
 
 import { KurdishText } from '@/components/KurdishText';
 
@@ -59,8 +61,11 @@ export default function DashboardScreen() {
   const { users } = usersContext || {};
   const notificationContext = useNotifications();
   const { notifications } = notificationContext || {};
+  const settingsContext = useSettings();
+  const { settings } = settingsContext || {};
+  const tenantContext = useTenant();
+  const { currentTenant } = tenantContext || {};
 
-  
   const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
   const [showFilters, setShowFilters] = useState(false);
   const [dateFilter, setDateFilter] = useState('');
@@ -354,7 +359,7 @@ export default function DashboardScreen() {
               
               <View style={styles.licenseInfo}>
                 <KurdishText style={[styles.licenseText, currentIsTablet && styles.tabletLicenseText]}>
-                  سوپەرمارکێتی نموونە • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                  {currentTenant?.storeNameKurdish || currentTenant?.storeName || settings?.businessInfo?.name || 'سوپەرمارکێتی نموونە'} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
                 </KurdishText>
               </View>
             </View>

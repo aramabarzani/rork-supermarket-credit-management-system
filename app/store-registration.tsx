@@ -195,6 +195,13 @@ export default function StoreRegistrationScreen() {
         plan: formData.plan,
       });
 
+      console.log('[Store Registration] New store request created:', {
+        requestId: newRequest.id,
+        storeName: formData.storeNameKurdish,
+        ownerName: formData.ownerName,
+        plan: formData.plan,
+      });
+
       await addNotification({
         title: 'داواکاریەکی نوێ بۆ تۆمارکردنی فرۆشگا',
         titleKurdish: 'داواکاریەکی نوێ بۆ تۆمارکردنی فرۆشگا',
@@ -209,11 +216,17 @@ export default function StoreRegistrationScreen() {
         metadata: {
           requestId: newRequest.id,
           storeName: formData.storeName,
+          storeNameKurdish: formData.storeNameKurdish,
           ownerName: formData.ownerName,
           ownerPhone: formData.ownerPhone,
+          ownerEmail: formData.ownerEmail,
+          address: formData.address,
+          city: formData.city,
           plan: formData.plan,
         },
       });
+
+      console.log('[Store Registration] Notification sent to admin');
 
       Alert.alert(
         'سەرکەوتوو بوو!',
@@ -226,7 +239,7 @@ export default function StoreRegistrationScreen() {
         ]
       );
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('[Store Registration] Error:', error);
       Alert.alert('هەڵە', 'کێشەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەرەوە');
     } finally {
       setIsSubmitting(false);

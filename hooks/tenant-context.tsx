@@ -13,12 +13,14 @@ const DEFAULT_NOTIFICATION_SETTINGS: SubscriptionNotificationSettings = {
 
 export const [TenantProvider, useTenant] = createContextHook(() => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionNotifications, setSubscriptionNotifications] = useState<SubscriptionNotification[]>([]);
   const [notificationSettings, setNotificationSettings] = useState<SubscriptionNotificationSettings>(DEFAULT_NOTIFICATION_SETTINGS);
 
   useEffect(() => {
     loadTenants();
+    loadCurrentTenant();
     loadSubscriptionNotifications();
     loadNotificationSettings();
     checkExpiringSubscriptions();
@@ -44,6 +46,25 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
       setIsLoading(false);
     }
   };
+
+  const loadCurrentTenant = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('currentTenant');
+      if (stored) {
+        setCurrentTenant(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Failed to load current tenant:', error);
+    }
+  };
+
+  const setActiveTenant = useCallback(async (tenantId: string) => {
+    const tenant = tenants.find(t => t.id === tenantId);
+    if (tenant) {
+      setCurrentTenant(tenant);
+      await AsyncStorage.setItem('currentTenant', JSON.stringify(tenant));
+    }
+  }, [tenants]);
 
   const loadSubscriptionNotifications = async () => {
     try {
@@ -417,6 +438,7 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   return useMemo(() => ({
     tenants,
+    currentTenant,
     isLoading,
     createTenant,
     updateTenant,
@@ -430,11 +452,12 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     getExpiredTenants,
     getSuspendedTenants,
     getExpiringTenants,
+    setActiveTenant,
     subscriptionNotifications,
     notificationSettings,
     checkExpiringSubscriptions,
     updateNotificationSettings,
     markNotificationAsRead,
     getUnreadNotifications,
-  }), [tenants, isLoading, createTenant, updateTenant, deleteTenant, suspendTenant, activateTenant, renewSubscription, getTenantById, getTenantStats, getActiveTenants, getExpiredTenants, getSuspendedTenants, getExpiringTenants, subscriptionNotifications, notificationSettings, checkExpiringSubscriptions, updateNotificationSettings, markNotificationAsRead, getUnreadNotifications]);
+  }), [tenants, currentTenant, isLoading, createTenant, updateTenant, deleteTenant, suspendTenant, activateTenant, renewSubscription, getTenantById, getTenantStats, getActiveTenants, getExpiredTenants, getSuspendedTenants, getExpiringTenants, setActiveTenant, subscriptionNotifications, notificationSettings, checkExpiringSubscriptions, updateNotificationSettings, markNotificationAsRead, getUnreadNotifications]);
 });

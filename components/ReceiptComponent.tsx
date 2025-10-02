@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -21,8 +21,11 @@ import {
   Calendar,
   User,
   DollarSign,
-  Hash
+  Hash,
+  Store
 } from 'lucide-react-native';
+import { useSettings } from '@/hooks/settings-context';
+import { useTenant } from '@/hooks/tenant-context';
 
 interface ReceiptComponentProps {
   receipt: Receipt;
@@ -44,6 +47,29 @@ export default function ReceiptComponent({
   onDownload
 }: ReceiptComponentProps) {
   const [showActions, setShowActions] = useState(false);
+  const { settings } = useSettings();
+  const { currentTenant } = useTenant();
+  const [storeInfo, setStoreInfo] = useState({
+    name: '',
+    phone: '',
+    address: '',
+  });
+
+  useEffect(() => {
+    if (currentTenant) {
+      setStoreInfo({
+        name: currentTenant.storeNameKurdish || currentTenant.storeName,
+        phone: currentTenant.ownerPhone,
+        address: currentTenant.address,
+      });
+    } else if (settings) {
+      setStoreInfo({
+        name: settings.businessInfo.name,
+        phone: settings.businessInfo.phone,
+        address: settings.businessInfo.address || '',
+      });
+    }
+  }, [currentTenant, settings]);
 
   const formatCurrency = (amount: number) => {
     if (!amount || isNaN(amount)) return '0 د.ع';
@@ -119,9 +145,9 @@ export default function ReceiptComponent({
 
   const generateReceiptText = () => {
     return `
-${receipt.companyInfo.name}
-${receipt.companyInfo.phone || ''}
-${receipt.companyInfo.address || ''}
+${storeInfo.name}
+${storeInfo.phone || ''}
+${storeInfo.address || ''}
 
 وەسڵی ${receipt.type === 'debt' ? 'قەرز' : 'پارەدان'}
 ژمارە: ${receipt.receiptNumber}
@@ -132,8 +158,9 @@ ${receipt.companyInfo.address || ''}
 
 ${receipt.notes ? `تێبینی: ${receipt.notes}` : ''}
 
+دروستکراو لەلایەن: ${receipt.createdByName}
+
 سوپاس بۆ هاوکاریتان
-${receipt.companyInfo.email || ''}
     `.trim();
   };
 
@@ -165,17 +192,17 @@ ${receipt.companyInfo.email || ''}
         </View>
       </View>
 
-      {/* Company Info */}
+      {/* Store Info */}
       <View style={styles.section}>
-        <Text style={styles.companyName}>{receipt.companyInfo.name}</Text>
-        {receipt.companyInfo.phone && (
-          <Text style={styles.companyInfo}>{receipt.companyInfo.phone}</Text>
+        <View style={styles.storeHeader}>
+          <Store size={24} color="#3B82F6" />
+          <Text style={styles.companyName}>{storeInfo.name}</Text>
+        </View>
+        {storeInfo.phone && (
+          <Text style={styles.companyInfo}>{storeInfo.phone}</Text>
         )}
-        {receipt.companyInfo.address && (
-          <Text style={styles.companyInfo}>{receipt.companyInfo.address}</Text>
-        )}
-        {receipt.companyInfo.email && (
-          <Text style={styles.companyInfo}>{receipt.companyInfo.email}</Text>
+        {storeInfo.address && (
+          <Text style={styles.companyInfo}>{storeInfo.address}</Text>
         )}
       </View>
 
@@ -326,12 +353,18 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
+  storeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
   companyName: {
     fontSize: 20,
     fontWeight: '700',
     color: '#1F2937',
     textAlign: 'center',
-    marginBottom: 8,
   },
   companyInfo: {
     fontSize: 14,

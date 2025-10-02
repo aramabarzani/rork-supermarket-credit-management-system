@@ -171,16 +171,43 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
   }, []);
 
   useEffect(() => {
-    // Don't load settings until hydration is complete
     if (!isHydrated) {
       return;
     }
 
     const loadSettings = async () => {
       try {
-        const storedSettings = await safeStorage.getItem<SystemSettings>('systemSettings');
-        if (storedSettings) {
-          setSettings({ ...DEFAULT_SETTINGS, ...storedSettings });
+        const currentTenant = await safeStorage.getItem<any>('currentTenant', null);
+        
+        if (currentTenant && currentTenant.id) {
+          const tenantSettings = await safeStorage.getItem<SystemSettings>(`systemSettings_${currentTenant.id}`, null);
+          if (tenantSettings) {
+            setSettings({ ...DEFAULT_SETTINGS, ...tenantSettings });
+          } else {
+            const defaultWithTenantInfo = {
+              ...DEFAULT_SETTINGS,
+              receipt: {
+                ...DEFAULT_SETTINGS.receipt,
+                businessName: currentTenant.storeNameKurdish || currentTenant.storeName,
+                phone: currentTenant.ownerPhone,
+                address: currentTenant.address,
+              },
+              businessInfo: {
+                ...DEFAULT_SETTINGS.businessInfo,
+                name: currentTenant.storeNameKurdish || currentTenant.storeName,
+                ownerName: currentTenant.ownerName,
+                phone: currentTenant.ownerPhone,
+                address: currentTenant.address,
+              },
+            };
+            setSettings(defaultWithTenantInfo);
+            await safeStorage.setItem(`systemSettings_${currentTenant.id}`, defaultWithTenantInfo);
+          }
+        } else {
+          const storedSettings = await safeStorage.getItem<SystemSettings>('systemSettings', null);
+          if (storedSettings) {
+            setSettings({ ...DEFAULT_SETTINGS, ...storedSettings });
+          }
         }
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -189,7 +216,6 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
       }
     };
 
-    // Immediate load on native, small delay on web
     const timer = setTimeout(loadSettings, Platform.OS === 'web' ? 10 : 0);
     return () => clearTimeout(timer);
   }, [isHydrated]);
@@ -198,8 +224,13 @@ export const [SettingsProvider, useSettings] = createContextHook(() => {
     try {
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
-      // Don't await storage operations to prevent blocking UI
-      safeStorage.setItem('systemSettings', updatedSettings);
+      
+      const currentTenant = await safeStorage.getItem<any>('currentTenant', null);
+      if (currentTenant && currentTenant.id) {
+        safeStorage.setItem(`systemSettings_${currentTenant.id}`, updatedSettings);
+      } else {
+        safeStorage.setItem('systemSettings', updatedSettings);
+      }
     } catch (error) {
       console.error('Error updating settings:', error);
     }

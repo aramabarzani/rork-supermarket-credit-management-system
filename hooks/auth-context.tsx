@@ -147,6 +147,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         );
         await safeStorage.setItem('users', updatedUsers);
         
+        if (updatedUser.tenantId) {
+          const currentTenant = await safeStorage.getItem<any>('currentTenant', null);
+          if (!currentTenant || currentTenant?.id !== updatedUser.tenantId) {
+            const tenants = await safeStorage.getItem<any[]>('tenants', []);
+            if (tenants && Array.isArray(tenants)) {
+              const userTenant = tenants.find((t: any) => t.id === updatedUser.tenantId);
+              if (userTenant) {
+                await safeStorage.setItem('currentTenant', userTenant);
+              }
+            }
+          }
+        }
+        
         return { success: true, user: updatedUser };
       }
       
