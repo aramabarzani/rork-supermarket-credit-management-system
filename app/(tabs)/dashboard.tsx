@@ -35,7 +35,12 @@ import {
   CheckCircle,
   Clock,
   X,
-
+  UserPlus,
+  Receipt,
+  Search,
+  Settings,
+  CreditCard,
+  Zap,
 } from 'lucide-react-native';
 import { LineChart, BarChart, PieChart as RNPieChart } from 'react-native-chart-kit';
 import { useAuth } from '@/hooks/auth-context';
@@ -362,6 +367,104 @@ export default function DashboardScreen() {
                   {currentTenant?.storeNameKurdish || currentTenant?.storeName || settings?.businessInfo?.name || 'سوپەرمارکێتی نموونە'} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
                 </KurdishText>
               </View>
+            </View>
+
+            {/* Quick Actions Section */}
+            <View style={[styles.quickActionsSection, currentIsTablet && styles.tabletQuickActionsSection]}>
+              <View style={styles.quickActionsHeader}>
+                <View style={styles.quickActionsHeaderLeft}>
+                  <Zap size={20} color="#F59E0B" />
+                  <KurdishText style={[styles.quickActionsTitle, currentIsTablet && styles.tabletQuickActionsTitle]}>
+                    کردارە خێراکان
+                  </KurdishText>
+                </View>
+              </View>
+              
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.quickActionsScroll}
+              >
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionGreen]}
+                  onPress={() => router.push('/add-debt')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconGreen]}>
+                    <Plus size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>زیادکردنی قەرز</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionBlue]}
+                  onPress={() => router.push('/add-payment')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconBlue]}>
+                    <CreditCard size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>زیادکردنی پارەدان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionPurple]}
+                  onPress={() => router.push('/add-user')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconPurple]}>
+                    <UserPlus size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>زیادکردنی کڕیار</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionOrange]}
+                  onPress={() => router.push('/(tabs)/reports')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconOrange]}>
+                    <FileText size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>ڕاپۆرتەکان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionTeal]}
+                  onPress={() => router.push('/(tabs)/search')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconTeal]}>
+                    <Search size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>گەڕان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionIndigo]}
+                  onPress={() => router.push('/(tabs)/customers')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconIndigo]}>
+                    <Users size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>کڕیارەکان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionRed]}
+                  onPress={() => router.push('/receipts')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconRed]}>
+                    <Receipt size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>وەسڵەکان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionGray]}
+                  onPress={() => router.push('/(tabs)/settings')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconGray]}>
+                    <Settings size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>ڕێکخستنەکان</KurdishText>
+                </TouchableOpacity>
+              </ScrollView>
             </View>
 
             {/* Filter Controls */}
@@ -1343,5 +1446,141 @@ const styles = StyleSheet.create({
   locationAccuracy: {
     fontSize: 12,
     color: '#6B7280',
+  },
+  quickActionsSection: {
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 10,
+    marginVertical: 8,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tabletQuickActionsSection: {
+    paddingHorizontal: 30,
+    paddingVertical: 20,
+    marginHorizontal: 20,
+  },
+  quickActionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  quickActionsHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  quickActionsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1F2937',
+  },
+  tabletQuickActionsTitle: {
+    fontSize: 22,
+  },
+  quickActionsScroll: {
+    gap: 12,
+    paddingRight: 20,
+  },
+  quickActionCard: {
+    width: 120,
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  quickActionGreen: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 2,
+    borderColor: '#10B981',
+  },
+  quickActionBlue: {
+    backgroundColor: '#EFF6FF',
+    borderWidth: 2,
+    borderColor: '#3B82F6',
+  },
+  quickActionPurple: {
+    backgroundColor: '#F5F3FF',
+    borderWidth: 2,
+    borderColor: '#8B5CF6',
+  },
+  quickActionOrange: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
+  quickActionTeal: {
+    backgroundColor: '#F0FDFA',
+    borderWidth: 2,
+    borderColor: '#14B8A6',
+  },
+  quickActionIndigo: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 2,
+    borderColor: '#6366F1',
+  },
+  quickActionRed: {
+    backgroundColor: '#FEF2F2',
+    borderWidth: 2,
+    borderColor: '#EF4444',
+  },
+  quickActionGray: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 2,
+    borderColor: '#6B7280',
+  },
+  quickActionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  quickActionIconGreen: {
+    backgroundColor: '#10B981',
+  },
+  quickActionIconBlue: {
+    backgroundColor: '#3B82F6',
+  },
+  quickActionIconPurple: {
+    backgroundColor: '#8B5CF6',
+  },
+  quickActionIconOrange: {
+    backgroundColor: '#F59E0B',
+  },
+  quickActionIconTeal: {
+    backgroundColor: '#14B8A6',
+  },
+  quickActionIconIndigo: {
+    backgroundColor: '#6366F1',
+  },
+  quickActionIconRed: {
+    backgroundColor: '#EF4444',
+  },
+  quickActionIconGray: {
+    backgroundColor: '#6B7280',
+  },
+  quickActionLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1F2937',
+    textAlign: 'center',
   },
 });
