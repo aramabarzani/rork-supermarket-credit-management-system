@@ -1,6 +1,6 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Debt, Payment, SearchFilters, PaymentFilters, DebtHistory } from '@/types/debt';
+import { Debt, Payment, SearchFilters, PaymentFilters, DebtHistory, PaymentPlan, PaymentReminder, AutomaticNotificationSettings } from '@/types/debt';
 import { safeStorage } from '@/utils/storage';
 import { useAuth } from '@/hooks/auth-context';
 
@@ -104,7 +104,8 @@ const samplePayments: Payment[] = [
     paymentDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     receivedBy: 'admin',
     receivedByName: 'بەڕێوەبەر',
-    notes: 'پارەدانی یەکەم'
+    notes: 'پارەدانی یەکەم',
+    status: 'completed' as const
   },
   {
     id: 'payment-2',
@@ -113,7 +114,8 @@ const samplePayments: Payment[] = [
     paymentDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     receivedBy: 'employee-1',
     receivedByName: 'کارمەند یەک',
-    notes: 'پارەدانی تەواو'
+    notes: 'پارەدانی تەواو',
+    status: 'completed' as const
   },
   {
     id: 'payment-3',
@@ -122,7 +124,8 @@ const samplePayments: Payment[] = [
     paymentDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
     receivedBy: 'admin',
     receivedByName: 'بەڕێوەبەر',
-    notes: 'پارەدانی بەشەکی'
+    notes: 'پارەدانی بەشەکی',
+    status: 'completed' as const
   },
   {
     id: 'payment-4',
@@ -131,19 +134,52 @@ const samplePayments: Payment[] = [
     paymentDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
     receivedBy: 'employee-1',
     receivedByName: 'کارمەند یەک',
-    notes: 'پارەدانی یەکەم'
+    notes: 'پارەدانی یەکەم',
+    status: 'completed' as const
   }
 ];
 
 const DEBTS_STORAGE_KEY = 'debts';
 const PAYMENTS_STORAGE_KEY = 'payments';
 const DEBT_HISTORY_STORAGE_KEY = 'debt_history';
+const PAYMENT_PLANS_STORAGE_KEY = 'payment_plans';
+const PAYMENT_REMINDERS_STORAGE_KEY = 'payment_reminders';
+const NOTIFICATION_SETTINGS_STORAGE_KEY = 'notification_settings';
 
 export const [DebtProvider, useDebts] = createContextHook(() => {
   const { user } = useAuth();
   const [debts, setDebts] = useState<Debt[]>(sampleDebts);
   const [payments, setPayments] = useState<Payment[]>(samplePayments);
   const [debtHistory, setDebtHistory] = useState<DebtHistory[]>([]);
+  const [paymentPlans, setPaymentPlans] = useState<PaymentPlan[]>([]);
+  const [paymentReminders, setPaymentReminders] = useState<PaymentReminder[]>([]);
+  const [notificationSettings, setNotificationSettings] = useState<AutomaticNotificationSettings>({
+    id: 'default',
+    enabled: true,
+    overdueNotifications: {
+      enabled: true,
+      daysBeforeDue: [7, 3, 1],
+      daysAfterDue: [1, 3, 7, 14],
+      channels: ['push', 'sms'],
+      messageTemplate: 'سڵاو {customerName}، قەرزەکەت بە بڕی {amount} دینار لە بەرواری {dueDate} بەسەرچووە. تکایە پارەدان بکە.'
+    },
+    paymentConfirmations: {
+      enabled: true,
+      channels: ['push', 'sms'],
+      messageTemplate: 'سوپاس {customerName}، پارەدانەکەت بە بڕی {amount} دینار وەرگیرا.'
+    },
+    monthlyReports: {
+      enabled: true,
+      dayOfMonth: 1,
+      channels: ['email'],
+      recipients: []
+    },
+    customReminders: {
+      enabled: true,
+      defaultTime: '09:00',
+      allowCustomerCustomization: true
+    }
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -156,10 +192,16 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
       const storedDebts = await safeStorage.getItem<Debt[]>(DEBTS_STORAGE_KEY, sampleDebts);
       const storedPayments = await safeStorage.getItem<Payment[]>(PAYMENTS_STORAGE_KEY, samplePayments);
       const storedHistory = await safeStorage.getItem<DebtHistory[]>(DEBT_HISTORY_STORAGE_KEY, []);
+      const storedPlans = await safeStorage.getItem<PaymentPlan[]>(PAYMENT_PLANS_STORAGE_KEY, []);
+      const storedReminders = await safeStorage.getItem<PaymentReminder[]>(PAYMENT_REMINDERS_STORAGE_KEY, []);
+      const storedSettings = await safeStorage.getItem<AutomaticNotificationSettings>(NOTIFICATION_SETTINGS_STORAGE_KEY, notificationSettings);
       
       if (storedDebts) setDebts(storedDebts);
       if (storedPayments) setPayments(storedPayments);
       if (storedHistory) setDebtHistory(storedHistory);
+      if (storedPlans) setPaymentPlans(storedPlans);
+      if (storedReminders) setPaymentReminders(storedReminders);
+      if (storedSettings) setNotificationSettings(storedSettings);
     } catch {
       
     } finally {
@@ -254,6 +296,7 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
         receivedBy: user?.id || 'unknown',
         receivedByName: user?.name || 'نەناسراو',
         notes: paymentData.notes,
+        status: 'completed' as const,
       };
 
       const updatedPayments = [...payments, newPayment];
@@ -1007,10 +1050,296 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
     );
   }, [debtHistory]);
 
+  const updatePayment = useCallback(async (paymentId: string, updates: Partial<Payment>) => {
+    try {
+      const payment = payments.find(p => p.id === paymentId);
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
+      if (payment.status === 'refunded') {
+        throw new Error('ناتوانیت پارەدانێکی گەڕاوە دەستکاری بکەیت');
+      }
+
+      const changes: DebtHistory['changes'] = [];
+      Object.keys(updates).forEach(key => {
+        const oldValue = payment[key as keyof Payment];
+        const newValue = updates[key as keyof Payment];
+        if (oldValue !== newValue) {
+          changes.push({
+            field: key,
+            oldValue,
+            newValue,
+          });
+        }
+      });
+
+      const updatedPayment: Payment = {
+        ...payment,
+        ...updates,
+        updatedAt: new Date().toISOString(),
+        updatedBy: user?.id || 'unknown',
+        updatedByName: user?.name || 'نەناسراو',
+      };
+
+      const updatedPayments = payments.map(p => p.id === paymentId ? updatedPayment : p);
+      await savePayments(updatedPayments);
+
+      if (changes.length > 0) {
+        await addHistoryEntry({
+          debtId: payment.debtId,
+          action: 'payment_updated',
+          performedBy: user?.id || 'unknown',
+          performedByName: user?.name || 'نەناسراو',
+          changes,
+          notes: `پارەدان دەستکاریکرا`,
+          metadata: { paymentId },
+        });
+      }
+
+      return updatedPayment;
+    } catch (error) {
+      throw error;
+    }
+  }, [payments, user, savePayments, addHistoryEntry]);
+
+  const deletePayment = useCallback(async (paymentId: string, reason?: string) => {
+    try {
+      const payment = payments.find(p => p.id === paymentId);
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
+      if (payment.status === 'refunded') {
+        throw new Error('ناتوانیت پارەدانێکی گەڕاوە بسڕیتەوە');
+      }
+
+      const debt = debts.find(d => d.id === payment.debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const updatedPayments = payments.filter(p => p.id !== paymentId);
+      await savePayments(updatedPayments);
+
+      const newRemainingAmount = debt.remainingAmount + payment.amount;
+      const updatedDebts = debts.map(d => {
+        if (d.id === payment.debtId) {
+          return {
+            ...d,
+            remainingAmount: newRemainingAmount,
+            status: newRemainingAmount === d.amount ? ('active' as const) : d.status,
+          };
+        }
+        return d;
+      });
+      await saveDebts(updatedDebts);
+
+      await addHistoryEntry({
+        debtId: payment.debtId,
+        action: 'payment_deleted',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        notes: reason || `پارەدان سڕایەوە بە بڕی ${payment.amount} دینار`,
+        metadata: { paymentId },
+      });
+
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }, [payments, debts, user, savePayments, saveDebts, addHistoryEntry]);
+
+  const refundPayment = useCallback(async (paymentId: string, reason: string) => {
+    try {
+      const payment = payments.find(p => p.id === paymentId);
+      if (!payment) {
+        throw new Error('Payment not found');
+      }
+
+      if (payment.status === 'refunded') {
+        throw new Error('ئەم پارەدانە پێشتر گەڕاوەتەوە');
+      }
+
+      const debt = debts.find(d => d.id === payment.debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const updatedPayment: Payment = {
+        ...payment,
+        status: 'refunded' as const,
+        refundedAt: new Date().toISOString(),
+        refundedBy: user?.id || 'unknown',
+        refundedByName: user?.name || 'نەناسراو',
+        refundReason: reason,
+      };
+
+      const updatedPayments = payments.map(p => p.id === paymentId ? updatedPayment : p);
+      await savePayments(updatedPayments);
+
+      const newRemainingAmount = debt.remainingAmount + payment.amount;
+      const updatedDebts = debts.map(d => {
+        if (d.id === payment.debtId) {
+          return {
+            ...d,
+            remainingAmount: newRemainingAmount,
+            status: newRemainingAmount === d.amount ? ('active' as const) : d.status,
+          };
+        }
+        return d;
+      });
+      await saveDebts(updatedDebts);
+
+      await addHistoryEntry({
+        debtId: payment.debtId,
+        action: 'payment_refunded',
+        performedBy: user?.id || 'unknown',
+        performedByName: user?.name || 'نەناسراو',
+        notes: `پارەدان گەڕایەوە بە بڕی ${payment.amount} دینار - هۆکار: ${reason}`,
+        metadata: { paymentId },
+      });
+
+      return updatedPayment;
+    } catch (error) {
+      throw error;
+    }
+  }, [payments, debts, user, savePayments, saveDebts, addHistoryEntry]);
+
+  const savePaymentPlans = useCallback(async (newPlans: PaymentPlan[]) => {
+    setPaymentPlans(newPlans);
+    await safeStorage.setItem(PAYMENT_PLANS_STORAGE_KEY, newPlans);
+  }, []);
+
+  const savePaymentReminders = useCallback(async (newReminders: PaymentReminder[]) => {
+    setPaymentReminders(newReminders);
+    await safeStorage.setItem(PAYMENT_REMINDERS_STORAGE_KEY, newReminders);
+  }, []);
+
+  const saveNotificationSettings = useCallback(async (newSettings: AutomaticNotificationSettings) => {
+    setNotificationSettings(newSettings);
+    await safeStorage.setItem(NOTIFICATION_SETTINGS_STORAGE_KEY, newSettings);
+  }, []);
+
+  const createPaymentPlan = useCallback(async (planData: {
+    debtId: string;
+    installmentAmount: number;
+    frequency: 'daily' | 'weekly' | 'monthly';
+    startDate: string;
+    notes?: string;
+  }) => {
+    try {
+      const debt = debts.find(d => d.id === planData.debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const totalInstallments = Math.ceil(debt.remainingAmount / planData.installmentAmount);
+      
+      const newPlan: PaymentPlan = {
+        id: `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        debtId: planData.debtId,
+        customerId: debt.customerId,
+        customerName: debt.customerName,
+        totalAmount: debt.remainingAmount,
+        installmentAmount: planData.installmentAmount,
+        frequency: planData.frequency,
+        startDate: planData.startDate,
+        nextPaymentDate: planData.startDate,
+        completedPayments: 0,
+        totalInstallments,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: user?.id || 'unknown',
+        createdByName: user?.name || 'نەناسراو',
+        notes: planData.notes,
+      };
+
+      const updatedPlans = [...paymentPlans, newPlan];
+      await savePaymentPlans(updatedPlans);
+
+      return newPlan;
+    } catch (error) {
+      throw error;
+    }
+  }, [debts, paymentPlans, user, savePaymentPlans]);
+
+  const createPaymentReminder = useCallback(async (reminderData: {
+    customerId: string;
+    debtId: string;
+    reminderDate: string;
+    reminderTime: string;
+    message: string;
+    type: 'sms' | 'whatsapp' | 'push' | 'email';
+    isRecurring: boolean;
+    recurringFrequency?: 'daily' | 'weekly' | 'monthly';
+  }) => {
+    try {
+      const debt = debts.find(d => d.id === reminderData.debtId);
+      if (!debt) {
+        throw new Error('Debt not found');
+      }
+
+      const newReminder: PaymentReminder = {
+        id: `reminder-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        customerId: reminderData.customerId,
+        customerName: debt.customerName,
+        debtId: reminderData.debtId,
+        reminderDate: reminderData.reminderDate,
+        reminderTime: reminderData.reminderTime,
+        message: reminderData.message,
+        type: reminderData.type,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        createdBy: user?.id || 'unknown',
+        createdByName: user?.name || 'نەناسراو',
+        isRecurring: reminderData.isRecurring,
+        recurringFrequency: reminderData.recurringFrequency,
+        customTime: reminderData.reminderTime,
+      };
+
+      const updatedReminders = [...paymentReminders, newReminder];
+      await savePaymentReminders(updatedReminders);
+
+      return newReminder;
+    } catch (error) {
+      throw error;
+    }
+  }, [debts, paymentReminders, user, savePaymentReminders]);
+
+  const updateNotificationSettings = useCallback(async (updates: Partial<AutomaticNotificationSettings>) => {
+    const updatedSettings: AutomaticNotificationSettings = {
+      ...notificationSettings,
+      ...updates,
+    };
+    await saveNotificationSettings(updatedSettings);
+    return updatedSettings;
+  }, [notificationSettings, saveNotificationSettings]);
+
+  const getActivePaymentPlans = useCallback(() => {
+    return paymentPlans.filter(plan => plan.status === 'active');
+  }, [paymentPlans]);
+
+  const getPendingReminders = useCallback(() => {
+    return paymentReminders.filter(reminder => reminder.status === 'pending');
+  }, [paymentReminders]);
+
+  const getOverdueReminders = useCallback(() => {
+    const now = new Date();
+    return paymentReminders.filter(reminder => {
+      if (reminder.status !== 'pending') return false;
+      const reminderDateTime = new Date(`${reminder.reminderDate}T${reminder.reminderTime}`);
+      return reminderDateTime < now;
+    });
+  }, [paymentReminders]);
+
   return useMemo(() => ({
     debts,
     payments,
     debtHistory,
+    paymentPlans,
+    paymentReminders,
+    notificationSettings,
     isLoading,
     addDebt,
     addPayment,
@@ -1019,6 +1348,15 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
     splitDebt,
     transferDebt,
     getDebtHistory,
+    updatePayment,
+    deletePayment,
+    refundPayment,
+    createPaymentPlan,
+    createPaymentReminder,
+    updateNotificationSettings,
+    getActivePaymentPlans,
+    getPendingReminders,
+    getOverdueReminders,
     getSummary,
     getHighDebtCustomers,
     getOverdueDebts,
@@ -1038,5 +1376,5 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
     getFinancialHealthReport,
     exportFinancialData,
     checkBalanceDiscrepancies,
-  }), [debts, payments, debtHistory, isLoading, addDebt, addPayment, updateDebt, deleteDebt, splitDebt, transferDebt, getDebtHistory, getSummary, getHighDebtCustomers, getOverdueDebts, getUnpaidDebts, getMonthlyPaymentReport, getYearlyPaymentReport, searchDebts, searchPayments, getNewDebts, getNewPayments, getDebtsByAmountRange, searchAllData, getCustomerDebts, getPaymentsByCustomer, getIrregularPaymentReport, getBestPayingCustomers, getFinancialHealthReport, exportFinancialData, checkBalanceDiscrepancies]);
+  }), [debts, payments, debtHistory, paymentPlans, paymentReminders, notificationSettings, isLoading, addDebt, addPayment, updateDebt, deleteDebt, splitDebt, transferDebt, getDebtHistory, updatePayment, deletePayment, refundPayment, createPaymentPlan, createPaymentReminder, updateNotificationSettings, getActivePaymentPlans, getPendingReminders, getOverdueReminders, getSummary, getHighDebtCustomers, getOverdueDebts, getUnpaidDebts, getMonthlyPaymentReport, getYearlyPaymentReport, searchDebts, searchPayments, getNewDebts, getNewPayments, getDebtsByAmountRange, searchAllData, getCustomerDebts, getPaymentsByCustomer, getIrregularPaymentReport, getBestPayingCustomers, getFinancialHealthReport, exportFinancialData, checkBalanceDiscrepancies]);
 });

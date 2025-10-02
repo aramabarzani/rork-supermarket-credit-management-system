@@ -29,6 +29,14 @@ export interface Payment {
   receivedBy: string;
   receivedByName: string;
   notes?: string;
+  status: 'completed' | 'refunded' | 'cancelled';
+  refundedAt?: string;
+  refundedBy?: string;
+  refundedByName?: string;
+  refundReason?: string;
+  updatedAt?: string;
+  updatedBy?: string;
+  updatedByName?: string;
 }
 
 export interface DebtSummary {
@@ -139,7 +147,7 @@ export interface ReceiptFilters {
 export interface DebtHistory {
   id: string;
   debtId: string;
-  action: 'created' | 'updated' | 'deleted' | 'split' | 'transferred' | 'payment_added';
+  action: 'created' | 'updated' | 'deleted' | 'split' | 'transferred' | 'payment_added' | 'payment_updated' | 'payment_deleted' | 'payment_refunded';
   performedBy: string;
   performedByName: string;
   performedAt: string;
@@ -155,5 +163,72 @@ export interface DebtHistory {
     splitInto?: string[];
     paymentId?: string;
     [key: string]: any;
+  };
+}
+
+export interface PaymentPlan {
+  id: string;
+  debtId: string;
+  customerId: string;
+  customerName: string;
+  totalAmount: number;
+  installmentAmount: number;
+  frequency: 'daily' | 'weekly' | 'monthly';
+  startDate: string;
+  endDate?: string;
+  nextPaymentDate: string;
+  completedPayments: number;
+  totalInstallments: number;
+  status: 'active' | 'completed' | 'cancelled';
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+  notes?: string;
+}
+
+export interface PaymentReminder {
+  id: string;
+  customerId: string;
+  customerName: string;
+  debtId: string;
+  reminderDate: string;
+  reminderTime: string;
+  message: string;
+  type: 'sms' | 'whatsapp' | 'push' | 'email';
+  status: 'pending' | 'sent' | 'failed';
+  sentAt?: string;
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+  isRecurring: boolean;
+  recurringFrequency?: 'daily' | 'weekly' | 'monthly';
+  customTime?: string;
+}
+
+export interface AutomaticNotificationSettings {
+  id: string;
+  enabled: boolean;
+  overdueNotifications: {
+    enabled: boolean;
+    daysBeforeDue: number[];
+    daysAfterDue: number[];
+    channels: ('sms' | 'whatsapp' | 'push' | 'email')[];
+    messageTemplate: string;
+  };
+  paymentConfirmations: {
+    enabled: boolean;
+    channels: ('sms' | 'whatsapp' | 'push' | 'email')[];
+    messageTemplate: string;
+  };
+  monthlyReports: {
+    enabled: boolean;
+    dayOfMonth: number;
+    channels: ('email' | 'push')[];
+    recipients: string[];
+  };
+  customReminders: {
+    enabled: boolean;
+    defaultTime: string;
+    allowCustomerCustomization: boolean;
   };
 }
