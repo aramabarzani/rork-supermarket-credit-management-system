@@ -169,8 +169,8 @@ export default function EmployeePermissionsScreen() {
               </View>
             </View>
 
-            {group.permissions.map((permission) => (
-              <View key={permission} style={styles.permissionRow}>
+            {group.permissions.map((permission, permIndex) => (
+              <View key={`${groupIndex}-${permission}-${permIndex}`} style={styles.permissionRow}>
                 <View style={styles.permissionInfo}>
                   <KurdishText variant="body" color="#1F2937">
                     {PERMISSION_LABELS[permission] || permission}

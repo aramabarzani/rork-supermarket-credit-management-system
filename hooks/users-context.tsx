@@ -178,12 +178,10 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             const trimmedData = stored.trim();
             
             if (!trimmedData.startsWith('[') && !trimmedData.startsWith('{')) {
-              console.log('UsersContext: Invalid JSON format detected, resetting to sample data');
               throw new Error('Invalid JSON format - data is corrupted');
             }
             
             if (trimmedData.length < 2) {
-              console.log('UsersContext: Data too short, resetting to sample data');
               throw new Error('Invalid JSON format - data is corrupted');
             }
             
@@ -191,17 +189,14 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             try {
               parsedUsers = JSON.parse(trimmedData);
             } catch (jsonError) {
-              console.log('UsersContext: JSON parse failed, resetting to sample data');
               throw new Error('Invalid JSON format - data is corrupted');
             }
             
             if (!Array.isArray(parsedUsers)) {
-              console.log('UsersContext: Data is not an array, resetting to sample data');
               throw new Error('Invalid users data structure');
             }
             
             if (parsedUsers.length === 0) {
-              console.log('UsersContext: Empty users array, resetting to sample data');
               throw new Error('Empty users array');
             }
             
@@ -214,37 +209,32 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
             );
             
             if (!validUsers) {
-              console.log('UsersContext: Invalid user objects detected, resetting to sample data');
               throw new Error('Invalid users data structure');
             }
             
             setUsers(parsedUsers);
-            console.log('UsersContext: Successfully loaded users from storage:', parsedUsers.length);
           } catch (parseError) {
-            console.log('UsersContext: Resetting to sample data due to error');
             try {
               await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
               await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
             } catch (clearError) {
-              console.log('UsersContext: Error during storage reset, continuing with sample data');
+              // Silent error
             }
             setUsers(sampleUsers);
           }
         } else {
-          console.log('UsersContext: No stored users, initializing with sample data');
           try {
             await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
           } catch (saveError) {
-            console.log('UsersContext: Error saving initial users, continuing with sample data');
+            // Silent error
           }
           setUsers(sampleUsers);
         }
       } catch (error) {
-        console.log('UsersContext: Error loading users, using sample data');
         try {
           await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
         } catch (clearError) {
-          console.log('UsersContext: Error clearing storage');
+          // Silent error
         }
         setUsers(sampleUsers);
       }

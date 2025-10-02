@@ -92,69 +92,15 @@ export default function CustomerQRManagementScreen() {
   };
 
   const regenerateQRCode = (customerId: string) => {
-    if (!canGenerate) {
-      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی نوێکردنەوەی QR Code ت نییە');
-      return;
-    }
-
-    Alert.alert(
-      'دڵنیابوونەوە',
-      'دڵنیایت لە دروستکردنەوەی QR Code نوێ؟ کۆدی کۆن ناچالاک دەبێت.',
-      [
-        { text: 'نەخێر', style: 'cancel' },
-        { 
-          text: 'بەڵێ', 
-          onPress: () => generateQRCode(customerId)
-        },
-      ]
-    );
+    Alert.alert('دەسەڵات نییە', 'تەنها دروستکردنی QR Code ڕێگەپێدراوە، نوێکردنەوە نا');
   };
 
   const deleteQRCode = (customerId: string) => {
-    if (!canGenerate) {
-      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی سڕینەوەی QR Code ت نییە');
-      return;
-    }
-
-    Alert.alert(
-      'دڵنیابوونەوە',
-      'دڵنیایت لە سڕینەوەی QR Code؟',
-      [
-        { text: 'نەخێر', style: 'cancel' },
-        { 
-          text: 'بەڵێ', 
-          style: 'destructive',
-          onPress: () => {
-            const customer = customers.find(c => c.id === customerId);
-            if (customer) {
-              updateUser(customer.id, { qrCode: undefined });
-              Alert.alert('سەرکەوتوو', 'QR Code سڕایەوە');
-            }
-          }
-        },
-      ]
-    );
+    Alert.alert('دەسەڵات نییە', 'تەنها دروستکردنی QR Code ڕێگەپێدراوە، سڕینەوە نا');
   };
 
   const toggleQRCodeStatus = (customerId: string) => {
-    if (!canGenerate) {
-      Alert.alert('دەسەڵات نییە', 'تۆ دەسەڵاتی گۆڕینی دۆخی QR Code ت نییە');
-      return;
-    }
-
-    const customer = customers.find(c => c.id === customerId);
-    if (!customer || !customer.qrCode) return;
-
-    const updatedQRCode = {
-      ...customer.qrCode,
-      isActive: !customer.qrCode.isActive,
-    };
-
-    updateUser(customer.id, { qrCode: updatedQRCode });
-    Alert.alert(
-      'سەرکەوتوو', 
-      updatedQRCode.isActive ? 'QR Code چالاککرا' : 'QR Code ناچالاککرا'
-    );
+    Alert.alert('دەسەڵات نییە', 'تەنها دروستکردنی QR Code ڕێگەپێدراوە، گۆڕینی دۆخ نا');
   };
 
   const shareQRCode = async (customerId: string) => {
@@ -252,43 +198,7 @@ export default function CustomerQRManagementScreen() {
                 </TouchableOpacity>
               )}
 
-              {canGenerate && (
-                <>
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.primaryButton]}
-                    onPress={() => toggleQRCodeStatus(customer.id)}
-                  >
-                    {customer.qrCode.isActive ? (
-                      <XCircle size={20} color="white" />
-                    ) : (
-                      <CheckCircle size={20} color="white" />
-                    )}
-                    <KurdishText variant="body" color="white">
-                      {customer.qrCode.isActive ? 'ناچالاککردن' : 'چالاککردن'}
-                    </KurdishText>
-                  </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.warningButton]}
-                    onPress={() => regenerateQRCode(customer.id)}
-                  >
-                    <RefreshCw size={20} color="#F59E0B" />
-                    <KurdishText variant="body" color="#F59E0B">
-                      نوێکردنەوە
-                    </KurdishText>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.actionButton, styles.dangerButton]}
-                    onPress={() => deleteQRCode(customer.id)}
-                  >
-                    <Trash2 size={20} color="#EF4444" />
-                    <KurdishText variant="body" color="#EF4444">
-                      سڕینەوە
-                    </KurdishText>
-                  </TouchableOpacity>
-                </>
-              )}
             </View>
           </>
         ) : (
