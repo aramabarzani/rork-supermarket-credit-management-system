@@ -763,6 +763,18 @@ export default function DashboardScreen() {
                     وەسڵەکان
                   </Text>
                 </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={styles.actionButton}
+                  onPress={() => router.push('/all-features')}
+                >
+                  <View style={[styles.actionIcon, { backgroundColor: '#10B981' }]}>
+                    <Activity size={24} color="white" />
+                  </View>
+                  <Text style={styles.actionText}>
+                    هەموو تایبەتمەندیەکان
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
 
