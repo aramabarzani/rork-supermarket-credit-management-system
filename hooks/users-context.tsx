@@ -492,47 +492,44 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     
     if (!userData.name || !userData.phone) {
       console.error('[Users] Missing required fields: name or phone');
-      return null;
+      throw new Error('ناو و ژمارەی مۆبایل پێویستە');
     }
-    
-    const existingUser = users.find(u => u.phone === userData.phone);
-    if (existingUser) {
-      console.log('[Users] User with this phone exists:', { 
-        existingUserId: existingUser.id, 
-        existingTenantId: existingUser.tenantId,
-        newTenantId: userData.tenantId 
-      });
-      
-      if (existingUser.tenantId && userData.tenantId && existingUser.tenantId !== userData.tenantId) {
-        console.log('[Users] Different tenant - creating new user with same phone (tenant isolation)');
-      } else if (!existingUser.tenantId && userData.tenantId) {
-        console.log('[Users] Existing user has no tenant - updating with tenant info');
-        const updatedUser: User = {
-          ...existingUser,
-          name: userData.name,
-          role: userData.role || existingUser.role,
-          password: userData.password || existingUser.password,
-          tenantId: userData.tenantId,
-          permissions: userData.role === 'employee' ? DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })) : 
-                       userData.role === 'admin' ? Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })) : 
-                       existingUser.permissions,
-          email: userData.email || existingUser.email,
-          address: userData.address || existingUser.address,
-          nationalId: userData.nationalId || existingUser.nationalId,
-        };
-        
-        const updatedUsers = users.map(u => u.id === existingUser.id ? updatedUser : u);
-        await saveUsers(updatedUsers);
-        console.log('[Users] User updated with tenant info:', { id: updatedUser.id, tenantId: updatedUser.tenantId });
-        return updatedUser;
-      } else if (existingUser.tenantId === userData.tenantId) {
-        console.warn('[Users] User already exists in this tenant');
-        return null;
-      } else {
-        console.warn('[Users] User with this phone already exists without tenant context');
-        return null;
+
+    if (userData.tenantId) {
+      const existingUserInTenant = users.find(
+        u => u.phone === userData.phone && u.tenantId === userData.tenantId
+      );
+      if (existingUserInTenant) {
+        console.error('[Users] User with this phone already exists in this tenant');
+        throw new Error(`ژمارەی مۆبایل ${userData.phone} پێشتر تۆمارکراوە لەم هەژمارەدا`);
+      }
+
+      if (userData.email && userData.email.trim()) {
+        const existingEmailInTenant = users.find(
+          u => u.email === userData.email && u.tenantId === userData.tenantId
+        );
+        if (existingEmailInTenant) {
+          console.error('[Users] User with this email already exists in this tenant');
+          throw new Error(`ئیمەیڵ ${userData.email} پێشتر تۆمارکراوە لەم هەژمارەدا`);
+        }
+      }
+    } else {
+      const existingUser = users.find(u => u.phone === userData.phone && !u.tenantId);
+      if (existingUser) {
+        console.error('[Users] User with this phone already exists (no tenant)');
+        throw new Error(`ژمارەی مۆبایل ${userData.phone} پێشتر تۆمارکراوە`);
+      }
+
+      if (userData.email && userData.email.trim()) {
+        const existingEmail = users.find(u => u.email === userData.email && !u.tenantId);
+        if (existingEmail) {
+          console.error('[Users] User with this email already exists (no tenant)');
+          throw new Error(`ئیمەیڵ ${userData.email} پێشتر تۆمارکراوە`);
+        }
       }
     }
+
+    console.log('[Users] No duplicates found, creating user');
     
     const newUser: User = {
       id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,

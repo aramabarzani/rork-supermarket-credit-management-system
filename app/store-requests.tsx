@@ -123,17 +123,24 @@ export default function StoreRequestsScreen() {
                 storeName: request.storeNameKurdish,
               });
 
-              const newUser = await addUser({
-                name: request.ownerName,
-                phone: request.ownerPhone,
-                email: request.ownerEmail,
-                role: 'admin',
-                password: request.ownerPassword,
-                tenantId: newTenant.id,
-              });
+              let newUser;
+              try {
+                newUser = await addUser({
+                  name: request.ownerName,
+                  phone: request.ownerPhone,
+                  email: request.ownerEmail,
+                  role: 'admin',
+                  password: request.ownerPassword,
+                  tenantId: newTenant.id,
+                });
+              } catch (userError: any) {
+                console.error('[Store Requests] Failed to create admin user:', userError);
+                Alert.alert('هەڵە', userError?.message || 'کێشەیەک ڕوویدا لە دروستکردنی هەژماری بەڕێوەبەر');
+                return;
+              }
 
               if (!newUser) {
-                console.error('[Store Requests] Failed to create admin user');
+                console.error('[Store Requests] Failed to create admin user - returned null');
                 Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە دروستکردنی هەژماری بەڕێوەبەر');
                 return;
               }

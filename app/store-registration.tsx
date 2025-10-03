@@ -183,6 +183,12 @@ export default function StoreRegistrationScreen() {
 
     setIsSubmitting(true);
     try {
+      console.log('[Store Registration] Submitting request:', {
+        phone: formData.ownerPhone,
+        email: formData.ownerEmail,
+        storeName: formData.storeNameKurdish,
+      });
+
       const newRequest = await createRequest({
         storeName: formData.storeName,
         storeNameKurdish: formData.storeNameKurdish,
@@ -238,9 +244,10 @@ export default function StoreRegistrationScreen() {
           },
         ]
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Store Registration] Error:', error);
-      Alert.alert('هەڵە', 'کێشەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەرەوە');
+      const errorMessage = error?.message || 'کێشەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەرەوە';
+      Alert.alert('هەڵە', errorMessage);
     } finally {
       setIsSubmitting(false);
     }

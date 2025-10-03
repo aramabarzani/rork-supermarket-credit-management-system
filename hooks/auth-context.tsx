@@ -129,9 +129,39 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       
       console.log('[Auth] Total users loaded:', allUsers.length);
       
-      const foundUser = allUsers.find(
+      let foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
       );
+
+      if (foundUser && (foundUser.role === 'admin' || foundUser.role === 'employee')) {
+        const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+        const approvedTenants = tenants && Array.isArray(tenants) ? tenants.filter((t: any) => t.status === 'active') : [];
+        
+        const matchingTenants = approvedTenants.filter((t: any) => 
+          t.adminPhone === foundUser!.phone || t.ownerPhone === foundUser!.phone
+        );
+
+        if (matchingTenants.length > 1) {
+          console.log('[Auth] Multiple tenants found for this phone:', matchingTenants.length);
+          
+          if (foundUser.tenantId) {
+            const userTenant = matchingTenants.find((t: any) => t.id === foundUser!.tenantId);
+            if (!userTenant) {
+              console.error('[Auth] User tenantId does not match any active tenant');
+              return { 
+                success: false, 
+                error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
+              };
+            }
+          } else {
+            console.error('[Auth] Multiple tenants but user has no tenantId');
+            return { 
+              success: false, 
+              error: 'ژمارەی مۆبایلەکەت بۆ چەند هەژمارێک بەکارهاتووە. پەیوەندی بە پشتیوانی بکە بۆ چارەسەرکردنی کێشەکە' 
+            };
+          }
+        }
+      }
       
       if (!foundUser) {
         console.log('[Auth] User not found or password incorrect');

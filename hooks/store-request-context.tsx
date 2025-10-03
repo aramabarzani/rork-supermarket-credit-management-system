@@ -35,6 +35,52 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
   }, []);
 
   const createRequest = useCallback(async (request: Omit<StoreRequest, 'id' | 'createdAt' | 'status'>) => {
+    console.log('[Store Request] Checking for duplicate data:', {
+      phone: request.ownerPhone,
+      email: request.ownerEmail,
+    });
+
+    const existingPhoneRequest = requests.find(
+      r => r.ownerPhone === request.ownerPhone && r.status === 'approved'
+    );
+    if (existingPhoneRequest) {
+      console.error('[Store Request] Phone number already registered:', request.ownerPhone);
+      throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر تۆمارکراوە و پەسەندکراوە`);
+    }
+
+    if (request.ownerEmail && request.ownerEmail.trim()) {
+      const existingEmailRequest = requests.find(
+        r => r.ownerEmail === request.ownerEmail && r.status === 'approved'
+      );
+      if (existingEmailRequest) {
+        console.error('[Store Request] Email already registered:', request.ownerEmail);
+        throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر تۆمارکراوە و پەسەندکراوە`);
+      }
+    }
+
+    const existingUsers = await safeStorage.getGlobalItem<any[]>('users', []);
+    if (existingUsers && Array.isArray(existingUsers)) {
+      const existingUserWithPhone = existingUsers.find(
+        (u: any) => u.phone === request.ownerPhone && (u.role === 'admin' || u.role === 'owner')
+      );
+      if (existingUserWithPhone) {
+        console.error('[Store Request] Phone number already used by another admin/owner:', request.ownerPhone);
+        throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
+      }
+
+      if (request.ownerEmail && request.ownerEmail.trim()) {
+        const existingUserWithEmail = existingUsers.find(
+          (u: any) => u.email === request.ownerEmail && (u.role === 'admin' || u.role === 'owner')
+        );
+        if (existingUserWithEmail) {
+          console.error('[Store Request] Email already used by another admin/owner:', request.ownerEmail);
+          throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
+        }
+      }
+    }
+
+    console.log('[Store Request] No duplicates found, creating request');
+
     const newRequest: StoreRequest = {
       ...request,
       id: Date.now().toString(),
@@ -43,6 +89,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     };
 
     await saveRequests([...requests, newRequest]);
+    console.log('[Store Request] Request created successfully:', newRequest.id);
     return newRequest;
   }, [requests, saveRequests]);
 
