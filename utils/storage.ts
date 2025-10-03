@@ -1,17 +1,28 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-/**
- * Cross-platform storage utilities with error handling
- * Works with AsyncStorage on mobile and localStorage on web
- */
+let currentTenantId: string | null = null;
+
+export const setCurrentTenantId = (tenantId: string | null) => {
+  currentTenantId = tenantId;
+  console.log('[Storage] Current tenant set to:', tenantId);
+};
+
+export const getCurrentTenantId = (): string | null => {
+  return currentTenantId;
+};
+
+const getTenantKey = (key: string): string => {
+  if (!currentTenantId) {
+    return key;
+  }
+  return `tenant_${currentTenantId}_${key}`;
+};
 
 export const safeStorage = {
-  /**
-   * Safely get and parse JSON from storage with optional decryption
-   */
   getItem: async <T>(key: string, defaultValue: T | null = null): Promise<T | null> => {
     try {
+      const tenantKey = getTenantKey(key);
       let item: string | null = null;
       
       if (Platform.OS === 'web') {
@@ -19,12 +30,12 @@ export const safeStorage = {
           return defaultValue;
         }
         try {
-          item = localStorage.getItem(key);
-        } catch (storageError) {
+          item = localStorage.getItem(tenantKey);
+        } catch {
           return defaultValue;
         }
       } else {
-        item = await AsyncStorage.getItem(key);
+        item = await AsyncStorage.getItem(tenantKey);
       }
       
       if (!item || !item.trim()) {
@@ -40,20 +51,82 @@ export const safeStorage = {
       
       try {
         return JSON.parse(trimmedItem) as T;
-      } catch (parseError) {
+      } catch {
         await safeStorage.removeItem(key);
         return defaultValue;
       }
-    } catch (error) {
+    } catch {
       await safeStorage.removeItem(key);
       return defaultValue;
     }
   },
   
-  /**
-   * Safely set JSON to storage with optional encryption
-   */
+  getGlobalItem: async <T>(key: string, defaultValue: T | null = null): Promise<T | null> => {
+    try {
+      let item: string | null = null;
+      
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return defaultValue;
+        }
+        try {
+          item = localStorage.getItem(key);
+        } catch {
+          return defaultValue;
+        }
+      } else {
+        item = await AsyncStorage.getItem(key);
+      }
+      
+      if (!item || !item.trim()) {
+        return defaultValue;
+      }
+      
+      const trimmedItem = item.trim();
+      
+      if (!trimmedItem.startsWith('[') && !trimmedItem.startsWith('{') && !trimmedItem.startsWith('"')) {
+        return defaultValue;
+      }
+      
+      try {
+        return JSON.parse(trimmedItem) as T;
+      } catch {
+        return defaultValue;
+      }
+    } catch {
+      return defaultValue;
+    }
+  },
+  
   setItem: async <T>(key: string, value: T): Promise<boolean> => {
+    try {
+      if (value === null || value === undefined) {
+        return false;
+      }
+      
+      const tenantKey = getTenantKey(key);
+      const jsonValue = JSON.stringify(value);
+      
+      if (!jsonValue || jsonValue === 'undefined' || jsonValue === 'null') {
+        return false;
+      }
+      
+      if (Platform.OS === 'web') {
+        if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+          return false;
+        }
+        localStorage.setItem(tenantKey, jsonValue);
+      } else {
+        await AsyncStorage.setItem(tenantKey, jsonValue);
+      }
+      
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  
+  setGlobalItem: async <T>(key: string, value: T): Promise<boolean> => {
     try {
       if (value === null || value === undefined) {
         return false;
@@ -75,39 +148,32 @@ export const safeStorage = {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },
   
-  /**
-   * Safely remove item from storage
-   */
   removeItem: async (key: string): Promise<boolean> => {
     try {
+      const tenantKey = getTenantKey(key);
       if (Platform.OS === 'web') {
-        // Check if we're in a browser environment
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
           return false;
         }
-        localStorage.removeItem(key);
+        localStorage.removeItem(tenantKey);
       } else {
-        await AsyncStorage.removeItem(key);
+        await AsyncStorage.removeItem(tenantKey);
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },
   
-  /**
-   * Clear all storage data
-   */
   clear: async (): Promise<boolean> => {
     try {
       if (Platform.OS === 'web') {
-        // Check if we're in a browser environment
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
           return false;
         }
@@ -117,26 +183,23 @@ export const safeStorage = {
       }
       
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   },
   
-  /**
-   * Get multiple items at once
-   */
   multiGet: async (keys: string[]): Promise<Record<string, any>> => {
     try {
       const result: Record<string, any> = {};
       
       if (Platform.OS === 'web') {
-        // Check if we're in a browser environment
         if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
           return result;
         }
         
         for (const key of keys) {
-          const item = localStorage.getItem(key);
+          const tenantKey = getTenantKey(key);
+          const item = localStorage.getItem(tenantKey);
           if (item) {
             try {
               result[key] = JSON.parse(item);
@@ -146,20 +209,22 @@ export const safeStorage = {
           }
         }
       } else {
-        const items = await AsyncStorage.multiGet(keys);
-        for (const [key, value] of items) {
+        const tenantKeys = keys.map(k => getTenantKey(k));
+        const items = await AsyncStorage.multiGet(tenantKeys);
+        for (let i = 0; i < items.length; i++) {
+          const [, value] = items[i];
           if (value) {
             try {
-              result[key] = JSON.parse(value);
+              result[keys[i]] = JSON.parse(value);
             } catch {
-              result[key] = null;
+              result[keys[i]] = null;
             }
           }
         }
       }
       
       return result;
-    } catch (error) {
+    } catch {
       return {};
     }
   }

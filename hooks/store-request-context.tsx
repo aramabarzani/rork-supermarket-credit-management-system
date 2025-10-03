@@ -1,6 +1,6 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeStorage } from '@/utils/storage';
 import { StoreRequest, StoreRequestStats } from '@/types/store-request';
 
 export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => {
@@ -13,9 +13,9 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
 
   const loadRequests = async () => {
     try {
-      const stored = await AsyncStorage.getItem('store_requests');
+      const stored = await safeStorage.getGlobalItem<StoreRequest[]>('store_requests', []);
       if (stored) {
-        setRequests(JSON.parse(stored));
+        setRequests(stored);
       }
     } catch (error) {
       console.error('Failed to load store requests:', error);
@@ -26,7 +26,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
 
   const saveRequests = useCallback(async (updatedRequests: StoreRequest[]) => {
     try {
-      await AsyncStorage.setItem('store_requests', JSON.stringify(updatedRequests));
+      await safeStorage.setGlobalItem('store_requests', updatedRequests);
       setRequests(updatedRequests);
     } catch (error) {
       console.error('Failed to save store requests:', error);

@@ -1,7 +1,7 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, LoginCredentials, LoginResult } from '@/types/auth';
-import { safeStorage } from '@/utils/storage';
+import { safeStorage, setCurrentTenantId } from '@/utils/storage';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
 
 
@@ -80,8 +80,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   useEffect(() => {
     const loadAuth = async () => {
       try {
-        const storedUser = await safeStorage.getItem<User>('user');
+        const storedUser = await safeStorage.getGlobalItem<User>('user');
         if (storedUser && storedUser.id && storedUser.name) {
+          if (storedUser.tenantId) {
+            setCurrentTenantId(storedUser.tenantId);
+            console.log('[Auth] Tenant context set:', storedUser.tenantId);
+          }
           setUser(storedUser);
         } else {
           setUser(null);
@@ -101,7 +105,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       let allUsers: User[] = [...DEMO_USERS];
       try {
-        const storedUsers = await safeStorage.getItem<User[]>('users', null);
+        const storedUsers = await safeStorage.getGlobalItem<User[]>('users', null);
         if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
           const mergedUsers = [...DEMO_USERS];
           storedUsers.forEach(storedUser => {
@@ -114,10 +118,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           });
           allUsers = mergedUsers;
         } else {
-          await safeStorage.setItem('users', allUsers);
+          await safeStorage.setGlobalItem('users', allUsers);
         }
       } catch (error) {
-        await safeStorage.setItem('users', allUsers);
+        await safeStorage.setGlobalItem('users', allUsers);
       }
       
       const foundUser = allUsers.find(
@@ -138,27 +142,27 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           lastLoginAt: new Date().toISOString(),
           failedLoginAttempts: 0,
         };
-        setUser(updatedUser);
         
-        await safeStorage.setItem('user', updatedUser);
+        if (updatedUser.tenantId) {
+          setCurrentTenantId(updatedUser.tenantId);
+          console.log('[Auth] Login - Tenant context set:', updatedUser.tenantId);
+          
+          const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+          if (tenants && Array.isArray(tenants)) {
+            const userTenant = tenants.find((t: any) => t.id === updatedUser.tenantId);
+            if (userTenant) {
+              await safeStorage.setGlobalItem('currentTenant', userTenant);
+            }
+          }
+        }
+        
+        setUser(updatedUser);
+        await safeStorage.setGlobalItem('user', updatedUser);
         
         const updatedUsers = allUsers.map(u => 
           u.id === foundUser.id ? updatedUser : u
         );
-        await safeStorage.setItem('users', updatedUsers);
-        
-        if (updatedUser.tenantId) {
-          const currentTenant = await safeStorage.getItem<any>('currentTenant', null);
-          if (!currentTenant || currentTenant?.id !== updatedUser.tenantId) {
-            const tenants = await safeStorage.getItem<any[]>('tenants', []);
-            if (tenants && Array.isArray(tenants)) {
-              const userTenant = tenants.find((t: any) => t.id === updatedUser.tenantId);
-              if (userTenant) {
-                await safeStorage.setItem('currentTenant', userTenant);
-              }
-            }
-          }
-        }
+        await safeStorage.setGlobalItem('users', updatedUsers);
         
         return { success: true, user: updatedUser };
       }
@@ -171,6 +175,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const logout = useCallback(async () => {
     try {
+      setCurrentTenantId(null);
+      console.log('[Auth] Logout - Tenant context cleared');
       setUser(null);
       safeStorage.removeItem('user');
     } catch (error) {
@@ -189,8 +195,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-    // Don't await storage operations to prevent blocking UI
-    safeStorage.setItem('user', updatedUser);
+    safeStorage.setGlobalItem('user', updatedUser);
   }, [user]);
 
   return useMemo(() => ({

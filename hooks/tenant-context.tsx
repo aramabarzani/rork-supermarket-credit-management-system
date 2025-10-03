@@ -1,6 +1,6 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { safeStorage } from '@/utils/storage';
 import { Tenant, TenantStats } from '@/types/tenant';
 import { SUBSCRIPTION_PLANS, SubscriptionNotification, SubscriptionNotificationSettings } from '@/types/subscription';
 
@@ -36,9 +36,9 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   const loadTenants = async () => {
     try {
-      const stored = await AsyncStorage.getItem('tenants');
+      const stored = await safeStorage.getGlobalItem<Tenant[]>('tenants', []);
       if (stored) {
-        setTenants(JSON.parse(stored));
+        setTenants(stored);
       }
     } catch (error) {
       console.error('Failed to load tenants:', error);
@@ -49,9 +49,9 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   const loadCurrentTenant = async () => {
     try {
-      const stored = await AsyncStorage.getItem('currentTenant');
+      const stored = await safeStorage.getGlobalItem<Tenant>('currentTenant', null);
       if (stored) {
-        setCurrentTenant(JSON.parse(stored));
+        setCurrentTenant(stored);
       }
     } catch (error) {
       console.error('Failed to load current tenant:', error);
@@ -62,15 +62,15 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
     const tenant = tenants.find(t => t.id === tenantId);
     if (tenant) {
       setCurrentTenant(tenant);
-      await AsyncStorage.setItem('currentTenant', JSON.stringify(tenant));
+      await safeStorage.setGlobalItem('currentTenant', tenant);
     }
   }, [tenants]);
 
   const loadSubscriptionNotifications = async () => {
     try {
-      const stored = await AsyncStorage.getItem('subscription_notifications');
+      const stored = await safeStorage.getGlobalItem<SubscriptionNotification[]>('subscription_notifications', []);
       if (stored) {
-        setSubscriptionNotifications(JSON.parse(stored));
+        setSubscriptionNotifications(stored);
       }
     } catch (error) {
       console.error('Failed to load subscription notifications:', error);
@@ -79,9 +79,9 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   const loadNotificationSettings = async () => {
     try {
-      const stored = await AsyncStorage.getItem('subscription_notification_settings');
+      const stored = await safeStorage.getGlobalItem<SubscriptionNotificationSettings>('subscription_notification_settings', DEFAULT_NOTIFICATION_SETTINGS);
       if (stored) {
-        setNotificationSettings(JSON.parse(stored));
+        setNotificationSettings(stored);
       }
     } catch (error) {
       console.error('Failed to load notification settings:', error);
@@ -90,7 +90,7 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   const saveSubscriptionNotifications = async (notifications: SubscriptionNotification[]) => {
     try {
-      await AsyncStorage.setItem('subscription_notifications', JSON.stringify(notifications));
+      await safeStorage.setGlobalItem('subscription_notifications', notifications);
       setSubscriptionNotifications(notifications);
     } catch (error) {
       console.error('Failed to save subscription notifications:', error);
@@ -99,7 +99,7 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   const saveNotificationSettings = async (settings: SubscriptionNotificationSettings) => {
     try {
-      await AsyncStorage.setItem('subscription_notification_settings', JSON.stringify(settings));
+      await safeStorage.setGlobalItem('subscription_notification_settings', settings);
       setNotificationSettings(settings);
     } catch (error) {
       console.error('Failed to save notification settings:', error);
@@ -108,7 +108,7 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
 
   const saveTenants = async (updatedTenants: Tenant[]) => {
     try {
-      await AsyncStorage.setItem('tenants', JSON.stringify(updatedTenants));
+      await safeStorage.setGlobalItem('tenants', updatedTenants);
       setTenants(updatedTenants);
     } catch (error) {
       console.error('Failed to save tenants:', error);

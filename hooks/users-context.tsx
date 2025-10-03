@@ -267,13 +267,13 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
           try {
             await AsyncStorage.removeItem('users');
             await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
-          } catch (storageError) {
+          } catch {
             
           }
           setUsers(sampleUsers);
         }
       }
-    } catch (error) {
+    } catch {
       
     } finally {
       setIsLoading(false);
