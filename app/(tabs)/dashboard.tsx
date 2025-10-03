@@ -327,13 +327,11 @@ export default function DashboardScreen() {
             {/* Header */}
             <View style={[styles.header, currentIsTablet && styles.tabletHeader]}>
               {/* Business Name Display */}
-              {currentTenant && (
-                <View style={styles.businessNameContainer}>
-                  <KurdishText style={[styles.businessName, currentIsTablet && styles.tabletBusinessName]}>
-                    {currentTenant.storeNameKurdish || currentTenant.storeName}
-                  </KurdishText>
-                </View>
-              )}
+              <View style={styles.businessNameContainer}>
+                <KurdishText style={[styles.businessName, currentIsTablet && styles.tabletBusinessName]}>
+                  {currentTenant?.storeNameKurdish || currentTenant?.storeName || user?.storeName || 'سیستەمی بەڕێوەبردنی قەرز'}
+                </KurdishText>
+              </View>
               
               <View style={styles.headerContent}>
                 <View style={styles.userInfo}>
@@ -373,7 +371,7 @@ export default function DashboardScreen() {
               
               <View style={styles.licenseInfo}>
                 <KurdishText style={[styles.licenseText, currentIsTablet && styles.tabletLicenseText]}>
-                  {currentTenant?.storeNameKurdish || currentTenant?.storeName || settings?.businessInfo?.name || 'سوپەرمارکێتی نموونە'} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                  {user?.role === 'admin' || user?.role === 'employee' ? (currentTenant?.storeNameKurdish || currentTenant?.storeName || user?.storeName || 'فرۆشگا') : (settings?.businessInfo?.name || 'سیستەمی بەڕێوەبردنی قەرز')} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
                 </KurdishText>
               </View>
             </View>

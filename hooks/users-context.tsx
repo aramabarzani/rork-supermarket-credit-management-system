@@ -537,6 +537,8 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       onTimePayments: userData.role === 'customer' ? 0 : undefined,
       latePayments: userData.role === 'customer' ? 0 : undefined,
       tenantId: userData.tenantId,
+      storeName: userData.storeName,
+      storeNameKurdish: userData.storeNameKurdish,
     };
 
     console.log('[Users] New user created:', { id: newUser.id, phone: newUser.phone, role: newUser.role, tenantId: newUser.tenantId });

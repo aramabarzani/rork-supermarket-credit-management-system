@@ -133,6 +133,8 @@ export default function StoreRequestsScreen() {
                   role: 'admin',
                   password: request.ownerPassword,
                   tenantId: newTenant.id,
+                  storeName: request.storeName,
+                  storeNameKurdish: request.storeNameKurdish,
                 });
               } catch (userError: any) {
                 console.error('[Store Requests] Failed to create admin user:', userError);

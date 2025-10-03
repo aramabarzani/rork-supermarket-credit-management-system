@@ -27,6 +27,8 @@ export interface User {
   currentSessions?: UserSession[];
   isStarEmployee?: boolean;
   tenantId?: string;
+  storeName?: string;
+  storeNameKurdish?: string;
   address?: string;
   nationalId?: string;
   email?: string;
