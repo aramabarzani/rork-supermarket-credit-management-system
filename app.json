@@ -26,6 +26,17 @@
         "NSLocationAlwaysUsageDescription": "Allow $(PRODUCT_NAME) to use your location.",
         "NSLocationWhenInUseUsageDescription": "Allow $(PRODUCT_NAME) to use your location.",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera"
+      },
+      "entitlements": {
+        "com": {
+          "apple": {
+            "developer": {
+              "networking": {
+                "wifi-info": true
+              }
+            }
+          }
+        }
       }
     },
     "android": {
@@ -44,7 +55,10 @@
         "FOREGROUND_SERVICE",
         "FOREGROUND_SERVICE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.REQUEST_INSTALL_PACKAGES"
       ]
     },
     "web": {
@@ -78,6 +92,18 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./local/assets/notification_icon.png",
+          "color": "#ffffff",
+          "defaultChannel": "default",
+          "sounds": [
+            "./local/assets/notification_sound.wav"
+          ],
+          "enableBackgroundRemoteNotifications": false
         }
       ]
     ],
