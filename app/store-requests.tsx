@@ -118,13 +118,25 @@ export default function StoreRequestsScreen() {
                 expiryDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
               });
 
-              await addUser({
+              console.log('[Store Requests] Tenant created:', {
+                tenantId: newTenant.id,
+                storeName: request.storeNameKurdish,
+              });
+
+              const newUser = await addUser({
                 name: request.ownerName,
                 phone: request.ownerPhone,
                 email: request.ownerEmail,
                 role: 'admin',
                 password: request.ownerPassword,
                 tenantId: newTenant.id,
+              });
+
+              console.log('[Store Requests] Admin user created:', {
+                userId: newUser?.id,
+                phone: newUser?.phone,
+                role: newUser?.role,
+                tenantId: newUser?.tenantId,
               });
 
               await approveRequest(request.id, user?.name || 'Admin', approvalNotes);

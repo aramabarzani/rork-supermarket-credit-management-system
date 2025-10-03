@@ -495,11 +495,12 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       role: userData.role || 'customer',
       createdAt: new Date().toISOString(),
       isActive: true,
-      permissions: userData.role === 'employee' ? DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })) : [],
+      permissions: userData.role === 'employee' ? DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })) : 
+                   userData.role === 'admin' ? Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })) : [],
       password: userData.password || userData.phone || 'default123',
       failedLoginAttempts: 0,
       twoFactorEnabled: false,
-      allowedDevices: userData.role === 'customer' ? 2 : 3,
+      allowedDevices: userData.role === 'customer' ? 2 : userData.role === 'admin' ? 5 : 3,
       currentSessions: [],
       address: userData.address,
       nationalId: userData.nationalId,
@@ -508,10 +509,19 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       customerRating: userData.role === 'customer' ? 'new' : undefined,
       onTimePayments: userData.role === 'customer' ? 0 : undefined,
       latePayments: userData.role === 'customer' ? 0 : undefined,
+      tenantId: userData.tenantId,
     };
 
     const updatedUsers = [...users, newUser];
     await saveUsers(updatedUsers);
+    
+    console.log('[Users Context] User added successfully:', {
+      id: newUser.id,
+      name: newUser.name,
+      phone: newUser.phone,
+      role: newUser.role,
+      tenantId: newUser.tenantId,
+    });
 
     // Initialize employee stats and schedule if employee
     if (newUser.role === 'employee') {
@@ -544,6 +554,8 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       resourceType: 'user',
       resourceId: newUser.id,
     });
+    
+    return newUser;
   }, [users, employeeStats, employeeSchedules]);
 
   // 222. Edit employee information
