@@ -329,7 +329,7 @@ export default function DashboardScreen() {
               {/* Business Name Display */}
               <View style={styles.businessNameContainer}>
                 <KurdishText style={[styles.businessName, currentIsTablet && styles.tabletBusinessName]}>
-                  {currentTenant?.storeNameKurdish || currentTenant?.storeName || user?.storeName || 'سیستەمی بەڕێوەبردنی قەرز'}
+                  {currentTenant?.storeNameKurdish || currentTenant?.storeName || 'سیستەمی بەڕێوەبردنی قەرز'}
                 </KurdishText>
               </View>
               
