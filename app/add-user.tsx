@@ -30,6 +30,7 @@ export default function AddUserScreen() {
   const [nationalId, setNationalId] = useState('');
   const [email, setEmail] = useState('');
   const [customerGroup, setCustomerGroup] = useState<CustomerGroupId>('regular');
+  const [storeName, setStoreName] = useState('');
 
   const isAdmin = user?.role === 'admin';
 
@@ -60,6 +61,7 @@ export default function AddUserScreen() {
         nationalId: role === 'customer' ? nationalId : undefined,
         email: role === 'customer' ? email : undefined,
         customerGroup: role === 'customer' ? customerGroup : undefined,
+        storeName: role === 'customer' && storeName ? storeName : undefined,
         tenantId: user?.tenantId,
       });
 
@@ -217,6 +219,26 @@ export default function AddUserScreen() {
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  textAlign="right"
+                />
+              </View>
+            )}
+
+            {/* Store Name (for customers only) */}
+            {role === 'customer' && (
+              <View style={styles.inputGroup}>
+                <View style={styles.labelRow}>
+                  <Users size={20} color="#1E3A8A" />
+                  <KurdishText variant="body" color="#1F2937">
+                    ناوی فرۆشگا
+                  </KurdishText>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="ناوی فرۆشگا بنووسە (ئیختیاری)"
+                  placeholderTextColor="#9CA3AF"
+                  value={storeName}
+                  onChangeText={setStoreName}
                   textAlign="right"
                 />
               </View>

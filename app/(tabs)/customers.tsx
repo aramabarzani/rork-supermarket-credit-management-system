@@ -164,6 +164,11 @@ export default function CustomersScreen() {
                 <KurdishText variant="subtitle" color="#1F2937">
                   {item.name}
                 </KurdishText>
+                {item.storeName && (
+                  <KurdishText variant="caption" color="#1E3A8A" style={{ marginTop: 2 }}>
+                    {item.storeName}
+                  </KurdishText>
+                )}
                 <View style={styles.customerDetails}>
                   <View style={styles.detailRow}>
                     <Phone size={14} color="#6B7280" />
