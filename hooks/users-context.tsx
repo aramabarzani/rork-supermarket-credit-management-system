@@ -495,37 +495,21 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       throw new Error('ناو و ژمارەی مۆبایل پێویستە');
     }
 
-    if (userData.tenantId) {
-      const existingUserInTenant = users.find(
-        u => u.phone === userData.phone && u.tenantId === userData.tenantId
+    const existingUserInTenant = users.find(
+      u => u.phone === userData.phone && u.tenantId === userData.tenantId
+    );
+    if (existingUserInTenant) {
+      console.error('[Users] User with this phone already exists in this tenant');
+      throw new Error(`ژمارەی مۆبایل ${userData.phone} پێشتر تۆمارکراوە لەم هەژمارەدا`);
+    }
+
+    if (userData.email && userData.email.trim()) {
+      const existingEmailInTenant = users.find(
+        u => u.email === userData.email && u.tenantId === userData.tenantId
       );
-      if (existingUserInTenant) {
-        console.error('[Users] User with this phone already exists in this tenant');
-        throw new Error(`ژمارەی مۆبایل ${userData.phone} پێشتر تۆمارکراوە لەم هەژمارەدا`);
-      }
-
-      if (userData.email && userData.email.trim()) {
-        const existingEmailInTenant = users.find(
-          u => u.email === userData.email && u.tenantId === userData.tenantId
-        );
-        if (existingEmailInTenant) {
-          console.error('[Users] User with this email already exists in this tenant');
-          throw new Error(`ئیمەیڵ ${userData.email} پێشتر تۆمارکراوە لەم هەژمارەدا`);
-        }
-      }
-    } else {
-      const existingUser = users.find(u => u.phone === userData.phone && !u.tenantId);
-      if (existingUser) {
-        console.error('[Users] User with this phone already exists (no tenant)');
-        throw new Error(`ژمارەی مۆبایل ${userData.phone} پێشتر تۆمارکراوە`);
-      }
-
-      if (userData.email && userData.email.trim()) {
-        const existingEmail = users.find(u => u.email === userData.email && !u.tenantId);
-        if (existingEmail) {
-          console.error('[Users] User with this email already exists (no tenant)');
-          throw new Error(`ئیمەیڵ ${userData.email} پێشتر تۆمارکراوە`);
-        }
+      if (existingEmailInTenant) {
+        console.error('[Users] User with this email already exists in this tenant');
+        throw new Error(`ئیمەیڵ ${userData.email} پێشتر تۆمارکراوە لەم هەژمارەدا`);
       }
     }
 

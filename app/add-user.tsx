@@ -49,23 +49,28 @@ export default function AddUserScreen() {
       return;
     }
 
-    await addUser({
-      name,
-      phone,
-      password: role === 'employee' ? password : (password || phone),
-      role,
-      isActive: true,
-      address: role === 'customer' ? address : undefined,
-      nationalId: role === 'customer' ? nationalId : undefined,
-      email: role === 'customer' ? email : undefined,
-      customerGroup: role === 'customer' ? customerGroup : undefined,
-    });
+    try {
+      await addUser({
+        name,
+        phone,
+        password: role === 'employee' ? password : (password || phone),
+        role,
+        isActive: true,
+        address: role === 'customer' ? address : undefined,
+        nationalId: role === 'customer' ? nationalId : undefined,
+        email: role === 'customer' ? email : undefined,
+        customerGroup: role === 'customer' ? customerGroup : undefined,
+        tenantId: user?.tenantId,
+      });
 
-    Alert.alert(
-      'سەرکەوتوو', 
-      role === 'customer' ? 'کڕیار بە سەرکەوتوویی زیادکرا' : 'کارمەند بە سەرکەوتوویی زیادکرا'
-    );
-    router.back();
+      Alert.alert(
+        'سەرکەوتوو', 
+        role === 'customer' ? 'کڕیار بە سەرکەوتوویی زیادکرا' : 'کارمەند بە سەرکەوتوویی زیادکرا'
+      );
+      router.back();
+    } catch (error: any) {
+      Alert.alert('هەڵە', error?.message || 'کێشەیەک ڕوویدا');
+    }
   };
 
   return (

@@ -153,11 +153,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
                 error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
               };
             }
+            console.log('[Auth] User belongs to tenant:', userTenant.storeNameKurdish);
           } else {
             console.error('[Auth] Multiple tenants but user has no tenantId');
             return { 
               success: false, 
               error: 'ژمارەی مۆبایلەکەت بۆ چەند هەژمارێک بەکارهاتووە. پەیوەندی بە پشتیوانی بکە بۆ چارەسەرکردنی کێشەکە' 
+            };
+          }
+        } else if (matchingTenants.length === 1 && foundUser.tenantId) {
+          console.log('[Auth] Single tenant found, verifying match');
+          if (matchingTenants[0].id !== foundUser.tenantId) {
+            console.error('[Auth] User tenantId does not match the only available tenant');
+            return { 
+              success: false, 
+              error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
             };
           }
         }
