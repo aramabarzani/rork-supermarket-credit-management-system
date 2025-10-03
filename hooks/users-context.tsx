@@ -1,8 +1,9 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User, Permission, ActivityLog, UserSession, CustomRole, RoleAssignment } from '@/types/auth';
 import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
+import { safeStorage } from '@/utils/storage';
+import { useAuth } from '@/hooks/auth-context';
 
 interface EmployeeStats {
   totalDebts: number;
@@ -159,7 +160,8 @@ const sampleUsers: User[] = [
 ];
 
 export const [UsersProvider, useUsers] = createContextHook(() => {
-  const [users, setUsers] = useState<User[]>(sampleUsers);
+  const { user: currentUser } = useAuth();
+  const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
   const [userSessions, setUserSessions] = useState<UserSession[]>([]);
@@ -172,71 +174,25 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     const initializeUsers = async () => {
       setIsLoading(true);
       try {
-        const stored = await AsyncStorage.getItem('users');
-        if (stored && stored.trim()) {
-          try {
-            const trimmedData = stored.trim();
-            
-            if (!trimmedData.startsWith('[') && !trimmedData.startsWith('{')) {
-              throw new Error('Invalid JSON format - data is corrupted');
-            }
-            
-            if (trimmedData.length < 2) {
-              throw new Error('Invalid JSON format - data is corrupted');
-            }
-            
-            let parsedUsers;
-            try {
-              parsedUsers = JSON.parse(trimmedData);
-            } catch (jsonError) {
-              throw new Error('Invalid JSON format - data is corrupted');
-            }
-            
-            if (!Array.isArray(parsedUsers)) {
-              throw new Error('Invalid users data structure');
-            }
-            
-            if (parsedUsers.length === 0) {
-              throw new Error('Empty users array');
-            }
-            
-            const validUsers = parsedUsers.every(u => 
-              u && 
-              typeof u === 'object' && 
-              typeof u.id === 'string' && 
-              typeof u.name === 'string' && 
-              typeof u.role === 'string'
-            );
-            
-            if (!validUsers) {
-              throw new Error('Invalid users data structure');
-            }
-            
-            setUsers(parsedUsers);
-          } catch (parseError) {
-            try {
-              await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
-              await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
-            } catch (clearError) {
-              
-            }
-            setUsers(sampleUsers);
-          }
+        if (!currentUser?.tenantId) {
+          console.log('[Users] No tenantId, loading empty data');
+          setUsers([]);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log('[Users] Loading users for tenant:', currentUser.tenantId);
+        const stored = await safeStorage.getItem<User[]>('users', []);
+        
+        if (stored && Array.isArray(stored)) {
+          setUsers(stored);
+          console.log('[Users] Loaded users:', stored.length);
         } else {
-          try {
-            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
-          } catch (saveError) {
-            // Silent error
-          }
-          setUsers(sampleUsers);
+          setUsers([]);
         }
       } catch (error) {
-        try {
-          await AsyncStorage.multiRemove(['users', 'activityLogs', 'userSessions', 'employeeStats', 'employeeSchedules', 'customRoles', 'roleAssignments']);
-        } catch (clearError) {
-          // Silent error
-        }
-        setUsers(sampleUsers);
+        console.error('[Users] Load error:', error);
+        setUsers([]);
       }
       
       await loadActivityLogs();
@@ -249,32 +205,25 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     };
     
     initializeUsers();
-  }, []);
+  }, [currentUser?.tenantId]);
 
   const loadUsers = async () => {
     try {
       setIsLoading(true);
-      const stored = await AsyncStorage.getItem('users');
-      if (stored && stored.trim()) {
-        try {
-          const parsedUsers = JSON.parse(stored);
-          if (Array.isArray(parsedUsers)) {
-            setUsers(parsedUsers);
-          } else {
-            throw new Error('Invalid data structure');
-          }
-        } catch (parseError) {
-          try {
-            await AsyncStorage.removeItem('users');
-            await AsyncStorage.setItem('users', JSON.stringify(sampleUsers));
-          } catch {
-            
-          }
-          setUsers(sampleUsers);
-        }
+      if (!currentUser?.tenantId) {
+        setUsers([]);
+        return;
       }
-    } catch {
       
+      const stored = await safeStorage.getItem<User[]>('users', []);
+      if (stored && Array.isArray(stored)) {
+        setUsers(stored);
+      } else {
+        setUsers([]);
+      }
+    } catch (error) {
+      console.error('[Users] Load error:', error);
+      setUsers([]);
     } finally {
       setIsLoading(false);
     }
@@ -286,109 +235,67 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
 
   const loadActivityLogs = async () => {
     try {
-      const stored = await AsyncStorage.getItem('activityLogs');
-      if (stored && stored.trim()) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            setActivityLogs(parsed);
-          }
-        } catch (parseError) {
-          await AsyncStorage.removeItem('activityLogs');
-        }
+      const stored = await safeStorage.getItem<ActivityLog[]>('activityLogs', []);
+      if (stored && Array.isArray(stored)) {
+        setActivityLogs(stored);
       }
     } catch (error) {
-      
+      console.error('[Users] Load activity logs error:', error);
     }
   };
 
   const loadUserSessions = async () => {
     try {
-      const stored = await AsyncStorage.getItem('userSessions');
-      if (stored && stored.trim()) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            setUserSessions(parsed);
-          }
-        } catch (parseError) {
-          await AsyncStorage.removeItem('userSessions');
-        }
+      const stored = await safeStorage.getItem<UserSession[]>('userSessions', []);
+      if (stored && Array.isArray(stored)) {
+        setUserSessions(stored);
       }
     } catch (error) {
-      
+      console.error('[Users] Load sessions error:', error);
     }
   };
 
   const loadEmployeeStats = async () => {
     try {
-      const stored = await AsyncStorage.getItem('employeeStats');
-      if (stored && stored.trim()) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (typeof parsed === 'object' && parsed !== null) {
-            setEmployeeStats(parsed);
-          }
-        } catch (parseError) {
-          await AsyncStorage.removeItem('employeeStats');
-        }
+      const stored = await safeStorage.getItem<Record<string, EmployeeStats>>('employeeStats', {});
+      if (stored && typeof stored === 'object') {
+        setEmployeeStats(stored);
       }
     } catch (error) {
-      
+      console.error('[Users] Load stats error:', error);
     }
   };
 
   const loadEmployeeSchedules = async () => {
     try {
-      const stored = await AsyncStorage.getItem('employeeSchedules');
-      if (stored && stored.trim()) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (typeof parsed === 'object' && parsed !== null) {
-            setEmployeeSchedules(parsed);
-          }
-        } catch (parseError) {
-          await AsyncStorage.removeItem('employeeSchedules');
-        }
+      const stored = await safeStorage.getItem<Record<string, EmployeeWorkSchedule>>('employeeSchedules', {});
+      if (stored && typeof stored === 'object') {
+        setEmployeeSchedules(stored);
       }
     } catch (error) {
-      
+      console.error('[Users] Load schedules error:', error);
     }
   };
 
   const loadCustomRoles = async () => {
     try {
-      const stored = await AsyncStorage.getItem('customRoles');
-      if (stored && stored.trim()) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            setCustomRoles(parsed);
-          }
-        } catch (parseError) {
-          await AsyncStorage.removeItem('customRoles');
-        }
+      const stored = await safeStorage.getItem<CustomRole[]>('customRoles', []);
+      if (stored && Array.isArray(stored)) {
+        setCustomRoles(stored);
       }
     } catch (error) {
-      
+      console.error('[Users] Load roles error:', error);
     }
   };
 
   const loadRoleAssignments = async () => {
     try {
-      const stored = await AsyncStorage.getItem('roleAssignments');
-      if (stored && stored.trim()) {
-        try {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            setRoleAssignments(parsed);
-          }
-        } catch (parseError) {
-          await AsyncStorage.removeItem('roleAssignments');
-        }
+      const stored = await safeStorage.getItem<RoleAssignment[]>('roleAssignments', []);
+      if (stored && Array.isArray(stored)) {
+        setRoleAssignments(stored);
       }
     } catch (error) {
-      
+      console.error('[Users] Load assignments error:', error);
     }
   };
 
@@ -396,10 +303,6 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     try {
       if (!Array.isArray(updatedUsers)) {
         throw new Error('Invalid users data: must be an array');
-      }
-      
-      if (updatedUsers.length === 0) {
-        throw new Error('Cannot save empty users array');
       }
       
       const validUsers = updatedUsers.every(u => 
@@ -414,75 +317,66 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
         throw new Error('Invalid users data structure');
       }
       
-      let jsonString;
-      try {
-        jsonString = JSON.stringify(updatedUsers);
-      } catch (stringifyError) {
-        throw new Error('Failed to serialize users data');
-      }
-      
-      if (!jsonString || jsonString === 'undefined' || jsonString === 'null' || jsonString.length < 2) {
-        throw new Error('Invalid JSON serialization');
-      }
-      
-      await AsyncStorage.setItem('users', jsonString);
+      await safeStorage.setItem('users', updatedUsers);
       setUsers(updatedUsers);
+      console.log('[Users] Saved users:', updatedUsers.length);
     } catch (error) {
+      console.error('[Users] Save error:', error);
       throw error;
     }
   };
 
   const saveActivityLogs = async (logs: ActivityLog[]) => {
     try {
-      await AsyncStorage.setItem('activityLogs', JSON.stringify(logs));
+      await safeStorage.setItem('activityLogs', logs);
       setActivityLogs(logs);
     } catch (error) {
-      
+      console.error('[Users] Save logs error:', error);
     }
   };
 
   const saveUserSessions = async (sessions: UserSession[]) => {
     try {
-      await AsyncStorage.setItem('userSessions', JSON.stringify(sessions));
+      await safeStorage.setItem('userSessions', sessions);
       setUserSessions(sessions);
     } catch (error) {
-      
+      console.error('[Users] Save sessions error:', error);
     }
   };
 
   const saveEmployeeStats = async (stats: Record<string, EmployeeStats>) => {
     try {
-      await AsyncStorage.setItem('employeeStats', JSON.stringify(stats));
+      await safeStorage.setItem('employeeStats', stats);
       setEmployeeStats(stats);
     } catch (error) {
-      
+      console.error('[Users] Save stats error:', error);
     }
   };
 
   const saveEmployeeSchedules = async (schedules: Record<string, EmployeeWorkSchedule>) => {
     try {
-      await AsyncStorage.setItem('employeeSchedules', JSON.stringify(schedules));
+      await safeStorage.setItem('employeeSchedules', schedules);
       setEmployeeSchedules(schedules);
     } catch (error) {
-      
+      console.error('[Users] Save schedules error:', error);
     }
   };
 
   const saveCustomRoles = async (roles: CustomRole[]) => {
     try {
-      await AsyncStorage.setItem('customRoles', JSON.stringify(roles));
+      await safeStorage.setItem('customRoles', roles);
       setCustomRoles(roles);
     } catch (error) {
-      
+      console.error('[Users] Save roles error:', error);
     }
   };
 
   const saveRoleAssignments = async (assignments: RoleAssignment[]) => {
     try {
-      await AsyncStorage.setItem('roleAssignments', JSON.stringify(assignments));
+      await safeStorage.setItem('roleAssignments', assignments);
       setRoleAssignments(assignments);
     } catch (error) {
-      
+      console.error('[Users] Save assignments error:', error);
     }
   };
 

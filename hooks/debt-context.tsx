@@ -184,26 +184,45 @@ export const [DebtProvider, useDebts] = createContextHook(() => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const storedDebts = await safeStorage.getItem<Debt[]>(DEBTS_STORAGE_KEY, sampleDebts);
-      const storedPayments = await safeStorage.getItem<Payment[]>(PAYMENTS_STORAGE_KEY, samplePayments);
+      
+      if (!user?.tenantId) {
+        console.log('[Debt] No tenantId, loading sample data');
+        setDebts(sampleDebts);
+        setPayments(samplePayments);
+        setDebtHistory([]);
+        setPaymentPlans([]);
+        setPaymentReminders([]);
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log('[Debt] Loading data for tenant:', user.tenantId);
+      const storedDebts = await safeStorage.getItem<Debt[]>(DEBTS_STORAGE_KEY, []);
+      const storedPayments = await safeStorage.getItem<Payment[]>(PAYMENTS_STORAGE_KEY, []);
       const storedHistory = await safeStorage.getItem<DebtHistory[]>(DEBT_HISTORY_STORAGE_KEY, []);
       const storedPlans = await safeStorage.getItem<PaymentPlan[]>(PAYMENT_PLANS_STORAGE_KEY, []);
       const storedReminders = await safeStorage.getItem<PaymentReminder[]>(PAYMENT_REMINDERS_STORAGE_KEY, []);
       const storedSettings = await safeStorage.getItem<AutomaticNotificationSettings>(NOTIFICATION_SETTINGS_STORAGE_KEY, notificationSettings);
       
-      if (storedDebts) setDebts(storedDebts);
-      if (storedPayments) setPayments(storedPayments);
-      if (storedHistory) setDebtHistory(storedHistory);
-      if (storedPlans) setPaymentPlans(storedPlans);
-      if (storedReminders) setPaymentReminders(storedReminders);
+      setDebts(storedDebts || []);
+      setPayments(storedPayments || []);
+      setDebtHistory(storedHistory || []);
+      setPaymentPlans(storedPlans || []);
+      setPaymentReminders(storedReminders || []);
       if (storedSettings) setNotificationSettings(storedSettings);
-    } catch {
       
+      console.log('[Debt] Loaded:', {
+        debts: storedDebts?.length || 0,
+        payments: storedPayments?.length || 0,
+        tenantId: user.tenantId
+      });
+    } catch (error) {
+      console.error('[Debt] Load error:', error);
     } finally {
       setIsLoading(false);
     }
