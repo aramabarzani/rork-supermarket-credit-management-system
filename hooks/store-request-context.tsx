@@ -41,20 +41,28 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     });
 
     const existingPhoneRequest = requests.find(
-      r => r.ownerPhone === request.ownerPhone && r.status === 'approved'
+      r => r.ownerPhone === request.ownerPhone && (r.status === 'approved' || r.status === 'pending')
     );
     if (existingPhoneRequest) {
       console.error('[Store Request] Phone number already registered:', request.ownerPhone);
-      throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر تۆمارکراوە و پەسەندکراوە`);
+      if (existingPhoneRequest.status === 'approved') {
+        throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر تۆمارکراوە و پەسەندکراوە`);
+      } else {
+        throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر تۆمارکراوە و چاوەڕوانی پەسەندکردنە`);
+      }
     }
 
     if (request.ownerEmail && request.ownerEmail.trim()) {
       const existingEmailRequest = requests.find(
-        r => r.ownerEmail === request.ownerEmail && r.status === 'approved'
+        r => r.ownerEmail === request.ownerEmail && (r.status === 'approved' || r.status === 'pending')
       );
       if (existingEmailRequest) {
         console.error('[Store Request] Email already registered:', request.ownerEmail);
-        throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر تۆمارکراوە و پەسەندکراوە`);
+        if (existingEmailRequest.status === 'approved') {
+          throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر تۆمارکراوە و پەسەندکراوە`);
+        } else {
+          throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر تۆمارکراوە و چاوەڕوانی پەسەندکردنە`);
+        }
       }
     }
 
