@@ -1,47 +1,38 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { 
-  LoyaltyPoints, 
-  LoyaltyTransaction, 
-  LoyaltyReward, 
-  LoyaltyRedemption,
-  LoyaltySettings 
+  LoyaltyProgram,
+  LoyaltyReward,
+  CustomerLoyaltyPoints,
+  LoyaltyTransaction,
+  LOYALTY_TIERS
 } from '@/types/loyalty';
 import { safeStorage } from '@/utils/storage';
 import { useAuth } from '@/hooks/auth-context';
 
-const LOYALTY_POINTS_KEY = 'loyalty_points';
+const LOYALTY_PROGRAMS_KEY = 'loyalty_programs';
+const LOYALTY_POINTS_KEY = 'loyalty_customer_points';
 const LOYALTY_TRANSACTIONS_KEY = 'loyalty_transactions';
 const LOYALTY_REWARDS_KEY = 'loyalty_rewards';
-const LOYALTY_REDEMPTIONS_KEY = 'loyalty_redemptions';
-const LOYALTY_SETTINGS_KEY = 'loyalty_settings';
 
-const defaultSettings: LoyaltySettings = {
+const defaultProgram: LoyaltyProgram = {
   id: 'default',
-  enabled: true,
+  name: 'Default Loyalty Program',
+  nameKurdish: 'پرۆگرامی دڵسۆزی بنەڕەتی',
+  description: 'Earn points on every purchase',
+  descriptionKurdish: 'خاڵ بەدەست بهێنە لەسەر هەر کڕینێک',
   pointsPerDinar: 1,
-  minimumPurchaseForPoints: 10000,
-  pointsExpiryDays: 365,
-  tiers: {
-    bronze: { minPoints: 0, multiplier: 1 },
-    silver: { minPoints: 1000, multiplier: 1.2 },
-    gold: { minPoints: 5000, multiplier: 1.5 },
-    platinum: { minPoints: 10000, multiplier: 2 },
-  },
-  bonusEvents: {
-    birthday: 100,
-    anniversary: 200,
-    referral: 50,
-  },
+  isActive: true,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
   const { user } = useAuth();
-  const [loyaltyPoints, setLoyaltyPoints] = useState<LoyaltyPoints[]>([]);
+  const [programs, setPrograms] = useState<LoyaltyProgram[]>([defaultProgram]);
+  const [customerPoints, setCustomerPoints] = useState<CustomerLoyaltyPoints[]>([]);
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([]);
   const [rewards, setRewards] = useState<LoyaltyReward[]>([]);
-  const [redemptions, setRedemptions] = useState<LoyaltyRedemption[]>([]);
-  const [settings, setSettings] = useState<LoyaltySettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -51,19 +42,17 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [points, trans, rew, red, sett] = await Promise.all([
-        safeStorage.getItem<LoyaltyPoints[]>(LOYALTY_POINTS_KEY, []),
+      const [progs, points, trans, rew] = await Promise.all([
+        safeStorage.getItem<LoyaltyProgram[]>(LOYALTY_PROGRAMS_KEY, [defaultProgram]),
+        safeStorage.getItem<CustomerLoyaltyPoints[]>(LOYALTY_POINTS_KEY, []),
         safeStorage.getItem<LoyaltyTransaction[]>(LOYALTY_TRANSACTIONS_KEY, []),
         safeStorage.getItem<LoyaltyReward[]>(LOYALTY_REWARDS_KEY, []),
-        safeStorage.getItem<LoyaltyRedemption[]>(LOYALTY_REDEMPTIONS_KEY, []),
-        safeStorage.getItem<LoyaltySettings>(LOYALTY_SETTINGS_KEY, defaultSettings),
       ]);
 
-      if (points) setLoyaltyPoints(points);
+      if (progs && progs.length > 0) setPrograms(progs);
+      if (points) setCustomerPoints(points);
       if (trans) setTransactions(trans);
       if (rew) setRewards(rew);
-      if (red) setRedemptions(red);
-      if (sett) setSettings(sett);
     } catch (error) {
       console.error('Error loading loyalty data:', error);
     } finally {
@@ -71,8 +60,13 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
     }
   };
 
-  const savePoints = useCallback(async (points: LoyaltyPoints[]) => {
-    setLoyaltyPoints(points);
+  const savePrograms = useCallback(async (progs: LoyaltyProgram[]) => {
+    setPrograms(progs);
+    await safeStorage.setItem(LOYALTY_PROGRAMS_KEY, progs);
+  }, []);
+
+  const saveCustomerPoints = useCallback(async (points: CustomerLoyaltyPoints[]) => {
+    setCustomerPoints(points);
     await safeStorage.setItem(LOYALTY_POINTS_KEY, points);
   }, []);
 
@@ -86,152 +80,158 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
     await safeStorage.setItem(LOYALTY_REWARDS_KEY, rew);
   }, []);
 
-  const saveRedemptions = useCallback(async (red: LoyaltyRedemption[]) => {
-    setRedemptions(red);
-    await safeStorage.setItem(LOYALTY_REDEMPTIONS_KEY, red);
-  }, []);
-
-  const saveSettings = useCallback(async (sett: LoyaltySettings) => {
-    setSettings(sett);
-    await safeStorage.setItem(LOYALTY_SETTINGS_KEY, sett);
-  }, []);
-
   const getTier = useCallback((points: number): 'bronze' | 'silver' | 'gold' | 'platinum' => {
-    if (points >= settings.tiers.platinum.minPoints) return 'platinum';
-    if (points >= settings.tiers.gold.minPoints) return 'gold';
-    if (points >= settings.tiers.silver.minPoints) return 'silver';
+    const sortedTiers = [...LOYALTY_TIERS].sort((a, b) => b.minPoints - a.minPoints);
+    for (const tier of sortedTiers) {
+      if (points >= tier.minPoints) {
+        return tier.name;
+      }
+    }
     return 'bronze';
-  }, [settings]);
+  }, []);
 
-  const getCustomerPoints = useCallback((customerId: string): LoyaltyPoints | null => {
-    return loyaltyPoints.find(p => p.customerId === customerId) || null;
-  }, [loyaltyPoints]);
+  const getCustomerPoints = useCallback((customerId: string): CustomerLoyaltyPoints | null => {
+    return customerPoints.find(p => p.customerId === customerId) || null;
+  }, [customerPoints]);
 
   const addPoints = useCallback(async (
     customerId: string,
     customerName: string,
     points: number,
     reason: string,
-    relatedId?: string
+    reasonKurdish: string,
+    relatedDebtId?: string,
+    relatedPaymentId?: string
   ) => {
     try {
-      let customerLoyalty = loyaltyPoints.find(p => p.customerId === customerId);
+      const activeProgram = programs.find(p => p.isActive) || programs[0];
+      if (!activeProgram) {
+        throw new Error('No active loyalty program found');
+      }
+
+      let customerLoyalty = customerPoints.find(p => p.customerId === customerId);
+      const balanceBefore = customerLoyalty?.availablePoints || 0;
 
       if (!customerLoyalty) {
         customerLoyalty = {
           id: `loyalty-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           customerId,
           customerName,
-          points: 0,
-          totalEarned: 0,
-          totalRedeemed: 0,
+          programId: activeProgram.id,
+          totalPoints: 0,
+          availablePoints: 0,
+          usedPoints: 0,
+          lifetimePoints: 0,
           tier: 'bronze',
-          createdAt: new Date().toISOString(),
+          joinedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
         };
       }
 
-      const tier = getTier(customerLoyalty.points);
-      const multiplier = settings.tiers[tier].multiplier;
-      const earnedPoints = Math.floor(points * multiplier);
+      const earnedPoints = Math.floor(points);
 
-      customerLoyalty.points += earnedPoints;
-      customerLoyalty.totalEarned += earnedPoints;
-      customerLoyalty.tier = getTier(customerLoyalty.points);
-      customerLoyalty.updatedAt = new Date().toISOString();
+      customerLoyalty.totalPoints += earnedPoints;
+      customerLoyalty.availablePoints += earnedPoints;
+      customerLoyalty.lifetimePoints += earnedPoints;
+      customerLoyalty.tier = getTier(customerLoyalty.lifetimePoints);
+      customerLoyalty.lastActivityAt = new Date().toISOString();
 
-      const updatedPoints = loyaltyPoints.some(p => p.customerId === customerId)
-        ? loyaltyPoints.map(p => p.customerId === customerId ? customerLoyalty! : p)
-        : [...loyaltyPoints, customerLoyalty];
+      const updatedPoints = customerPoints.some(p => p.customerId === customerId)
+        ? customerPoints.map(p => p.customerId === customerId ? customerLoyalty! : p)
+        : [...customerPoints, customerLoyalty];
 
-      await savePoints(updatedPoints);
+      await saveCustomerPoints(updatedPoints);
 
       const transaction: LoyaltyTransaction = {
         id: `trans-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         customerId,
         customerName,
+        programId: activeProgram.id,
         type: 'earn',
         points: earnedPoints,
+        balanceBefore,
+        balanceAfter: customerLoyalty.availablePoints,
         reason,
-        relatedId,
-        createdAt: new Date().toISOString(),
+        reasonKurdish,
+        relatedDebtId,
+        relatedPaymentId,
         createdBy: user?.id || 'system',
-        createdByName: user?.name || 'سیستەم',
+        createdAt: new Date().toISOString(),
       };
 
       await saveTransactions([...transactions, transaction]);
 
+      console.log(`[Loyalty] Added ${earnedPoints} points to ${customerName}`);
       return customerLoyalty;
     } catch (error) {
+      console.error('[Loyalty] Error adding points:', error);
       throw error;
     }
-  }, [loyaltyPoints, transactions, settings, user, getTier, savePoints, saveTransactions]);
+  }, [customerPoints, transactions, programs, user, getTier, saveCustomerPoints, saveTransactions]);
 
   const redeemPoints = useCallback(async (
     customerId: string,
     rewardId: string
   ) => {
     try {
-      const customerLoyalty = loyaltyPoints.find(p => p.customerId === customerId);
+      const customerLoyalty = customerPoints.find(p => p.customerId === customerId);
       if (!customerLoyalty) {
-        throw new Error('Customer loyalty not found');
+        throw new Error('خاڵی دڵسۆزی کڕیار نەدۆزرایەوە');
       }
 
       const reward = rewards.find(r => r.id === rewardId);
       if (!reward) {
-        throw new Error('Reward not found');
+        throw new Error('خەڵات نەدۆزرایەوە');
       }
 
       if (!reward.isActive) {
-        throw new Error('Reward is not active');
+        throw new Error('خەڵاتەکە چالاک نییە');
       }
 
-      if (customerLoyalty.points < reward.pointsCost) {
-        throw new Error('Insufficient points');
+      if (customerLoyalty.availablePoints < reward.pointsRequired) {
+        throw new Error('خاڵی پێویست بەسنییە');
       }
 
-      customerLoyalty.points -= reward.pointsCost;
-      customerLoyalty.totalRedeemed += reward.pointsCost;
-      customerLoyalty.tier = getTier(customerLoyalty.points);
-      customerLoyalty.updatedAt = new Date().toISOString();
+      const balanceBefore = customerLoyalty.availablePoints;
 
-      const updatedPoints = loyaltyPoints.map(p => 
+      customerLoyalty.availablePoints -= reward.pointsRequired;
+      customerLoyalty.usedPoints += reward.pointsRequired;
+      customerLoyalty.lastActivityAt = new Date().toISOString();
+
+      const updatedPoints = customerPoints.map(p => 
         p.customerId === customerId ? customerLoyalty : p
       );
-      await savePoints(updatedPoints);
+      await saveCustomerPoints(updatedPoints);
 
       const transaction: LoyaltyTransaction = {
         id: `trans-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         customerId,
         customerName: customerLoyalty.customerName,
+        programId: customerLoyalty.programId,
         type: 'redeem',
-        points: reward.pointsCost,
-        reason: `Redeemed: ${reward.nameKurdish}`,
-        relatedId: rewardId,
-        createdAt: new Date().toISOString(),
+        points: reward.pointsRequired,
+        balanceBefore,
+        balanceAfter: customerLoyalty.availablePoints,
+        reason: `Redeemed: ${reward.name}`,
+        reasonKurdish: `بەکارهێنرا: ${reward.nameKurdish}`,
+        relatedRewardId: rewardId,
         createdBy: user?.id || 'system',
-        createdByName: user?.name || 'سیستەم',
+        createdAt: new Date().toISOString(),
       };
 
       await saveTransactions([...transactions, transaction]);
 
-      const redemption: LoyaltyRedemption = {
-        id: `redemption-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        customerId,
-        customerName: customerLoyalty.customerName,
-        rewardId,
-        rewardName: reward.nameKurdish,
-        pointsUsed: reward.pointsCost,
-        status: 'pending',
-        redeemedAt: new Date().toISOString(),
-      };
+      reward.usedCount += 1;
+      const updatedRewards = rewards.map(r => r.id === rewardId ? reward : r);
+      await saveRewards(updatedRewards);
 
-      await saveRedemptions([...redemptions, redemption]);
-
-      return redemption;
+      console.log(`[Loyalty] ${customerLoyalty.customerName} redeemed ${reward.nameKurdish}`);
+      return transaction;
     } catch (error) {
+      console.error('[Loyalty] Error redeeming points:', error);
       throw error;
     }
-  }, [loyaltyPoints, rewards, redemptions, transactions, user, getTier, savePoints, saveTransactions, saveRedemptions]);
+  }, [customerPoints, rewards, transactions, user, saveCustomerPoints, saveTransactions, saveRewards]);
 
   const getCustomerTransactions = useCallback((customerId: string) => {
     return transactions
@@ -240,30 +240,35 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
   }, [transactions]);
 
   const getCustomerRedemptions = useCallback((customerId: string) => {
-    return redemptions
-      .filter(r => r.customerId === customerId)
-      .sort((a, b) => new Date(b.redeemedAt).getTime() - new Date(a.redeemedAt).getTime());
-  }, [redemptions]);
+    return transactions
+      .filter(t => t.customerId === customerId && t.type === 'redeem')
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [transactions]);
 
   const getActiveRewards = useCallback(() => {
     return rewards.filter(r => r.isActive);
   }, [rewards]);
 
-  const addReward = useCallback(async (reward: Omit<LoyaltyReward, 'id'>) => {
+  const addReward = useCallback(async (reward: Omit<LoyaltyReward, 'id' | 'usedCount' | 'createdAt' | 'updatedAt'>) => {
     const newReward: LoyaltyReward = {
       ...reward,
       id: `reward-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      usedCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     await saveRewards([...rewards, newReward]);
+    console.log(`[Loyalty] Created reward: ${newReward.nameKurdish}`);
     return newReward;
   }, [rewards, saveRewards]);
 
   const updateReward = useCallback(async (rewardId: string, updates: Partial<LoyaltyReward>) => {
     const updatedRewards = rewards.map(r => 
-      r.id === rewardId ? { ...r, ...updates } : r
+      r.id === rewardId ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r
     );
     await saveRewards(updatedRewards);
+    console.log(`[Loyalty] Updated reward: ${rewardId}`);
   }, [rewards, saveRewards]);
 
   const deleteReward = useCallback(async (rewardId: string) => {
@@ -271,17 +276,32 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
     await saveRewards(updatedRewards);
   }, [rewards, saveRewards]);
 
-  const updateSettings = useCallback(async (updates: Partial<LoyaltySettings>) => {
-    const updatedSettings = { ...settings, ...updates };
-    await saveSettings(updatedSettings);
-  }, [settings, saveSettings]);
+  const addProgram = useCallback(async (program: Omit<LoyaltyProgram, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newProgram: LoyaltyProgram = {
+      ...program,
+      id: `program-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await savePrograms([...programs, newProgram]);
+    console.log(`[Loyalty] Created program: ${newProgram.nameKurdish}`);
+    return newProgram;
+  }, [programs, savePrograms]);
+
+  const updateProgram = useCallback(async (programId: string, updates: Partial<LoyaltyProgram>) => {
+    const updatedPrograms = programs.map(p => 
+      p.id === programId ? { ...p, ...updates, updatedAt: new Date().toISOString() } : p
+    );
+    await savePrograms(updatedPrograms);
+    console.log(`[Loyalty] Updated program: ${programId}`);
+  }, [programs, savePrograms]);
 
   return useMemo(() => ({
-    loyaltyPoints,
+    programs,
+    customerPoints,
     transactions,
     rewards,
-    redemptions,
-    settings,
     isLoading,
     getCustomerPoints,
     addPoints,
@@ -292,14 +312,14 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
     addReward,
     updateReward,
     deleteReward,
-    updateSettings,
+    addProgram,
+    updateProgram,
     getTier,
   }), [
-    loyaltyPoints,
+    programs,
+    customerPoints,
     transactions,
     rewards,
-    redemptions,
-    settings,
     isLoading,
     getCustomerPoints,
     addPoints,
@@ -310,7 +330,8 @@ export const [LoyaltyProvider, useLoyalty] = createContextHook(() => {
     addReward,
     updateReward,
     deleteReward,
-    updateSettings,
+    addProgram,
+    updateProgram,
     getTier,
   ]);
 });
