@@ -41,7 +41,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     });
 
     const existingPhoneRequest = requests.find(
-      r => r.ownerPhone === request.ownerPhone && (r.status === 'approved' || r.status === 'pending') && r.status !== 'deleted'
+      r => r.ownerPhone === request.ownerPhone && (r.status === 'approved' || r.status === 'pending')
     );
     if (existingPhoneRequest) {
       console.error('[Store Request] Phone number already registered:', request.ownerPhone);
@@ -54,7 +54,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
 
     if (request.ownerEmail && request.ownerEmail.trim()) {
       const existingEmailRequest = requests.find(
-        r => r.ownerEmail === request.ownerEmail && (r.status === 'approved' || r.status === 'pending') && r.status !== 'deleted'
+        r => r.ownerEmail === request.ownerEmail && (r.status === 'approved' || r.status === 'pending')
       );
       if (existingEmailRequest) {
         console.error('[Store Request] Email already registered:', request.ownerEmail);
@@ -69,7 +69,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     const existingUsers = await safeStorage.getGlobalItem<any[]>('users', []);
     if (existingUsers && Array.isArray(existingUsers)) {
       const existingUserWithPhone = existingUsers.find(
-        (u: any) => u.phone === request.ownerPhone && (u.role === 'admin' || u.role === 'owner') && !u.deletedAt
+        (u: any) => u.phone === request.ownerPhone && (u.role === 'admin' || u.role === 'owner')
       );
       if (existingUserWithPhone) {
         console.error('[Store Request] Phone number already used by another active admin/owner:', request.ownerPhone);
@@ -78,7 +78,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
 
       if (request.ownerEmail && request.ownerEmail.trim()) {
         const existingUserWithEmail = existingUsers.find(
-          (u: any) => u.email === request.ownerEmail && (u.role === 'admin' || u.role === 'owner') && !u.deletedAt
+          (u: any) => u.email === request.ownerEmail && (u.role === 'admin' || u.role === 'owner')
         );
         if (existingUserWithEmail) {
           console.error('[Store Request] Email already used by another active admin/owner:', request.ownerEmail);
