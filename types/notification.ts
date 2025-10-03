@@ -1,6 +1,6 @@
 export interface Notification {
   id: string;
-  type: 'debt_added' | 'payment_received' | 'debt_overdue' | 'high_debt_warning' | 'payment_incomplete' | 'system_error' | 'debt_reminder' | 'payment_reminder' | 'receipt' | 'direct_message' | 'report' | 'new_customer' | 'new_employee' | 'debt_50_days' | 'debt_100_days' | 'high_payment' | 'user_inactivity' | 'backup_issue' | 'data_overflow' | 'account_locked' | 'system_update' | 'new_store_registration' | 'store_request_approved' | 'store_request_rejected';
+  type: 'debt_added' | 'payment_received' | 'debt_overdue' | 'high_debt_warning' | 'payment_incomplete' | 'system_error' | 'debt_reminder' | 'payment_reminder' | 'receipt' | 'direct_message' | 'report' | 'new_customer' | 'new_employee' | 'debt_50_days' | 'debt_100_days' | 'high_payment' | 'user_inactivity' | 'backup_issue' | 'data_overflow' | 'account_locked' | 'system_update' | 'new_store_registration' | 'store_request_approved' | 'store_request_rejected' | 'store_deleted';
   title: string;
   titleKurdish?: string;
   message: string;

@@ -27,6 +27,7 @@ import {
   FileText,
   AlertCircle,
   MessageCircle,
+  Trash2,
 } from 'lucide-react-native';
 import { useStoreRequests } from '@/hooks/store-request-context';
 import { useTenant } from '@/hooks/tenant-context';
@@ -37,8 +38,8 @@ import { SUBSCRIPTION_PLANS } from '@/types/subscription';
 import { StoreRequest } from '@/types/store-request';
 
 export default function StoreRequestsScreen() {
-  const { requests, isLoading, approveRequest, rejectRequest } = useStoreRequests();
-  const { createTenant } = useTenant();
+  const { requests, isLoading, approveRequest, rejectRequest, deleteRequest } = useStoreRequests();
+  const { createTenant, deleteTenant } = useTenant();
   const { addNotification } = useNotifications();
   const { user } = useAuth();
   const { addUser } = useUsers();
@@ -231,6 +232,51 @@ export default function StoreRequestsScreen() {
       console.error('Rejection error:', error);
       Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە ڕەتکردنەوەی داواکاریەکە');
     }
+  };
+
+  const handleDeleteAccount = async (request: StoreRequest) => {
+    Alert.alert(
+      'سڕینەوەی هەژمار',
+      `دڵنیایت لە سڕینەوەی هەژماری ${request.storeNameKurdish}?\n\n⚠️ ئاگاداری: ئەم کردارە ناگەڕێتەوە و هەموو زانیاریەکانی پەیوەست بە ئەم هەژمارە دەسڕێتەوە.`,
+      [
+        { text: 'پاشگەزبوونەوە', style: 'cancel' },
+        {
+          text: 'سڕینەوە',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              if (request.tenantId) {
+                await deleteTenant(request.tenantId);
+              }
+              
+              await deleteRequest(request.id);
+
+              await addNotification({
+                title: 'هەژمارەکەت سڕایەوە',
+                titleKurdish: 'هەژمارەکەت سڕایەوە',
+                message: `هەژماری ${request.storeNameKurdish} بە سەرکەوتوویی سڕایەوە لەلایەن بەڕێوەبەرەوە.`,
+                messageKurdish: `هەژماری ${request.storeNameKurdish} بە سەرکەوتوویی سڕایەوە لەلایەن بەڕێوەبەرەوە.`,
+                type: 'store_deleted',
+                priority: 'high',
+                recipientId: request.ownerPhone,
+                recipientType: 'admin',
+                isRead: false,
+                channels: ['in_app', 'sms'],
+                metadata: {
+                  requestId: request.id,
+                  storeName: request.storeName,
+                },
+              });
+
+              Alert.alert('سەرکەوتوو', 'هەژمارەکە بە سەرکەوتوویی سڕایەوە');
+            } catch (error) {
+              console.error('Delete account error:', error);
+              Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە سڕینەوەی هەژمارەکە');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleWhatsAppContact = (phone: string, storeName: string) => {
@@ -439,6 +485,17 @@ export default function StoreRequestsScreen() {
             >
               <XCircle size={18} color="#fff" />
               <Text style={styles.actionButtonText}>ڕەتکردنەوە</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {request.status === 'approved' && (
+          <View style={styles.requestActions}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.deleteButton]}
+              onPress={() => handleDeleteAccount(request)}
+            >
+              <Trash2 size={18} color="#fff" />
+              <Text style={styles.actionButtonText}>سڕینەوەی هەژمار</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -763,6 +820,9 @@ const styles = StyleSheet.create({
   },
   rejectButton: {
     backgroundColor: '#ef4444',
+  },
+  deleteButton: {
+    backgroundColor: '#dc2626',
   },
   actionButtonText: {
     fontSize: 14,
