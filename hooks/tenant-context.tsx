@@ -193,8 +193,45 @@ export const [TenantProvider, useTenant] = createContextHook(() => {
   }, [tenants]);
 
   const deleteTenant = useCallback(async (id: string) => {
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) {
+      throw new Error('Tenant not found');
+    }
+
+    console.log('[Tenant] Deleting tenant and freeing up registration data:', {
+      tenantId: id,
+      phone: tenant.adminPhone,
+      email: tenant.adminEmail,
+    });
+
     const updated = tenants.filter(t => t.id !== id);
     await saveTenants(updated);
+
+    const storeRequests = await safeStorage.getGlobalItem<any[]>('store_requests', []);
+    if (storeRequests && Array.isArray(storeRequests)) {
+      const updatedRequests = storeRequests.map((req: any) => {
+        if (req.tenantId === id) {
+          console.log('[Tenant] Unlinking store request from deleted tenant:', req.id);
+          const { tenantId, ...rest } = req;
+          return {
+            ...rest,
+            status: 'deleted',
+            deletedAt: new Date().toISOString(),
+          };
+        }
+        return req;
+      });
+      await safeStorage.setGlobalItem('store_requests', updatedRequests);
+    }
+
+    const users = await safeStorage.getGlobalItem<any[]>('users', []);
+    if (users && Array.isArray(users)) {
+      const updatedUsers = users.filter((u: any) => u.tenantId !== id);
+      await safeStorage.setGlobalItem('users', updatedUsers);
+      console.log('[Tenant] Deleted all users associated with tenant:', id);
+    }
+
+    console.log('[Tenant] Tenant deleted successfully. Registration data is now available for reuse.');
   }, [tenants]);
 
   const suspendTenant = useCallback(async (id: string, reason: string) => {

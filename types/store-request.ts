@@ -1,6 +1,6 @@
 import { SubscriptionPlan } from './subscription';
 
-export type StoreRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type StoreRequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'deleted';
 
 export interface StoreRequest {
   id: string;

@@ -26,10 +26,11 @@ import {
   TrendingUp,
 } from 'lucide-react-native';
 import { useTenant } from '@/hooks/tenant-context';
+import { Trash2 } from 'lucide-react-native';
 import { SUBSCRIPTION_PLANS } from '@/types/subscription';
 
 export default function AdminStoresScreen() {
-  const { tenants, isLoading, suspendTenant, activateTenant, renewSubscription } = useTenant();
+  const { tenants, isLoading, suspendTenant, activateTenant, renewSubscription, deleteTenant } = useTenant();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'trial' | 'expired' | 'suspended'>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -169,6 +170,28 @@ export default function AdminStoresScreen() {
               Alert.alert('سەرکەوتوو', 'بەشداریکردن نوێکرایەوە بۆ ١ ساڵ');
             } catch {
               Alert.alert('هەڵە', 'کێشەیەک ڕوویدا');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDelete = (id: string, storeName: string) => {
+    Alert.alert(
+      'سڕینەوەی فرۆشگا',
+      `دڵنیایت لە سڕینەوەی ${storeName}?\n\nئەم کارە هەموو زانیاریەکانی فرۆشگاکە دەسڕێتەوە و ڕێگە بە بەکارهێنانەوەی ژمارە مۆبایل و ئیمەیڵەکە دەدات.`,
+      [
+        { text: 'پاشگەزبوونەوە', style: 'cancel' },
+        {
+          text: 'سڕینەوە',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteTenant(id);
+              Alert.alert('سەرکەوتوو', 'فرۆشگاکە سڕایەوە و زانیاریەکان ئێستا بەردەستن بۆ تۆمارکردنەوە');
+            } catch (error) {
+              Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە سڕینەوەی فرۆشگاکە');
             }
           },
         },
@@ -318,6 +341,13 @@ export default function AdminStoresScreen() {
           >
             <Calendar size={18} color="#fff" />
             <Text style={styles.actionButtonText}>نوێکردنەوە</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.deleteButton]}
+            onPress={() => handleDelete(tenant.id, tenant.storeNameKurdish)}
+          >
+            <Trash2 size={18} color="#fff" />
+            <Text style={styles.actionButtonText}>سڕینەوە</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -541,6 +571,9 @@ const styles = StyleSheet.create({
   },
   renewButton: {
     backgroundColor: '#3b82f6',
+  },
+  deleteButton: {
+    backgroundColor: '#ef4444',
   },
   actionButtonText: {
     fontSize: 14,

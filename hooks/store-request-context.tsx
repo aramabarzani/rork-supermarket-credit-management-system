@@ -69,19 +69,19 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     const existingUsers = await safeStorage.getGlobalItem<any[]>('users', []);
     if (existingUsers && Array.isArray(existingUsers)) {
       const existingUserWithPhone = existingUsers.find(
-        (u: any) => u.phone === request.ownerPhone && (u.role === 'admin' || u.role === 'owner')
+        (u: any) => u.phone === request.ownerPhone && (u.role === 'admin' || u.role === 'owner') && !u.deletedAt
       );
       if (existingUserWithPhone) {
-        console.error('[Store Request] Phone number already used by another admin/owner:', request.ownerPhone);
+        console.error('[Store Request] Phone number already used by another active admin/owner:', request.ownerPhone);
         throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
       }
 
       if (request.ownerEmail && request.ownerEmail.trim()) {
         const existingUserWithEmail = existingUsers.find(
-          (u: any) => u.email === request.ownerEmail && (u.role === 'admin' || u.role === 'owner')
+          (u: any) => u.email === request.ownerEmail && (u.role === 'admin' || u.role === 'owner') && !u.deletedAt
         );
         if (existingUserWithEmail) {
-          console.error('[Store Request] Email already used by another admin/owner:', request.ownerEmail);
+          console.error('[Store Request] Email already used by another active admin/owner:', request.ownerEmail);
           throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
         }
       }
