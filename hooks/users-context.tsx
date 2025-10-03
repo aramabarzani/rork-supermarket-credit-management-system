@@ -320,6 +320,21 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       await safeStorage.setItem('users', updatedUsers);
       setUsers(updatedUsers);
       console.log('[Users] Saved users:', updatedUsers.length);
+      
+      const globalUsers = await safeStorage.getGlobalItem<User[]>('users', []);
+      const mergedGlobalUsers = [...(globalUsers || [])];
+      
+      updatedUsers.forEach(updatedUser => {
+        const existingIndex = mergedGlobalUsers.findIndex(u => u.id === updatedUser.id);
+        if (existingIndex >= 0) {
+          mergedGlobalUsers[existingIndex] = updatedUser;
+        } else {
+          mergedGlobalUsers.push(updatedUser);
+        }
+      });
+      
+      await safeStorage.setGlobalItem('users', mergedGlobalUsers);
+      console.log('[Users] Synced to global storage:', mergedGlobalUsers.length);
     } catch (error) {
       console.error('[Users] Save error:', error);
       throw error;
