@@ -127,6 +127,28 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         await safeStorage.setGlobalItem('users', allUsers);
       }
       
+      const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+      const activeTenants = tenants && Array.isArray(tenants) ? tenants.filter((t: any) => t.status === 'active') : [];
+      
+      for (const tenant of activeTenants) {
+        try {
+          const tenantKey = `tenant_${tenant.id}_users`;
+          const tenantUsers = await safeStorage.getGlobalItem<User[]>(tenantKey, []);
+          if (tenantUsers && Array.isArray(tenantUsers)) {
+            tenantUsers.forEach(tenantUser => {
+              const existingIndex = allUsers.findIndex(u => u.id === tenantUser.id);
+              if (existingIndex >= 0) {
+                allUsers[existingIndex] = tenantUser;
+              } else {
+                allUsers.push(tenantUser);
+              }
+            });
+          }
+        } catch (error) {
+          console.error(`[Auth] Error loading users from tenant ${tenant.id}:`, error);
+        }
+      }
+      
       console.log('[Auth] Total users loaded:', allUsers.length);
       
       let foundUser = allUsers.find(

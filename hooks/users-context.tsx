@@ -457,25 +457,6 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     
     console.log('[Users] User saved to tenant storage');
 
-    try {
-      const globalUsers = await safeStorage.getGlobalItem<User[]>('users', []);
-      const safeGlobalUsers = globalUsers || [];
-      const existingGlobalIndex = safeGlobalUsers.findIndex(u => u.id === newUser.id);
-      
-      let updatedGlobalUsers: User[];
-      if (existingGlobalIndex >= 0) {
-        updatedGlobalUsers = [...safeGlobalUsers];
-        updatedGlobalUsers[existingGlobalIndex] = newUser;
-      } else {
-        updatedGlobalUsers = [...safeGlobalUsers, newUser];
-      }
-      
-      await safeStorage.setGlobalItem('users', updatedGlobalUsers);
-      console.log('[Users] User saved to global storage for login access');
-    } catch (error) {
-      console.error('[Users] Failed to save to global storage:', error);
-    }
-
     // Initialize employee stats and schedule if employee
     if (newUser.role === 'employee') {
       const newStats = {
