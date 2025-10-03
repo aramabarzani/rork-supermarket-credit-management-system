@@ -423,6 +423,16 @@ export default function DashboardScreen() {
                 </TouchableOpacity>
                 
                 <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionYellow]}
+                  onPress={() => router.push('/employees')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconYellow]}>
+                    <Users size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>بەڕێوەبردنی کارمەندان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
                   style={[styles.quickActionCard, styles.quickActionOrange]}
                   onPress={() => router.push('/(tabs)/reports')}
                 >
@@ -1572,6 +1582,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#6B7280',
   },
+  quickActionYellow: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 2,
+    borderColor: '#FBBF24',
+  },
   quickActionIconContainer: {
     width: 56,
     height: 56,
@@ -1607,6 +1622,9 @@ const styles = StyleSheet.create({
   },
   quickActionIconGray: {
     backgroundColor: '#6B7280',
+  },
+  quickActionIconYellow: {
+    backgroundColor: '#FBBF24',
   },
   quickActionLabel: {
     fontSize: 13,
