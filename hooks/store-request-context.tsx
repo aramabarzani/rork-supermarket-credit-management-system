@@ -47,18 +47,26 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
   }, [requests, saveRequests]);
 
   const approveRequest = useCallback(async (id: string, reviewedBy: string, notes?: string) => {
-    const updated = requests.map(r =>
-      r.id === id
-        ? {
-            ...r,
-            status: 'approved' as const,
-            reviewedAt: new Date().toISOString(),
-            reviewedBy,
-            notes,
-          }
-        : r
-    );
+    const updated = requests.map(r => {
+      if (r.id === id) {
+        const { ownerPassword, ...rest } = r;
+        return {
+          ...rest,
+          status: 'approved' as const,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy,
+          notes,
+        };
+      }
+      return r;
+    });
     await saveRequests(updated);
+    
+    console.log('[Store Request] Password removed from approved request for security:', {
+      requestId: id,
+      note: 'Password is now only stored in the new tenant user account',
+    });
+    
     return updated.find(r => r.id === id);
   }, [requests, saveRequests]);
 

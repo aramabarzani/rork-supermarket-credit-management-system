@@ -9,7 +9,7 @@ export interface StoreRequest {
   ownerName: string;
   ownerPhone: string;
   ownerEmail?: string;
-  ownerPassword: string;
+  ownerPassword?: string;
   address: string;
   city: string;
   plan: SubscriptionPlan;

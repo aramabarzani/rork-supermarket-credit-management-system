@@ -147,11 +147,18 @@ export default function StoreRequestsScreen() {
 
               await approveRequest(request.id, user?.name || 'Admin', approvalNotes);
 
+              console.log('[Store Requests] Request approved and tenant linked:', {
+                requestId: request.id,
+                tenantId: newTenant.id,
+                adminUserId: newUser.id,
+                note: 'Old request credentials are now invalid. User must login with new tenant-specific account.',
+              });
+
               await addNotification({
-                title: 'داواکاریەکەت پەسەندکرا',
-                titleKurdish: 'داواکاریەکەت پەسەندکرا',
-                message: `داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا. دەتوانیت ئێستا بچیتە ژوورەوە بە ژمارەی مۆبایل ${request.ownerPhone} و وشەی نهێنیەکەت`,
-                messageKurdish: `داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا. دەتوانیت ئێستا بچیتە ژوورەوە بە ژمارەی مۆبایل ${request.ownerPhone} و وشەی نهێنیەکەت`,
+                title: 'داواکاریەکەت پەسەندکرا - هەژماری نوێ دروستکرا',
+                titleKurdish: 'داواکاریەکەت پەسەندکرا - هەژماری نوێ دروستکرا',
+                message: `پیرۆزە! داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا.\n\n🔐 زانیاری چوونەژوورەوە:\nژمارەی مۆبایل: ${request.ownerPhone}\nوشەی نهێنی: ${request.ownerPassword}\n\n⚠️ گرنگ: ئەمە هەژمارێکی نوێیە کە تایبەتە بە فرۆشگاکەت. داتای تۆ بە تەواوی جیاوازە لە هەژمارەکانی تر.\n\nتکایە وشەی نهێنیەکەت بگۆڕە دوای یەکەم جار چوونەژوورەوە.`,
+                messageKurdish: `پیرۆزە! داواکاریەکەت بۆ ${request.storeNameKurdish} پەسەندکرا.\n\n🔐 زانیاری چوونەژوورەوە:\nژمارەی مۆبایل: ${request.ownerPhone}\nوشەی نهێنی: ${request.ownerPassword}\n\n⚠️ گرنگ: ئەمە هەژمارێکی نوێیە کە تایبەتە بە فرۆشگاکەت. داتای تۆ بە تەواوی جیاوازە لە هەژمارەکانی تر.\n\nتکایە وشەی نهێنیەکەت بگۆڕە دوای یەکەم جار چوونەژوورەوە.`,
                 type: 'store_request_approved',
                 priority: 'high',
                 recipientId: request.ownerPhone,
@@ -163,6 +170,9 @@ export default function StoreRequestsScreen() {
                   tenantId: newTenant.id,
                   storeName: request.storeName,
                   plan: request.plan,
+                  loginPhone: request.ownerPhone,
+                  temporaryPassword: request.ownerPassword,
+                  mustChangePassword: true,
                 },
               });
 
