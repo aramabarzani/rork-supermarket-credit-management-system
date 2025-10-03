@@ -371,7 +371,7 @@ export default function DashboardScreen() {
               
               <View style={styles.licenseInfo}>
                 <KurdishText style={[styles.licenseText, currentIsTablet && styles.tabletLicenseText]}>
-                  {user?.role === 'admin' || user?.role === 'employee' ? (currentTenant?.storeNameKurdish || currentTenant?.storeName || user?.storeName || 'فرۆشگا') : (settings?.businessInfo?.name || 'سیستەمی بەڕێوەبردنی قەرز')} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                  {Platform.OS === 'ios' ? 'iOS' : 'Android'}
                 </KurdishText>
               </View>
             </View>
