@@ -26,14 +26,17 @@ export const KurdishText: React.FC<KurdishTextProps> = ({
     'extra-large': 1.25,
   }[settings.theme.fontSize] : 1;
 
+  const variantStyle = styles[variant];
+  const baseFontSize = typeof variantStyle.fontSize === 'number' ? variantStyle.fontSize : 16;
+
   return (
     <Text 
       {...props}
       style={[
         styles.base,
         isRTL ? styles.rtl : styles.ltr,
-        styles[variant],
-        { fontSize: (styles[variant].fontSize as number) * fontSizeMultiplier },
+        variantStyle,
+        { fontSize: baseFontSize * fontSizeMultiplier },
         color ? { color } : {},
         style,
       ]}

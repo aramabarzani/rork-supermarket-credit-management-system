@@ -32,6 +32,9 @@ import { VoiceInputContext as VoiceInputProvider } from "@/hooks/voice-input-con
 import { FAQProvider } from "@/hooks/faq-context";
 import { BlacklistProvider } from "@/hooks/blacklist-context";
 import { PredictionProvider } from "@/hooks/prediction-context";
+import { AnalyticsContext as AnalyticsProvider } from "@/hooks/analytics-context";
+import { MapContext as MapProvider } from "@/hooks/map-context";
+import { WhatsAppContext as WhatsAppProvider } from "@/hooks/whatsapp-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
@@ -662,10 +665,16 @@ export default function RootLayout() {
                                                       <FAQProvider>
                                                         <BlacklistProvider>
                                                           <PredictionProvider>
-                                                            <VoiceInputProvider>
-                                                              <RootLayoutNav />
-                                                              <SessionTimeoutWarning />
-                                                            </VoiceInputProvider>
+                                                            <AnalyticsProvider>
+                                                              <MapProvider>
+                                                                <WhatsAppProvider>
+                                                                  <VoiceInputProvider>
+                                                                    <RootLayoutNav />
+                                                                    <SessionTimeoutWarning />
+                                                                  </VoiceInputProvider>
+                                                                </WhatsAppProvider>
+                                                              </MapProvider>
+                                                            </AnalyticsProvider>
                                                           </PredictionProvider>
                                                         </BlacklistProvider>
                                                       </FAQProvider>
