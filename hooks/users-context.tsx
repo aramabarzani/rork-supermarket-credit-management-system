@@ -487,11 +487,24 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
   };
 
   // 221. Add new employee
-  const addUser = useCallback(async (userData: Partial<User>) => {
+  const addUser = useCallback(async (userData: Partial<User>): Promise<User | null> => {
+    console.log('[Users] Adding new user:', { phone: userData.phone, role: userData.role, tenantId: userData.tenantId });
+    
+    if (!userData.name || !userData.phone) {
+      console.error('[Users] Missing required fields: name or phone');
+      return null;
+    }
+    
+    const existingUser = users.find(u => u.phone === userData.phone);
+    if (existingUser) {
+      console.warn('[Users] User with this phone already exists:', userData.phone);
+      return null;
+    }
+    
     const newUser: User = {
-      id: Date.now().toString(),
-      name: userData.name || '',
-      phone: userData.phone || '',
+      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: userData.name,
+      phone: userData.phone,
       role: userData.role || 'customer',
       createdAt: new Date().toISOString(),
       isActive: true,
@@ -512,16 +525,12 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       tenantId: userData.tenantId,
     };
 
+    console.log('[Users] New user created:', { id: newUser.id, phone: newUser.phone, role: newUser.role, tenantId: newUser.tenantId });
+
     const updatedUsers = [...users, newUser];
     await saveUsers(updatedUsers);
     
-    console.log('[Users Context] User added successfully:', {
-      id: newUser.id,
-      name: newUser.name,
-      phone: newUser.phone,
-      role: newUser.role,
-      tenantId: newUser.tenantId,
-    });
+    console.log('[Users] User saved successfully');
 
     // Initialize employee stats and schedule if employee
     if (newUser.role === 'employee') {
@@ -555,6 +564,7 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
       resourceId: newUser.id,
     });
     
+    console.log('[Users] User added successfully');
     return newUser;
   }, [users, employeeStats, employeeSchedules]);
 

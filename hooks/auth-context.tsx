@@ -103,6 +103,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
+      console.log('[Auth] Login attempt:', { phone: credentials.phone });
+      
       let allUsers: User[] = [...DEMO_USERS];
       try {
         const storedUsers = await safeStorage.getGlobalItem<User[]>('users', null);
@@ -121,54 +123,70 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           await safeStorage.setGlobalItem('users', allUsers);
         }
       } catch (error) {
+        console.error('[Auth] Error loading users:', error);
         await safeStorage.setGlobalItem('users', allUsers);
       }
+      
+      console.log('[Auth] Total users loaded:', allUsers.length);
       
       const foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
       );
       
-      if (foundUser) {
-        if (!foundUser.isActive) {
-          return { success: false, error: 'حسابەکەت ناچالاککراوە. پەیوەندی بە بەڕێوەبەر بکە' };
-        }
-        
-        if (foundUser.lockedUntil && new Date(foundUser.lockedUntil) > new Date()) {
-          return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
-        }
-        
-        const updatedUser = {
-          ...foundUser,
-          lastLoginAt: new Date().toISOString(),
-          failedLoginAttempts: 0,
-        };
-        
-        if (updatedUser.tenantId) {
-          setCurrentTenantId(updatedUser.tenantId);
-          console.log('[Auth] Login - Tenant context set:', updatedUser.tenantId);
-          
-          const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-          if (tenants && Array.isArray(tenants)) {
-            const userTenant = tenants.find((t: any) => t.id === updatedUser.tenantId);
-            if (userTenant) {
-              await safeStorage.setGlobalItem('currentTenant', userTenant);
-            }
-          }
-        }
-        
-        setUser(updatedUser);
-        await safeStorage.setGlobalItem('user', updatedUser);
-        
-        const updatedUsers = allUsers.map(u => 
-          u.id === foundUser.id ? updatedUser : u
-        );
-        await safeStorage.setGlobalItem('users', updatedUsers);
-        
-        return { success: true, user: updatedUser };
+      if (!foundUser) {
+        console.log('[Auth] User not found or password incorrect');
+        return { success: false, error: 'ژمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
       }
       
-      return { success: false, error: 'ژمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
+      console.log('[Auth] User found:', { id: foundUser.id, role: foundUser.role, tenantId: foundUser.tenantId });
+      
+      if (!foundUser.isActive) {
+        console.log('[Auth] User account is inactive');
+        return { success: false, error: 'حسابەکەت ناچالاککراوە. پەیوەندی بە بەڕێوەبەر بکە' };
+      }
+      
+      if (foundUser.lockedUntil && new Date(foundUser.lockedUntil) > new Date()) {
+        console.log('[Auth] User account is locked');
+        return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
+      }
+      
+      const updatedUser = {
+        ...foundUser,
+        lastLoginAt: new Date().toISOString(),
+        failedLoginAttempts: 0,
+      };
+      
+      if (updatedUser.tenantId) {
+        setCurrentTenantId(updatedUser.tenantId);
+        console.log('[Auth] Login - Tenant context set:', updatedUser.tenantId);
+        
+        const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+        if (tenants && Array.isArray(tenants)) {
+          const userTenant = tenants.find((t: any) => t.id === updatedUser.tenantId);
+          if (userTenant) {
+            console.log('[Auth] Tenant found and set:', userTenant.id);
+            await safeStorage.setGlobalItem('currentTenant', userTenant);
+          } else {
+            console.warn('[Auth] Tenant not found for tenantId:', updatedUser.tenantId);
+          }
+        }
+      } else {
+        console.log('[Auth] User has no tenantId (owner or demo user)');
+        setCurrentTenantId(null);
+      }
+      
+      setUser(updatedUser);
+      await safeStorage.setGlobalItem('user', updatedUser);
+      
+      const updatedUsers = allUsers.map(u => 
+        u.id === foundUser.id ? updatedUser : u
+      );
+      await safeStorage.setGlobalItem('users', updatedUsers);
+      
+      console.log('[Auth] Login successful');
+      return { success: true, user: updatedUser };
     } catch (error) {
+      console.error('[Auth] Login error:', error);
       return { success: false, error: 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە' };
     }
   }, []);

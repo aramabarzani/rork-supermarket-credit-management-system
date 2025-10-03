@@ -132,11 +132,17 @@ export default function StoreRequestsScreen() {
                 tenantId: newTenant.id,
               });
 
+              if (!newUser) {
+                console.error('[Store Requests] Failed to create admin user');
+                Alert.alert('هەڵە', 'کێشەیەک ڕوویدا لە دروستکردنی هەژماری بەڕێوەبەر');
+                return;
+              }
+
               console.log('[Store Requests] Admin user created:', {
-                userId: newUser?.id,
-                phone: newUser?.phone,
-                role: newUser?.role,
-                tenantId: newUser?.tenantId,
+                userId: newUser.id,
+                phone: newUser.phone,
+                role: newUser.role,
+                tenantId: newUser.tenantId,
               });
 
               await approveRequest(request.id, user?.name || 'Admin', approvalNotes);
