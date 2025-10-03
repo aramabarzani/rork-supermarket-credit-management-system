@@ -329,7 +329,7 @@ export default function DashboardScreen() {
               {/* Business Name Display */}
               <View style={styles.businessNameContainer}>
                 <KurdishText style={[styles.businessName, currentIsTablet && styles.tabletBusinessName]}>
-                  {currentTenant?.storeNameKurdish || currentTenant?.storeName || 'سیستەمی بەڕێوەبردنی قەرز'}
+                  {user?.storeNameKurdish || user?.storeName || currentTenant?.storeNameKurdish || currentTenant?.storeName || 'سیستەمی بەڕێوەبردنی قەرز'}
                 </KurdishText>
               </View>
               
@@ -371,7 +371,7 @@ export default function DashboardScreen() {
               
               <View style={styles.licenseInfo}>
                 <KurdishText style={[styles.licenseText, currentIsTablet && styles.tabletLicenseText]}>
-                  {user?.role === 'admin' || user?.role === 'employee' ? (currentTenant?.storeNameKurdish || currentTenant?.storeName || user?.storeName || 'فرۆشگا') : (settings?.businessInfo?.name || 'سیستەمی بەڕێوەبردنی قەرز')} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+                  {user?.role === 'admin' || user?.role === 'employee' ? (user?.storeNameKurdish || user?.storeName || currentTenant?.storeNameKurdish || currentTenant?.storeName || 'فرۆشگا') : (settings?.businessInfo?.name || 'سیستەمی بەڕێوەبردنی قەرز')} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
                 </KurdishText>
               </View>
             </View>
