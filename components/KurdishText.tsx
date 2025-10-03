@@ -14,15 +14,17 @@ export const KurdishText: React.FC<KurdishTextProps> = ({
   style,
   ...props 
 }) => {
-  const { settings } = useSettings();
-  const isRTL = settings.language === 'kurdish' || settings.language === 'arabic';
+  const settingsContext = useSettings();
+  const settings = settingsContext?.settings;
   
-  const fontSizeMultiplier = {
+  const isRTL = settings?.language === 'kurdish' || settings?.language === 'arabic';
+  
+  const fontSizeMultiplier = settings?.theme?.fontSize ? {
     'small': 0.875,
     'medium': 1,
     'large': 1.125,
     'extra-large': 1.25,
-  }[settings.theme.fontSize];
+  }[settings.theme.fontSize] : 1;
 
   return (
     <Text 
