@@ -150,6 +150,50 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
       }
       
+      if (foundUser.role === 'admin' || foundUser.role === 'employee') {
+        if (!foundUser.tenantId) {
+          console.log('[Auth] Admin/Employee without tenantId - checking if tenant was created');
+          
+          const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+          const userTenant = tenants?.find((t: any) => 
+            t.adminPhone === foundUser.phone || 
+            t.ownerPhone === foundUser.phone
+          );
+          
+          if (userTenant && userTenant.status === 'active') {
+            console.log('[Auth] Tenant found but user not migrated - blocking login');
+            return { 
+              success: false, 
+              error: 'ئەم زانیاریانە لە دوای پەسەندکردنی هەژمار بەکارناهێنرێن. تکایە بە زانیاریەکانی هەژماری نوێت بچۆ ژوورەوە' 
+            };
+          }
+        } else {
+          const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+          const userTenant = tenants?.find((t: any) => t.id === foundUser.tenantId);
+          
+          if (!userTenant) {
+            console.log('[Auth] Tenant not found for user');
+            return { 
+              success: false, 
+              error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
+            };
+          }
+          
+          if (userTenant.status !== 'active') {
+            console.log('[Auth] Tenant is not active:', userTenant.status);
+            let errorMessage = 'هەژماری فرۆشگا ناچالاکە';
+            if (userTenant.status === 'pending') {
+              errorMessage = 'هەژماری فرۆشگا هێشتا پەسەند نەکراوە. چاوەڕوانی پەسەندکردن بە';
+            } else if (userTenant.status === 'suspended') {
+              errorMessage = 'هەژماری فرۆشگا ڕاگیراوە. پەیوەندی بە پشتیوانی بکە';
+            } else if (userTenant.status === 'expired') {
+              errorMessage = 'هەژماری فرۆشگا بەسەرچووە. تکایە نوێی بکەرەوە';
+            }
+            return { success: false, error: errorMessage };
+          }
+        }
+      }
+      
       const updatedUser = {
         ...foundUser,
         lastLoginAt: new Date().toISOString(),
