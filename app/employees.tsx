@@ -124,6 +124,17 @@ export default function EmployeesScreen() {
             <KurdishText variant="caption" color="#9CA3AF" style={styles.emptySubtitle}>
               {searchQuery ? 'گەڕانەکەت هیچ ئەنجامێکی نەداوە' : 'هێشتا هیچ کارمەندێک زیاد نەکراوە'}
             </KurdishText>
+            {!searchQuery && hasPermission(PERMISSIONS.ADD_EMPLOYEE) && (
+              <TouchableOpacity
+                style={styles.emptyAddButton}
+                onPress={() => router.push('/add-user')}
+              >
+                <Plus size={20} color="white" />
+                <KurdishText variant="body" color="white">
+                  {'زیادکردنی کارمەند'}
+                </KurdishText>
+              </TouchableOpacity>
+            )}
           </GradientCard>
         ) : (
           filteredEmployees.map((employee) => (
@@ -273,6 +284,16 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     textAlign: 'center',
+  },
+  emptyAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#1E3A8A',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 20,
   },
   employeeCard: {
     marginBottom: 16,
