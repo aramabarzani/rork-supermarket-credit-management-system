@@ -41,7 +41,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     });
 
     const existingPhoneRequest = requests.find(
-      r => r.ownerPhone === request.ownerPhone && (r.status === 'approved' || r.status === 'pending')
+      r => r.ownerPhone === request.ownerPhone && (r.status === 'approved' || r.status === 'pending') && r.status !== 'deleted'
     );
     if (existingPhoneRequest) {
       console.error('[Store Request] Phone number already registered:', request.ownerPhone);
@@ -54,7 +54,7 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
 
     if (request.ownerEmail && request.ownerEmail.trim()) {
       const existingEmailRequest = requests.find(
-        r => r.ownerEmail === request.ownerEmail && (r.status === 'approved' || r.status === 'pending')
+        r => r.ownerEmail === request.ownerEmail && (r.status === 'approved' || r.status === 'pending') && r.status !== 'deleted'
       );
       if (existingEmailRequest) {
         console.error('[Store Request] Email already registered:', request.ownerEmail);
