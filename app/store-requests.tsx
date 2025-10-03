@@ -113,7 +113,7 @@ export default function StoreRequestsScreen() {
                 address: request.address,
                 city: request.city,
                 plan: request.plan,
-                status: 'trial',
+                status: 'active',
                 startDate: new Date().toISOString(),
                 expiryDate: new Date(Date.now() + duration * 24 * 60 * 60 * 1000).toISOString(),
               });

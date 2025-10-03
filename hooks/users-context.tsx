@@ -497,8 +497,41 @@ export const [UsersProvider, useUsers] = createContextHook(() => {
     
     const existingUser = users.find(u => u.phone === userData.phone);
     if (existingUser) {
-      console.warn('[Users] User with this phone already exists:', userData.phone);
-      return null;
+      console.log('[Users] User with this phone exists:', { 
+        existingUserId: existingUser.id, 
+        existingTenantId: existingUser.tenantId,
+        newTenantId: userData.tenantId 
+      });
+      
+      if (existingUser.tenantId && userData.tenantId && existingUser.tenantId !== userData.tenantId) {
+        console.log('[Users] Different tenant - creating new user with same phone (tenant isolation)');
+      } else if (!existingUser.tenantId && userData.tenantId) {
+        console.log('[Users] Existing user has no tenant - updating with tenant info');
+        const updatedUser: User = {
+          ...existingUser,
+          name: userData.name,
+          role: userData.role || existingUser.role,
+          password: userData.password || existingUser.password,
+          tenantId: userData.tenantId,
+          permissions: userData.role === 'employee' ? DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })) : 
+                       userData.role === 'admin' ? Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })) : 
+                       existingUser.permissions,
+          email: userData.email || existingUser.email,
+          address: userData.address || existingUser.address,
+          nationalId: userData.nationalId || existingUser.nationalId,
+        };
+        
+        const updatedUsers = users.map(u => u.id === existingUser.id ? updatedUser : u);
+        await saveUsers(updatedUsers);
+        console.log('[Users] User updated with tenant info:', { id: updatedUser.id, tenantId: updatedUser.tenantId });
+        return updatedUser;
+      } else if (existingUser.tenantId === userData.tenantId) {
+        console.warn('[Users] User already exists in this tenant');
+        return null;
+      } else {
+        console.warn('[Users] User with this phone already exists without tenant context');
+        return null;
+      }
     }
     
     const newUser: User = {
