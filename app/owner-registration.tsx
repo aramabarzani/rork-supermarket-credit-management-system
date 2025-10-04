@@ -166,6 +166,19 @@ export default function OwnerRegistrationScreen() {
 
       const existingUsers = await safeStorage.getGlobalItem<UserType[]>('users', []);
       
+      if (!existingUsers || !Array.isArray(existingUsers)) {
+        Alert.alert('هەڵە', 'کێشەیەک لە خوێندنەوەی داتا ڕوویدا');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const ownerExists = existingUsers.some(u => u.role === 'owner');
+      if (ownerExists) {
+        Alert.alert('هەڵە', 'خاوەندار پێشتر دروست کراوە. تەنها یەک خاوەندار ڕێگەپێدراوە');
+        setIsSubmitting(false);
+        return;
+      }
+      
       const phoneExists = existingUsers.some(u => u.phone === formData.phone);
       if (phoneExists) {
         Alert.alert('هەڵە', 'ئەم ژمارە مۆبایلە پێشتر تۆمار کراوە');

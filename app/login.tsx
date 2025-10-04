@@ -82,7 +82,6 @@ export default function LoginScreen() {
           subtitle: 'دەسەڵاتی تەواو',
           color: '#7C3AED' as const,
           gradient: ['#7C3AED', '#A78BFA'] as const,
-          demo: null,
         };
       case 'admin':
         return {
@@ -91,7 +90,6 @@ export default function LoginScreen() {
           subtitle: 'بەڕێوەبردنی سیستەم',
           color: '#DC2626' as const,
           gradient: ['#DC2626', '#EF4444'] as const,
-          demo: { phone: '07501234567', password: 'admin123' },
         };
       case 'employee':
         return {
@@ -100,7 +98,6 @@ export default function LoginScreen() {
           subtitle: 'کارکردن لە سیستەم',
           color: '#059669' as const,
           gradient: ['#059669', '#10B981'] as const,
-          demo: { phone: '07509876543', password: 'employee123' },
         };
       case 'customer':
         return {
@@ -109,20 +106,13 @@ export default function LoginScreen() {
           subtitle: 'بینینی قەرزەکان',
           color: '#2563EB' as const,
           gradient: ['#2563EB', '#3B82F6'] as const,
-          demo: { phone: '07701234567', password: 'customer123' },
         };
       default:
         return null;
     }
   };
 
-  const fillDemoCredentials = () => {
-    const roleInfo = getRoleInfo(selectedRole);
-    if (roleInfo?.demo) {
-      setPhone(roleInfo.demo.phone);
-      setPassword(roleInfo.demo.password);
-    }
-  };
+
 
   if (isLoading) {
     return (
@@ -320,27 +310,7 @@ export default function LoginScreen() {
                   )}
                 </TouchableOpacity>
 
-                {roleInfo.demo && (
-                  <View style={[styles.demoInfo, { borderLeftColor: roleInfo.color }]}>
-                    <Text style={styles.demoTitle}>
-                      حسابی نموونە:
-                    </Text>
-                    <Text style={styles.demoText}>
-                      مۆبایل: {roleInfo.demo.phone}
-                    </Text>
-                    <Text style={styles.demoText}>
-                      وشەی نهێنی: {roleInfo.demo.password}
-                    </Text>
-                    <TouchableOpacity
-                      style={[styles.fillDemoButton, { backgroundColor: roleInfo.color }]}
-                      onPress={fillDemoCredentials}
-                    >
-                      <Text style={styles.fillDemoButtonText}>
-                        پڕکردنەوەی خۆکار
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+
 
                 {selectedRole === 'owner' && (
                   <View style={styles.ownerInfo}>

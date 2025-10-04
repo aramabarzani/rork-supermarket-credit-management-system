@@ -2,61 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, LoginCredentials, LoginResult } from '@/types/auth';
 import { safeStorage, setCurrentTenantId } from '@/utils/storage';
-import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissions';
 
-
-const DEMO_USERS: User[] = [
-  {
-    id: 'admin',
-    name: 'بەڕێوەبەر',
-    phone: '07501234567',
-    role: 'admin',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
-    password: 'admin123',
-    failedLoginAttempts: 0,
-    twoFactorEnabled: false,
-    allowedDevices: 5,
-    currentSessions: [],
-  },
-  {
-    id: 'employee-1',
-    name: 'کارمەند یەک',
-    phone: '07509876543',
-    role: 'employee',
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    permissions: DEFAULT_EMPLOYEE_PERMISSIONS.map(p => ({ id: p, name: p, code: p, description: '' })),
-    password: 'employee123',
-    failedLoginAttempts: 0,
-    twoFactorEnabled: false,
-    allowedDevices: 3,
-    currentSessions: [],
-    isStarEmployee: true,
-  },
-  {
-    id: 'customer-1',
-    name: 'ئەحمەد محەمەد',
-    phone: '07701234567',
-    role: 'customer',
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    permissions: [],
-    password: 'customer123',
-    failedLoginAttempts: 0,
-    twoFactorEnabled: false,
-    allowedDevices: 2,
-    currentSessions: [],
-    address: 'هەولێر، شەقامی ٦٠ مەتری، ژمارە ١٢٣',
-    nationalId: '1234567890123',
-    email: 'ahmad.mohammed@example.com',
-    customerGroup: 'family',
-    customerRating: 'good',
-    onTimePayments: 8,
-    latePayments: 2,
-  },
-];
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
@@ -102,7 +48,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         console.error('[Auth] Error loading global users:', error);
       }
       
-      allUsers = [...DEMO_USERS, ...allUsers];
+
       
       console.log('[Auth] Total users loaded:', allUsers.length);
       
