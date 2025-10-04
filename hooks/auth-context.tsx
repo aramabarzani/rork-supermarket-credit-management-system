@@ -105,48 +105,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('[Auth] Login attempt:', { phone: credentials.phone });
       
-      let allUsers: User[] = [...DEMO_USERS];
+      let allUsers: User[] = [];
+      
       try {
-        const storedUsers = await safeStorage.getGlobalItem<User[]>('users', null);
-        if (storedUsers && Array.isArray(storedUsers) && storedUsers.length > 0) {
-          const mergedUsers = [...DEMO_USERS];
-          storedUsers.forEach(storedUser => {
-            const existingIndex = mergedUsers.findIndex(u => u.id === storedUser.id);
-            if (existingIndex >= 0) {
-              mergedUsers[existingIndex] = storedUser;
-            } else {
-              mergedUsers.push(storedUser);
-            }
-          });
-          allUsers = mergedUsers;
-        } else {
-          await safeStorage.setGlobalItem('users', allUsers);
+        const globalUsers = await safeStorage.getGlobalItem<User[]>('users', []);
+        if (globalUsers && Array.isArray(globalUsers)) {
+          allUsers = [...globalUsers];
         }
       } catch (error) {
-        console.error('[Auth] Error loading users:', error);
-        await safeStorage.setGlobalItem('users', allUsers);
-      }
-      
-      const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-      const activeTenants = tenants && Array.isArray(tenants) ? tenants.filter((t: any) => t.status === 'active') : [];
-      
-      for (const tenant of activeTenants) {
-        try {
-          const tenantKey = `tenant_${tenant.id}_users`;
-          const tenantUsers = await safeStorage.getGlobalItem<User[]>(tenantKey, []);
-          if (tenantUsers && Array.isArray(tenantUsers)) {
-            tenantUsers.forEach(tenantUser => {
-              const existingIndex = allUsers.findIndex(u => u.id === tenantUser.id);
-              if (existingIndex >= 0) {
-                allUsers[existingIndex] = tenantUser;
-              } else {
-                allUsers.push(tenantUser);
-              }
-            });
-          }
-        } catch (error) {
-          console.error(`[Auth] Error loading users from tenant ${tenant.id}:`, error);
-        }
+        console.error('[Auth] Error loading global users:', error);
       }
       
       console.log('[Auth] Total users loaded:', allUsers.length);
@@ -155,43 +122,37 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         u => u.phone === credentials.phone && u.password === credentials.password
       );
 
-      if (foundUser && (foundUser.role === 'admin' || foundUser.role === 'employee')) {
-        const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-        const approvedTenants = tenants && Array.isArray(tenants) ? tenants.filter((t: any) => t.status === 'active') : [];
+      if (foundUser && (foundUser.role === 'admin' || foundUser.role === 'employee' || foundUser.role === 'customer')) {
+        if (!foundUser.tenantId) {
+          console.error('[Auth] User has no tenantId');
+          return { 
+            success: false, 
+            error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە بەڕێوەبەر بکە' 
+          };
+        }
         
-        const matchingTenants = approvedTenants.filter((t: any) => 
-          t.adminPhone === foundUser!.phone || t.ownerPhone === foundUser!.phone
-        );
-
-        if (matchingTenants.length > 1) {
-          console.log('[Auth] Multiple tenants found for this phone:', matchingTenants.length);
-          
-          if (foundUser.tenantId) {
-            const userTenant = matchingTenants.find((t: any) => t.id === foundUser!.tenantId);
-            if (!userTenant) {
-              console.error('[Auth] User tenantId does not match any active tenant');
-              return { 
-                success: false, 
-                error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
-              };
-            }
-            console.log('[Auth] User belongs to tenant:', userTenant.storeNameKurdish);
-          } else {
-            console.error('[Auth] Multiple tenants but user has no tenantId');
-            return { 
-              success: false, 
-              error: 'ژمارەی مۆبایلەکەت بۆ چەند هەژمارێک بەکارهاتووە. پەیوەندی بە پشتیوانی بکە بۆ چارەسەرکردنی کێشەکە' 
-            };
+        const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+        const userTenant = tenants?.find((t: any) => t.id === foundUser!.tenantId);
+        
+        if (!userTenant) {
+          console.error('[Auth] Tenant not found for user');
+          return { 
+            success: false, 
+            error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
+          };
+        }
+        
+        if (userTenant.status !== 'active') {
+          console.log('[Auth] Tenant is not active:', userTenant.status);
+          let errorMessage = 'هەژماری فرۆشگا ناچالاکە';
+          if (userTenant.status === 'pending') {
+            errorMessage = 'هەژماری فرۆشگا هێشتا پەسەند نەکراوە. چاوەڕوانی پەسەندکردن بە';
+          } else if (userTenant.status === 'suspended') {
+            errorMessage = 'هەژماری فرۆشگا ڕاگیراوە. پەیوەندی بە پشتیوانی بکە';
+          } else if (userTenant.status === 'expired') {
+            errorMessage = 'هەژماری فرۆشگا بەسەرچووە. تکایە نوێی بکەرەوە';
           }
-        } else if (matchingTenants.length === 1 && foundUser.tenantId) {
-          console.log('[Auth] Single tenant found, verifying match');
-          if (matchingTenants[0].id !== foundUser.tenantId) {
-            console.error('[Auth] User tenantId does not match the only available tenant');
-            return { 
-              success: false, 
-              error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
-            };
-          }
+          return { success: false, error: errorMessage };
         }
       }
       
@@ -210,50 +171,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (foundUser.lockedUntil && new Date(foundUser.lockedUntil) > new Date()) {
         console.log('[Auth] User account is locked');
         return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
-      }
-      
-      if (foundUser.role === 'admin' || foundUser.role === 'employee') {
-        if (!foundUser.tenantId) {
-          console.log('[Auth] Admin/Employee without tenantId - checking if tenant was created');
-          
-          const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-          const userTenant = tenants?.find((t: any) => 
-            t.adminPhone === foundUser.phone || 
-            t.ownerPhone === foundUser.phone
-          );
-          
-          if (userTenant && userTenant.status === 'active') {
-            console.log('[Auth] Tenant found but user not migrated - blocking login');
-            return { 
-              success: false, 
-              error: 'ئەم زانیاریانە لە دوای پەسەندکردنی هەژمار بەکارناهێنرێن. تکایە بە زانیاریەکانی هەژماری نوێت بچۆ ژوورەوە' 
-            };
-          }
-        } else {
-          const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-          const userTenant = tenants?.find((t: any) => t.id === foundUser.tenantId);
-          
-          if (!userTenant) {
-            console.log('[Auth] Tenant not found for user');
-            return { 
-              success: false, 
-              error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
-            };
-          }
-          
-          if (userTenant.status !== 'active') {
-            console.log('[Auth] Tenant is not active:', userTenant.status);
-            let errorMessage = 'هەژماری فرۆشگا ناچالاکە';
-            if (userTenant.status === 'pending') {
-              errorMessage = 'هەژماری فرۆشگا هێشتا پەسەند نەکراوە. چاوەڕوانی پەسەندکردن بە';
-            } else if (userTenant.status === 'suspended') {
-              errorMessage = 'هەژماری فرۆشگا ڕاگیراوە. پەیوەندی بە پشتیوانی بکە';
-            } else if (userTenant.status === 'expired') {
-              errorMessage = 'هەژماری فرۆشگا بەسەرچووە. تکایە نوێی بکەرەوە';
-            }
-            return { success: false, error: errorMessage };
-          }
-        }
       }
       
       const updatedUser = {
