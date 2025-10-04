@@ -45,14 +45,32 @@ export const safeStorage = {
       const trimmedItem = item.trim();
       
       if (!trimmedItem.startsWith('[') && !trimmedItem.startsWith('{') && !trimmedItem.startsWith('"')) {
-        await safeStorage.removeItem(key);
+        console.warn('[Storage] Invalid JSON format for tenant key:', key, 'Value starts with:', trimmedItem.substring(0, 10));
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            const tenantKey = getTenantKey(key);
+            localStorage.removeItem(tenantKey);
+          }
+        } else {
+          const tenantKey = getTenantKey(key);
+          await AsyncStorage.removeItem(tenantKey);
+        }
         return defaultValue;
       }
       
       try {
         return JSON.parse(trimmedItem) as T;
-      } catch {
-        await safeStorage.removeItem(key);
+      } catch (parseError) {
+        console.error('[Storage] JSON parse error for tenant key:', key, 'Error:', parseError);
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            const tenantKey = getTenantKey(key);
+            localStorage.removeItem(tenantKey);
+          }
+        } else {
+          const tenantKey = getTenantKey(key);
+          await AsyncStorage.removeItem(tenantKey);
+        }
         return defaultValue;
       }
     } catch {
@@ -85,12 +103,28 @@ export const safeStorage = {
       const trimmedItem = item.trim();
       
       if (!trimmedItem.startsWith('[') && !trimmedItem.startsWith('{') && !trimmedItem.startsWith('"')) {
+        console.warn('[Storage] Invalid JSON format for key:', key, 'Value starts with:', trimmedItem.substring(0, 10));
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            localStorage.removeItem(key);
+          }
+        } else {
+          await AsyncStorage.removeItem(key);
+        }
         return defaultValue;
       }
       
       try {
         return JSON.parse(trimmedItem) as T;
-      } catch {
+      } catch (parseError) {
+        console.error('[Storage] JSON parse error for key:', key, 'Error:', parseError);
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
+            localStorage.removeItem(key);
+          }
+        } else {
+          await AsyncStorage.removeItem(key);
+        }
         return defaultValue;
       }
     } catch {
