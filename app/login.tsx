@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { LogIn, Phone, Lock, Crown, Shield, Users, User as UserIcon } from 'lucide-react-native';
+import { LogIn, Phone, Lock, Store, Crown, Shield, Users, User as UserIcon } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
 
 type RoleType = 'owner' | 'admin' | 'employee' | 'customer' | null;
@@ -218,7 +218,15 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </ScrollView>
 
-
+            <TouchableOpacity
+              style={styles.registerButtonMain}
+              onPress={() => router.push('/store-registration')}
+            >
+              <Store size={22} color="#FFFFFF" />
+              <Text style={styles.registerButtonMainText}>
+                تۆمارکردنی فرۆشگای نوێ
+              </Text>
+            </TouchableOpacity>
           </Animated.View>
         </LinearGradient>
       </SafeAreaView>
@@ -304,7 +312,21 @@ export default function LoginScreen() {
 
 
 
-
+                {selectedRole === 'owner' && (
+                  <View style={styles.ownerInfo}>
+                    <Text style={styles.ownerInfoTitle}>
+                      ئەگەر خاوەنداری نوێی، تکایە حساب دروست بکە:
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.createOwnerButton}
+                      onPress={() => router.push('/owner-registration')}
+                    >
+                      <Text style={styles.createOwnerButtonText}>
+                        دروستکردنی حسابی خاوەندار
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           </ScrollView>
