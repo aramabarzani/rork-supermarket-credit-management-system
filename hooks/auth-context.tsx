@@ -116,6 +116,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         console.error('[Auth] Error loading global users:', error);
       }
       
+      allUsers = [...DEMO_USERS, ...allUsers];
+      
       console.log('[Auth] Total users loaded:', allUsers.length);
       
       let foundUser = allUsers.find(
