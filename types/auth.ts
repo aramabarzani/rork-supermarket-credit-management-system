@@ -69,6 +69,7 @@ export interface LoginCredentials {
   password: string;
   otpCode?: string;
   deviceId?: string;
+  expectedRole?: 'owner' | 'admin' | 'employee' | 'customer';
 }
 
 export interface LoginResult {

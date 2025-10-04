@@ -35,7 +35,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
-      console.log('[Auth] Login attempt:', { phone: credentials.phone });
+      console.log('[Auth] Login attempt:', { phone: credentials.phone, expectedRole: credentials.expectedRole });
       
       let allUsers: User[] = [];
       
@@ -55,6 +55,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       let foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
       );
+
+      if (foundUser && credentials.expectedRole && foundUser.role !== credentials.expectedRole) {
+        console.log('[Auth] Role mismatch:', { expected: credentials.expectedRole, actual: foundUser.role });
+        return { 
+          success: false, 
+          error: 'ئەم حسابە بۆ ئەم ڕۆڵە نییە. تکایە لە لاپەڕەی دروست بچۆ ژوورەوە' 
+        };
+      }
 
       if (foundUser && (foundUser.role === 'admin' || foundUser.role === 'employee' || foundUser.role === 'customer')) {
         if (!foundUser.tenantId) {
