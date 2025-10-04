@@ -7,20 +7,6 @@ import { PERMISSIONS, DEFAULT_EMPLOYEE_PERMISSIONS } from '@/constants/permissio
 
 const DEMO_USERS: User[] = [
   {
-    id: 'owner',
-    name: 'خاوەندار',
-    phone: '07700000000',
-    role: 'owner',
-    createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    isActive: true,
-    permissions: Object.values(PERMISSIONS).map(p => ({ id: p, name: p, code: p, description: '' })),
-    password: 'owner123',
-    failedLoginAttempts: 0,
-    twoFactorEnabled: false,
-    allowedDevices: 10,
-    currentSessions: [],
-  },
-  {
     id: 'admin',
     name: 'بەڕێوەبەر',
     phone: '07501234567',

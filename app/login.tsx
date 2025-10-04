@@ -82,7 +82,7 @@ export default function LoginScreen() {
           subtitle: 'دەسەڵاتی تەواو',
           color: '#7C3AED' as const,
           gradient: ['#7C3AED', '#A78BFA'] as const,
-          demo: { phone: '07700000000', password: 'owner123' },
+          demo: null,
         };
       case 'admin':
         return {
@@ -320,25 +320,43 @@ export default function LoginScreen() {
                   )}
                 </TouchableOpacity>
 
-                <View style={[styles.demoInfo, { borderLeftColor: roleInfo.color }]}>
-                  <Text style={styles.demoTitle}>
-                    حسابی نموونە:
-                  </Text>
-                  <Text style={styles.demoText}>
-                    مۆبایل: {roleInfo.demo.phone}
-                  </Text>
-                  <Text style={styles.demoText}>
-                    وشەی نهێنی: {roleInfo.demo.password}
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.fillDemoButton, { backgroundColor: roleInfo.color }]}
-                    onPress={fillDemoCredentials}
-                  >
-                    <Text style={styles.fillDemoButtonText}>
-                      پڕکردنەوەی خۆکار
+                {roleInfo.demo && (
+                  <View style={[styles.demoInfo, { borderLeftColor: roleInfo.color }]}>
+                    <Text style={styles.demoTitle}>
+                      حسابی نموونە:
                     </Text>
-                  </TouchableOpacity>
-                </View>
+                    <Text style={styles.demoText}>
+                      مۆبایل: {roleInfo.demo.phone}
+                    </Text>
+                    <Text style={styles.demoText}>
+                      وشەی نهێنی: {roleInfo.demo.password}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.fillDemoButton, { backgroundColor: roleInfo.color }]}
+                      onPress={fillDemoCredentials}
+                    >
+                      <Text style={styles.fillDemoButtonText}>
+                        پڕکردنەوەی خۆکار
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {selectedRole === 'owner' && (
+                  <View style={styles.ownerInfo}>
+                    <Text style={styles.ownerInfoTitle}>
+                      ئەگەر خاوەنداری نوێی، تکایە حساب دروست بکە:
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.createOwnerButton}
+                      onPress={() => router.push('/owner-registration')}
+                    >
+                      <Text style={styles.createOwnerButtonText}>
+                        دروستکردنی حسابی خاوەندار
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           </ScrollView>
@@ -548,5 +566,38 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  ownerInfo: {
+    marginTop: 24,
+    padding: 20,
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#7C3AED',
+  },
+  ownerInfoTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  createOwnerButton: {
+    backgroundColor: '#7C3AED',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#7C3AED',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  createOwnerButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
