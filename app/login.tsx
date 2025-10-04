@@ -54,7 +54,10 @@ export default function LoginScreen() {
               سیستەمی بەڕێوەبردنی قەرز
             </Text>
             <Text style={styles.subtitle}>
-              بۆ سوپەرمارکێتەکان
+              بۆ سوپەرمارکێت و بازرگانیەکان
+            </Text>
+            <Text style={styles.description}>
+              هەڵبژاردنی جۆری حساب بۆ چوونەژوورەوە
             </Text>
           </View>
 
@@ -188,6 +191,13 @@ const styles = StyleSheet.create({
     color: '#E0E7FF',
     marginTop: 8,
     textAlign: 'center',
+  },
+  description: {
+    fontSize: 14,
+    color: '#CBD5E1',
+    marginTop: 12,
+    textAlign: 'center',
+    fontWeight: '500',
   },
   roleScroll: {
     marginBottom: 32,

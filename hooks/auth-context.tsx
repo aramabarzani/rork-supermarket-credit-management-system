@@ -22,7 +22,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         } else {
           setUser(null);
         }
-      } catch (error) {
+      } catch {
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -35,7 +35,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<LoginResult> => {
     try {
-      console.log('[Auth] Login attempt:', { phone: credentials.phone, expectedRole: credentials.expectedRole });
+      console.log('[Auth] Login attempt for role:', credentials.expectedRole || 'any');
       
       let allUsers: User[] = [];
       
@@ -50,7 +50,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       
 
       
-      console.log('[Auth] Total users loaded:', allUsers.length);
+      console.log('[Auth] Users loaded:', allUsers.length);
       
       let foundUser = allUsers.find(
         u => u.phone === credentials.phone && u.password === credentials.password
@@ -103,7 +103,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
       }
       
-      console.log('[Auth] User found:', { id: foundUser.id, role: foundUser.role, tenantId: foundUser.tenantId });
+      console.log('[Auth] User authenticated:', foundUser.role, foundUser.tenantId ? `(tenant: ${foundUser.tenantId})` : '(no tenant)');
       
       if (!foundUser.isActive) {
         console.log('[Auth] User account is inactive');
@@ -162,8 +162,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       console.log('[Auth] Logout - Tenant context cleared');
       setUser(null);
       safeStorage.removeItem('user');
-    } catch (error) {
-      
+    } catch {
+      console.log('[Auth] Logout error (ignored)');
     }
   }, []);
 

@@ -20,28 +20,36 @@ export default function IndexScreen() {
 
   useEffect(() => {
     if (!isMounted || isLoading || !isInitialized) {
-      console.log('IndexScreen: Still loading...', { isMounted, isLoading, isInitialized });
+      console.log('[Index] Still loading...', { isMounted, isLoading, isInitialized });
       return;
     }
     
-    console.log('IndexScreen: Auth loaded, user:', !!user, 'role:', user?.role);
+    console.log('[Index] Auth loaded, user:', !!user, 'role:', user?.role);
     
-    // Small delay to ensure everything is ready, then navigate
     const timer = setTimeout(() => {
       if (user) {
-        console.log('IndexScreen: User found, role:', user.role);
-        if (user.role === 'owner') {
-          console.log('IndexScreen: Owner detected, redirecting to owner dashboard');
-          router.replace('/owner-dashboard');
-        } else if (user.role === 'customer') {
-          console.log('IndexScreen: Customer detected, redirecting to customer dashboard');
-          router.replace('/customer-dashboard');
-        } else {
-          console.log('IndexScreen: Admin/Employee user, redirecting to dashboard');
-          router.replace('/(tabs)/dashboard');
+        console.log('[Index] User found, role:', user.role);
+        
+        switch (user.role) {
+          case 'owner':
+            console.log('[Index] Redirecting to owner dashboard');
+            router.replace('/owner-dashboard');
+            break;
+          case 'customer':
+            console.log('[Index] Redirecting to customer dashboard');
+            router.replace('/customer-dashboard');
+            break;
+          case 'admin':
+          case 'employee':
+            console.log('[Index] Redirecting to admin/employee dashboard');
+            router.replace('/(tabs)/dashboard');
+            break;
+          default:
+            console.warn('[Index] Unknown role:', user.role);
+            router.replace('/login');
         }
       } else {
-        console.log('IndexScreen: No user, redirecting to login');
+        console.log('[Index] No user, redirecting to login');
         router.replace('/login');
       }
     }, 50);
