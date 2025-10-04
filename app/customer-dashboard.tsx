@@ -214,6 +214,12 @@ export default function CustomerDashboardScreen() {
                           {debt.description}
                         </Text>
                       )}
+                      <View style={styles.createdByContainer}>
+                        <User size={14} color="#6B7280" />
+                        <Text style={styles.createdByText}>
+                          قەرزی پێدراوە لەلایەن: {debt.createdByName}
+                        </Text>
+                      </View>
                     </View>
                     <View style={styles.debtStatus}>
                       {debt.status === 'paid' ? (
@@ -266,6 +272,12 @@ export default function CustomerDashboardScreen() {
                           {payment.notes}
                         </Text>
                       )}
+                      <View style={styles.receivedByContainer}>
+                        <User size={14} color="#6B7280" />
+                        <Text style={styles.receivedByText}>
+                          وەرگیراوە لەلایەن: {payment.receivedByName}
+                        </Text>
+                      </View>
                     </View>
                     <CheckCircle size={24} color="#10B981" />
                   </View>
@@ -530,6 +542,34 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#6B7280',
     fontStyle: 'italic',
+  },
+  createdByContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  createdByText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  receivedByContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopColor: '#F3F4F6',
+    borderTopWidth: 1,
+  },
+  receivedByText: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   infoCard: {
     flexDirection: 'row',
