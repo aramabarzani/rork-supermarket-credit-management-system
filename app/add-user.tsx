@@ -44,8 +44,13 @@ export default function AddUserScreen() {
       return;
     }
 
-    if (!name || !phone || (role === 'employee' && !password)) {
+    if (!name || !phone) {
       Alert.alert('تێبینی', 'تکایە هەموو خانە پێویستەکان پڕ بکەرەوە');
+      return;
+    }
+
+    if (!password || password.trim() === '') {
+      Alert.alert('تێبینی', 'تکایە وشەی نهێنی بنووسە');
       return;
     }
 
@@ -53,7 +58,7 @@ export default function AddUserScreen() {
       await addUser({
         name,
         phone,
-        password: role === 'employee' ? password : (password || phone),
+        password: password,
         role,
         isActive: true,
         address: role === 'customer' ? address : undefined,
@@ -156,6 +161,27 @@ export default function AddUserScreen() {
                 textAlign="right"
               />
             </View>
+
+            {/* Password (for customers) */}
+            {role === 'customer' && (
+              <View style={styles.inputGroup}>
+                <View style={styles.labelRow}>
+                  <Lock size={20} color="#1E3A8A" />
+                  <KurdishText variant="body" color="#1F2937">
+                    وشەی نهێنی
+                  </KurdishText>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="وشەی نهێنی بنووسە"
+                  placeholderTextColor="#9CA3AF"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                  textAlign="right"
+                />
+              </View>
+            )}
 
             {/* Address (for customers only) */}
             {role === 'customer' && (
