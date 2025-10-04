@@ -158,7 +158,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       
       if (!foundUser) {
         console.log('[Auth] User not found or password incorrect');
-        return { success: false, error: 'ژمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
+        return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
       }
       
       console.log('[Auth] User found:', { id: foundUser.id, role: foundUser.role, tenantId: foundUser.tenantId });
