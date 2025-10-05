@@ -14,9 +14,7 @@ import {
   TrendingUp,
   TrendingDown,
   DollarSign,
-  Calendar,
   Award,
-  Mail,
   FileText,
   Download,
 } from 'lucide-react-native';
@@ -45,37 +43,13 @@ interface CustomerReportData {
 export default function DetailedCustomerReportsScreen() {
   const router = useRouter();
   const { getCustomers } = useUsers();
-  const { getAllDebts, getAllPayments } = useDebts();
+  const { debts: allDebts, payments: allPayments } = useDebts();
   const { hasPermission } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState<string>('all');
   const [selectedRating, setSelectedRating] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'debt' | 'paid' | 'rating' | 'name'>('debt');
 
-  // Check permissions
-  if (!hasPermission(PERMISSIONS.VIEW_REPORTS)) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <ArrowLeft size={24} color="#1E3A8A" />
-          </TouchableOpacity>
-          <KurdishText variant="title" color="#1F2937">
-            ڕاپۆرتی تایبەتی کڕیاران
-          </KurdishText>
-        </View>
-        <View style={styles.noPermissionContainer}>
-          <FileText size={48} color="#9CA3AF" />
-          <KurdishText variant="body" color="#6B7280" style={styles.noPermissionText}>
-            تۆ دەسەڵاتی بینینی ڕاپۆرتەکانت نییە
-          </KurdishText>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const customers = getCustomers();
-  const allDebts = getAllDebts();
-  const allPayments = getAllPayments();
 
   // Generate detailed customer reports
   const customerReports: CustomerReportData[] = useMemo(() => {
