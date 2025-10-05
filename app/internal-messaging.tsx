@@ -68,6 +68,11 @@ export default function InternalMessagingScreen() {
       return;
     }
 
+    if (!messaging) {
+      Alert.alert('هەڵە', 'سیستەمی پەیام ئامادە نییە');
+      return;
+    }
+
     setIsSending(true);
     const result = await messaging.sendMessage({
       senderId: user.id,
@@ -97,6 +102,7 @@ export default function InternalMessagingScreen() {
   };
 
   const handleMarkAsRead = async (messageId: string) => {
+    if (!messaging) return;
     await messaging.markAsRead(messageId);
   };
 
@@ -119,7 +125,7 @@ export default function InternalMessagingScreen() {
     setShowShareModal(false);
   };
 
-  const displayMessages = activeTab === 'inbox' ? messaging.getInboxMessages() : messaging.getSentMessages();
+  const displayMessages = activeTab === 'inbox' ? (messaging?.getInboxMessages() || []) : (messaging?.getSentMessages() || []);
 
   const filteredMessages = displayMessages.filter((msg) => {
     const matchesSearch =
@@ -132,9 +138,9 @@ export default function InternalMessagingScreen() {
   });
 
   const stats = {
-    totalMessages: messaging.messages.length,
-    unreadMessages: messaging.getUnreadCount(),
-    sentMessages: messaging.getSentMessages().length,
+    totalMessages: messaging?.messages?.length || 0,
+    unreadMessages: messaging?.getUnreadCount() || 0,
+    sentMessages: messaging?.getSentMessages()?.length || 0,
   };
 
   const handleOpenConversations = () => {
@@ -158,10 +164,10 @@ export default function InternalMessagingScreen() {
       >
         <Users size={24} color="#FFFFFF" />
         <KurdishText style={styles.conversationsButtonText}>گفتوگۆکان لەگەڵ کڕیاران</KurdishText>
-        {messaging.getTotalUnreadConversations() > 0 && (
+        {(messaging?.getTotalUnreadConversations() || 0) > 0 && (
           <View style={styles.conversationsBadge}>
             <KurdishText style={styles.conversationsBadgeText}>
-              {messaging.getTotalUnreadConversations()}
+              {messaging?.getTotalUnreadConversations() || 0}
             </KurdishText>
           </View>
         )}
@@ -217,7 +223,7 @@ export default function InternalMessagingScreen() {
         </TouchableOpacity>
       </View>
 
-      {messaging.isLoading ? (
+      {messaging?.isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4F46E5" />
         </View>
