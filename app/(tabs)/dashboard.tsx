@@ -41,6 +41,7 @@ import {
   Settings,
   CreditCard,
   Zap,
+  MessageCircle,
 } from 'lucide-react-native';
 import { LineChart, BarChart, PieChart as RNPieChart } from 'react-native-chart-kit';
 import { useAuth } from '@/hooks/auth-context';
@@ -480,6 +481,16 @@ export default function DashboardScreen() {
                     <Settings size={24} color="#fff" />
                   </View>
                   <KurdishText style={styles.quickActionLabel}>ڕێکخستنەکان</KurdishText>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, styles.quickActionPink]}
+                  onPress={() => router.push('/internal-messaging')}
+                >
+                  <View style={[styles.quickActionIconContainer, styles.quickActionIconPink]}>
+                    <MessageCircle size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>پەیامەکان</KurdishText>
                 </TouchableOpacity>
               </ScrollView>
             </View>
@@ -1625,6 +1636,14 @@ const styles = StyleSheet.create({
   },
   quickActionIconYellow: {
     backgroundColor: '#FBBF24',
+  },
+  quickActionPink: {
+    backgroundColor: '#FCE7F3',
+    borderWidth: 2,
+    borderColor: '#EC4899',
+  },
+  quickActionIconPink: {
+    backgroundColor: '#EC4899',
   },
   quickActionLabel: {
     fontSize: 13,
