@@ -37,6 +37,25 @@ export default function InternalMessagingScreen() {
     content: '',
   });
 
+  if (!messaging) {
+    return (
+      <SafeAreaView style={styles.container} edges={['bottom']}>
+        <Stack.Screen
+          options={{
+            title: 'پەیامە ناوخۆییەکان',
+            headerStyle: { backgroundColor: '#4F46E5' },
+            headerTintColor: '#fff',
+            headerTitleStyle: { fontWeight: 'bold' },
+          }}
+        />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4F46E5" />
+          <KurdishText style={styles.emptyText}>چاوەڕوان بە...</KurdishText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   const handleSendMessage = async () => {
     if (!newMessage.recipientId || !newMessage.subject || !newMessage.content) {
       Alert.alert('هەڵە', 'تکایە هەموو خانەکان پڕ بکەرەوە');
