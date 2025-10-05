@@ -489,6 +489,18 @@ function RootLayoutNav() {
         }} 
       />
       <Stack.Screen 
+        name="conversations" 
+        options={{ 
+          title: "گفتوگۆکان",
+        }} 
+      />
+      <Stack.Screen 
+        name="chat" 
+        options={{ 
+          title: "گفتوگۆ",
+        }} 
+      />
+      <Stack.Screen 
         name="tenant-features" 
         options={{ 
           title: "تایبەتمەندیەکانی فرۆشگا",

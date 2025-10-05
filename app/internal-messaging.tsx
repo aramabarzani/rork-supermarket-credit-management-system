@@ -9,9 +9,9 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MessageCircle, Send, Mail, MailOpen, Trash2, Share2, Filter, Plus } from 'lucide-react-native';
+import { MessageCircle, Send, Mail, MailOpen, Trash2, Share2, Filter, Plus, Users } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
 import { useMessaging } from '@/hooks/messaging-context';
 import { useAuth } from '@/hooks/auth-context';
@@ -20,6 +20,7 @@ type TabType = 'inbox' | 'sent';
 type ShareMethod = 'email' | 'whatsapp' | 'telegram' | 'viber' | 'sms';
 
 export default function InternalMessagingScreen() {
+  const router = useRouter();
   const { user } = useAuth();
   const messaging = useMessaging();
   const [activeTab, setActiveTab] = useState<TabType>('inbox');
@@ -136,6 +137,10 @@ export default function InternalMessagingScreen() {
     sentMessages: messaging.getSentMessages().length,
   };
 
+  const handleOpenConversations = () => {
+    router.push('/conversations');
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <Stack.Screen
@@ -146,6 +151,21 @@ export default function InternalMessagingScreen() {
           headerTitleStyle: { fontWeight: 'bold' },
         }}
       />
+
+      <TouchableOpacity 
+        style={styles.conversationsButton}
+        onPress={handleOpenConversations}
+      >
+        <Users size={24} color="#FFFFFF" />
+        <KurdishText style={styles.conversationsButtonText}>گفتوگۆکان لەگەڵ کڕیاران</KurdishText>
+        {messaging.getTotalUnreadConversations() > 0 && (
+          <View style={styles.conversationsBadge}>
+            <KurdishText style={styles.conversationsBadgeText}>
+              {messaging.getTotalUnreadConversations()}
+            </KurdishText>
+          </View>
+        )}
+      </TouchableOpacity>
 
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
@@ -676,5 +696,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#6B7280',
     fontWeight: '600',
+  },
+  conversationsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 8,
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  conversationsButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  conversationsBadge: {
+    backgroundColor: '#EF4444',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginLeft: 8,
+  },
+  conversationsBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
