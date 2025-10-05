@@ -28,6 +28,7 @@ import {
 import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useTenant } from '@/hooks/tenant-context';
+import { useUsers } from '@/hooks/users-context';
 import { KurdishText } from '@/components/KurdishText';
 
 export default function CustomerDashboardScreen() {
@@ -35,6 +36,7 @@ export default function CustomerDashboardScreen() {
   const { user, logout } = useAuth();
   const { debts, payments } = useDebts();
   const { currentTenant } = useTenant();
+  const { getAdmins } = useUsers();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
@@ -91,6 +93,25 @@ export default function CustomerDashboardScreen() {
         }
       ]
     );
+  };
+
+  const handleOpenChat = () => {
+    const admins = getAdmins();
+    const admin = admins.find(a => a.tenantId === user?.tenantId);
+    
+    if (!admin) {
+      Alert.alert('هەڵە', 'بەڕێوەبەر نەدۆزرایەوە');
+      return;
+    }
+
+    router.push({
+      pathname: '/chat',
+      params: {
+        recipientId: admin.id,
+        recipientName: admin.name,
+        recipientRole: 'admin',
+      },
+    });
   };
 
   const onRefresh = async () => {
@@ -355,6 +376,19 @@ export default function CustomerDashboardScreen() {
                   <Text style={styles.contactPhone}>{currentTenant.adminPhone}</Text>
                 </View>
                 <MessageCircle size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.chatButton}
+                onPress={handleOpenChat}
+              >
+                <View style={styles.chatIconContainer}>
+                  <MessageCircle size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.chatInfo}>
+                  <KurdishText style={styles.chatTitle}>نامەگۆڕینەوە لەگەڵ بەڕێوەبەر</KurdishText>
+                  <Text style={styles.chatSubtitle}>{'گفتوگۆی ڕاستەوخۆ'}</Text>
+                </View>
               </TouchableOpacity>
             </View>
           )}
@@ -700,5 +734,40 @@ const styles = StyleSheet.create({
   contactPhone: {
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.7)',
+  },
+  chatButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B981',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    gap: 16,
+  },
+  chatIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatInfo: {
+    flex: 1,
+  },
+  chatTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  chatSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
 });

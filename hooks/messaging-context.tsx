@@ -1,8 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Message, BroadcastMessage, EmployeeRating, CustomerRating } from '@/types/messaging';
+import { Message, BroadcastMessage, EmployeeRating, CustomerRating, Conversation, ChatMessage } from '@/types/messaging';
 import { useAuth } from './auth-context';
+import { safeStorage } from '@/utils/storage';
 
 export const [MessagingProvider, useMessaging] = createContextHook(() => {
   const { user } = useAuth();
@@ -10,6 +10,8 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
   const [broadcastMessages, setBroadcastMessages] = useState<BroadcastMessage[]>([]);
   const [employeeRatings, setEmployeeRatings] = useState<EmployeeRating[]>([]);
   const [customerRatings, setCustomerRatings] = useState<CustomerRating[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,17 +20,21 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
 
   const loadData = async () => {
     try {
-      const [messagesData, broadcastData, empRatingsData, custRatingsData] = await Promise.all([
-        AsyncStorage.getItem('messages'),
-        AsyncStorage.getItem('broadcast_messages'),
-        AsyncStorage.getItem('employee_ratings'),
-        AsyncStorage.getItem('customer_ratings'),
+      const [messagesData, broadcastData, empRatingsData, custRatingsData, conversationsData, chatMessagesData] = await Promise.all([
+        safeStorage.getItem<Message[]>('messages', []),
+        safeStorage.getItem<BroadcastMessage[]>('broadcast_messages', []),
+        safeStorage.getItem<EmployeeRating[]>('employee_ratings', []),
+        safeStorage.getItem<CustomerRating[]>('customer_ratings', []),
+        safeStorage.getItem<Conversation[]>('conversations', []),
+        safeStorage.getItem<ChatMessage[]>('chat_messages', []),
       ]);
 
-      if (messagesData) setMessages(JSON.parse(messagesData));
-      if (broadcastData) setBroadcastMessages(JSON.parse(broadcastData));
-      if (empRatingsData) setEmployeeRatings(JSON.parse(empRatingsData));
-      if (custRatingsData) setCustomerRatings(JSON.parse(custRatingsData));
+      setMessages(messagesData || []);
+      setBroadcastMessages(broadcastData || []);
+      setEmployeeRatings(empRatingsData || []);
+      setCustomerRatings(custRatingsData || []);
+      setConversations(conversationsData || []);
+      setChatMessages(chatMessagesData || []);
     } catch (error) {
       console.error('Error loading messaging data:', error);
     } finally {
@@ -51,7 +57,7 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
 
       const updatedMessages = [...messages, newMessage];
       setMessages(updatedMessages);
-      await AsyncStorage.setItem('messages', JSON.stringify(updatedMessages));
+      await safeStorage.setItem('messages', updatedMessages);
 
       return { success: true };
     } catch (error) {
@@ -70,11 +76,11 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
     }
 
     try {
-      const allUsers = await AsyncStorage.getItem('users');
+      const allUsers = await safeStorage.getItem<any[]>('users', []);
       let recipientCount = 0;
 
       if (allUsers) {
-        const users = JSON.parse(allUsers);
+        const users = allUsers;
         recipientCount = users.filter((u: any) => {
           if (targetRole === 'all') return true;
           if (targetRole === 'customers') return u.role === 'customer';
@@ -97,7 +103,7 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
 
       const updatedBroadcasts = [...broadcastMessages, newBroadcast];
       setBroadcastMessages(updatedBroadcasts);
-      await AsyncStorage.setItem('broadcast_messages', JSON.stringify(updatedBroadcasts));
+      await safeStorage.setItem('broadcast_messages', updatedBroadcasts);
 
       return { success: true };
     } catch (error) {
@@ -111,7 +117,7 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
       m.id === messageId ? { ...m, isRead: true, readAt: new Date().toISOString() } : m
     );
     setMessages(updatedMessages);
-    await AsyncStorage.setItem('messages', JSON.stringify(updatedMessages));
+    await safeStorage.setItem('messages', updatedMessages);
   }, [messages]);
 
   const rateEmployee = useCallback(async (
@@ -142,7 +148,7 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
 
       const updatedRatings = [...employeeRatings, newRating];
       setEmployeeRatings(updatedRatings);
-      await AsyncStorage.setItem('employee_ratings', JSON.stringify(updatedRatings));
+      await safeStorage.setItem('employee_ratings', updatedRatings);
 
       return { success: true };
     } catch (error) {
@@ -185,7 +191,7 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
 
       const updatedRatings = [...customerRatings, newRating];
       setCustomerRatings(updatedRatings);
-      await AsyncStorage.setItem('customer_ratings', JSON.stringify(updatedRatings));
+      await safeStorage.setItem('customer_ratings', updatedRatings);
 
       return { success: true };
     } catch (error) {
@@ -233,11 +239,139 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
     return ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length;
   }, [customerRatings]);
 
+  const getOrCreateConversation = useCallback(async (participantId: string, participantName: string, participantRole: 'admin' | 'employee' | 'customer'): Promise<Conversation> => {
+    if (!user) {
+      throw new Error('بەکارهێنەر نەدۆزرایەوە');
+    }
+
+    const existingConversation = conversations.find(c => 
+      c.participants.some(p => p.userId === user.id) &&
+      c.participants.some(p => p.userId === participantId)
+    );
+
+    if (existingConversation) {
+      return existingConversation;
+    }
+
+    const newConversation: Conversation = {
+      id: `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      participants: [
+        {
+          userId: user.id,
+          userName: user.name,
+          userRole: user.role as 'admin' | 'employee' | 'customer',
+          joinedAt: new Date().toISOString(),
+        },
+        {
+          userId: participantId,
+          userName: participantName,
+          userRole: participantRole,
+          joinedAt: new Date().toISOString(),
+        },
+      ],
+      unreadCount: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    const updatedConversations = [...conversations, newConversation];
+    setConversations(updatedConversations);
+    await safeStorage.setItem('conversations', updatedConversations);
+
+    return newConversation;
+  }, [user, conversations]);
+
+  const sendChatMessage = useCallback(async (conversationId: string, content: string): Promise<{ success: boolean; error?: string }> => {
+    if (!user) {
+      return { success: false, error: 'بەکارهێنەر نەدۆزرایەوە' };
+    }
+
+    try {
+      const newMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        conversationId,
+        senderId: user.id,
+        senderName: user.name,
+        senderRole: user.role as 'admin' | 'employee' | 'customer',
+        content,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+      };
+
+      const updatedChatMessages = [...chatMessages, newMessage];
+      setChatMessages(updatedChatMessages);
+      await safeStorage.setItem('chat_messages', updatedChatMessages);
+
+      const updatedConversations = conversations.map(c => {
+        if (c.id === conversationId) {
+          return {
+            ...c,
+            lastMessage: newMessage,
+            updatedAt: new Date().toISOString(),
+            unreadCount: c.unreadCount + 1,
+          };
+        }
+        return c;
+      });
+      setConversations(updatedConversations);
+      await safeStorage.setItem('conversations', updatedConversations);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      return { success: false, error: 'هەڵەیەک ڕوویدا' };
+    }
+  }, [user, chatMessages, conversations]);
+
+  const getConversationMessages = useCallback((conversationId: string) => {
+    return chatMessages
+      .filter(m => m.conversationId === conversationId)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  }, [chatMessages]);
+
+  const getUserConversations = useCallback(() => {
+    if (!user) return [];
+    return conversations
+      .filter(c => c.participants.some(p => p.userId === user.id))
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  }, [user, conversations]);
+
+  const markConversationAsRead = useCallback(async (conversationId: string) => {
+    if (!user) return;
+
+    const updatedChatMessages = chatMessages.map(m => {
+      if (m.conversationId === conversationId && m.senderId !== user.id && !m.isRead) {
+        return { ...m, isRead: true, readAt: new Date().toISOString() };
+      }
+      return m;
+    });
+    setChatMessages(updatedChatMessages);
+    await safeStorage.setItem('chat_messages', updatedChatMessages);
+
+    const updatedConversations = conversations.map(c => {
+      if (c.id === conversationId) {
+        return { ...c, unreadCount: 0 };
+      }
+      return c;
+    });
+    setConversations(updatedConversations);
+    await safeStorage.setItem('conversations', updatedConversations);
+  }, [user, chatMessages, conversations]);
+
+  const getTotalUnreadConversations = useCallback(() => {
+    if (!user) return 0;
+    return conversations.filter(c => 
+      c.participants.some(p => p.userId === user.id) && c.unreadCount > 0
+    ).length;
+  }, [user, conversations]);
+
   return useMemo(() => ({
     messages,
     broadcastMessages,
     employeeRatings,
     customerRatings,
+    conversations,
+    chatMessages,
     isLoading,
     sendMessage,
     sendBroadcastMessage,
@@ -251,11 +385,19 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
     getCustomerRatings,
     getAverageEmployeeRating,
     getAverageCustomerRating,
+    getOrCreateConversation,
+    sendChatMessage,
+    getConversationMessages,
+    getUserConversations,
+    markConversationAsRead,
+    getTotalUnreadConversations,
   }), [
     messages,
     broadcastMessages,
     employeeRatings,
     customerRatings,
+    conversations,
+    chatMessages,
     isLoading,
     sendMessage,
     sendBroadcastMessage,
@@ -269,5 +411,11 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
     getCustomerRatings,
     getAverageEmployeeRating,
     getAverageCustomerRating,
+    getOrCreateConversation,
+    sendChatMessage,
+    getConversationMessages,
+    getUserConversations,
+    markConversationAsRead,
+    getTotalUnreadConversations,
   ]);
 });
