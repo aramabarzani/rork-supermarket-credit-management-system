@@ -28,7 +28,6 @@ import {
 import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useTenant } from '@/hooks/tenant-context';
-import { useUsers } from '@/hooks/users-context';
 import { KurdishText } from '@/components/KurdishText';
 
 export default function CustomerDashboardScreen() {
@@ -36,7 +35,6 @@ export default function CustomerDashboardScreen() {
   const { user, logout } = useAuth();
   const { debts, payments } = useDebts();
   const { currentTenant } = useTenant();
-  const { getAdmins } = useUsers();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
@@ -96,19 +94,16 @@ export default function CustomerDashboardScreen() {
   };
 
   const handleOpenChat = () => {
-    const admins = getAdmins();
-    const admin = admins.find(a => a.tenantId === user?.tenantId);
-    
-    if (!admin) {
-      Alert.alert('هەڵە', 'بەڕێوەبەر نەدۆزرایەوە');
+    if (!currentTenant) {
+      Alert.alert('هەڵە', 'زانیاری بەڕێوەبەر نەدۆزرایەوە');
       return;
     }
 
     router.push({
       pathname: '/chat',
       params: {
-        recipientId: admin.id,
-        recipientName: admin.name,
+        recipientId: currentTenant.adminId,
+        recipientName: currentTenant.adminName,
         recipientRole: 'admin',
       },
     });
