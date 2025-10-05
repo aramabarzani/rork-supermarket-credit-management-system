@@ -7,6 +7,8 @@ import {
   Text,
   RefreshControl,
   Alert,
+  Linking,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, Stack } from 'expo-router';
@@ -20,21 +22,25 @@ import {
   CheckCircle,
   AlertTriangle,
   User,
+  Phone,
+  MessageCircle,
 } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
+import { useTenant } from '@/hooks/tenant-context';
 import { KurdishText } from '@/components/KurdishText';
 
 export default function CustomerDashboardScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { debts, payments } = useDebts();
+  const { currentTenant } = useTenant();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleLogout = async () => {
     Alert.alert(
       'دەرچوون',
-      'دڵنیای�� لە دەرچوون؟',
+      'دڵنیایت لە دەرچوون؟',
       [
         { text: 'پاشگەزبوونەوە', style: 'cancel' },
         {
@@ -44,6 +50,44 @@ export default function CustomerDashboardScreen() {
             await logout();
             router.replace('/login');
           }
+        }
+      ]
+    );
+  };
+
+  const handleContactAdmin = () => {
+    if (!currentTenant) {
+      Alert.alert('هەڵە', 'زانیاری بەڕێوەبەر نەدۆزرایەوە');
+      return;
+    }
+
+    Alert.alert(
+      'پەیوەندی بە بەڕێوەبەر',
+      `${currentTenant.adminName}\n${currentTenant.adminPhone}`,
+      [
+        {
+          text: 'پەیوەندی تەلەفۆنی',
+          onPress: () => {
+            Linking.openURL(`tel:${currentTenant.adminPhone}`);
+          }
+        },
+        {
+          text: 'نامە لە WhatsApp',
+          onPress: () => {
+            const message = encodeURIComponent(`سڵاو ${currentTenant.adminName}، من ${user?.name}م`);
+            const whatsappUrl = Platform.select({
+              ios: `whatsapp://send?phone=${currentTenant.adminPhone}&text=${message}`,
+              android: `whatsapp://send?phone=${currentTenant.adminPhone}&text=${message}`,
+              default: `https://wa.me/${currentTenant.adminPhone}?text=${message}`
+            });
+            Linking.openURL(whatsappUrl).catch(() => {
+              Alert.alert('هەڵە', 'WhatsApp دانەمەزراوە لەسەر ئامێرەکەت');
+            });
+          }
+        },
+        {
+          text: 'پاشگەزبوونەوە',
+          style: 'cancel'
         }
       ]
     );
@@ -295,6 +339,25 @@ export default function CustomerDashboardScreen() {
               </Text>
             </View>
           </View>
+
+          {currentTenant && (
+            <View style={styles.contactSection}>
+              <TouchableOpacity 
+                style={styles.contactButton}
+                onPress={handleContactAdmin}
+              >
+                <View style={styles.contactIconContainer}>
+                  <Phone size={24} color="#FFFFFF" />
+                </View>
+                <View style={styles.contactInfo}>
+                  <KurdishText style={styles.contactTitle}>پەیوەندی بە بەڕێوەبەر</KurdishText>
+                  <Text style={styles.contactSubtitle}>{currentTenant.adminName}</Text>
+                  <Text style={styles.contactPhone}>{currentTenant.adminPhone}</Text>
+                </View>
+                <MessageCircle size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
       </LinearGradient>
     </SafeAreaView>
@@ -594,5 +657,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1E40AF',
     lineHeight: 20,
+  },
+  contactSection: {
+    padding: 20,
+    paddingTop: 0,
+  },
+  contactButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E3A8A',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    gap: 16,
+  },
+  contactIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contactInfo: {
+    flex: 1,
+  },
+  contactTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 4,
+  },
+  contactSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.9)',
+    marginBottom: 2,
+  },
+  contactPhone: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
   },
 });
