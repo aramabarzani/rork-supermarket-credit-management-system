@@ -308,7 +308,6 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
             ...c,
             lastMessage: newMessage,
             updatedAt: new Date().toISOString(),
-            unreadCount: c.unreadCount + 1,
           };
         }
         return c;
@@ -333,8 +332,17 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
     if (!user) return [];
     return conversations
       .filter(c => c.participants.some(p => p.userId === user.id))
+      .map(c => {
+        const unreadMessages = chatMessages.filter(
+          m => m.conversationId === c.id && m.senderId !== user.id && !m.isRead
+        ).length;
+        return {
+          ...c,
+          unreadCount: unreadMessages,
+        };
+      })
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-  }, [user, conversations]);
+  }, [user, conversations, chatMessages]);
 
   const markConversationAsRead = useCallback(async (conversationId: string) => {
     if (!user) return;
@@ -347,23 +355,13 @@ export const [MessagingProvider, useMessaging] = createContextHook(() => {
     });
     setChatMessages(updatedChatMessages);
     await safeStorage.setItem('chat_messages', updatedChatMessages);
-
-    const updatedConversations = conversations.map(c => {
-      if (c.id === conversationId) {
-        return { ...c, unreadCount: 0 };
-      }
-      return c;
-    });
-    setConversations(updatedConversations);
-    await safeStorage.setItem('conversations', updatedConversations);
-  }, [user, chatMessages, conversations]);
+  }, [user, chatMessages]);
 
   const getTotalUnreadConversations = useCallback(() => {
     if (!user) return 0;
-    return conversations.filter(c => 
-      c.participants.some(p => p.userId === user.id) && c.unreadCount > 0
-    ).length;
-  }, [user, conversations]);
+    const userConversations = getUserConversations();
+    return userConversations.filter(c => c.unreadCount > 0).length;
+  }, [user, getUserConversations]);
 
   return useMemo(() => ({
     messages,

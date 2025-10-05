@@ -28,7 +28,7 @@ export default function ConversationsScreen() {
   }, [messaging]);
 
   const loadConversations = () => {
-    if (!messaging) return;
+    if (!messaging || !user) return;
     const userConversations = messaging.getUserConversations();
     setConversations(userConversations);
   };
@@ -67,10 +67,12 @@ export default function ConversationsScreen() {
   };
 
   const filteredConversations = conversations.filter((conv) => {
+    if (!user) return false;
     const otherParticipant = conv.participants.find(
-      (p: any) => p.userId !== user?.id
+      (p: any) => p.userId !== user.id
     );
-    return otherParticipant?.userName.includes(searchQuery);
+    if (!otherParticipant) return false;
+    return otherParticipant.userName.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   if (!messaging) {
