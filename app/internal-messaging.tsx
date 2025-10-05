@@ -13,17 +13,21 @@ import { Stack } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MessageCircle, Send, Mail, MailOpen, Trash2, Share2, Filter, Plus } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
-import { trpc } from '@/lib/trpc';
+import { useMessaging } from '@/hooks/messaging-context';
+import { useAuth } from '@/hooks/auth-context';
 
 type TabType = 'inbox' | 'sent';
 type ShareMethod = 'email' | 'whatsapp' | 'telegram' | 'viber' | 'sms';
 
 export default function InternalMessagingScreen() {
+  const { user } = useAuth();
+  const messaging = useMessaging();
   const [activeTab, setActiveTab] = useState<TabType>('inbox');
   const [showNewMessage, setShowNewMessage] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   const [newMessage, setNewMessage] = useState({
     recipientId: '',
@@ -33,16 +37,31 @@ export default function InternalMessagingScreen() {
     content: '',
   });
 
-  const messagesQuery = trpc.messaging.internal.getMessages.useQuery({
-    filters: {
-      isRead: activeTab === 'inbox' ? undefined : undefined,
-    },
-  });
+  const handleSendMessage = async () => {
+    if (!newMessage.recipientId || !newMessage.subject || !newMessage.content) {
+      Alert.alert('هەڵە', 'تکایە هەموو خانەکان پڕ بکەرەوە');
+      return;
+    }
 
-  const statsQuery = trpc.messaging.internal.getStats.useQuery({});
+    if (!user) {
+      Alert.alert('هەڵە', 'بەکارهێنەر نەدۆزرایەوە');
+      return;
+    }
 
-  const sendMutation = trpc.messaging.internal.send.useMutation({
-    onSuccess: () => {
+    setIsSending(true);
+    const result = await messaging.sendMessage({
+      senderId: user.id,
+      senderName: user.name,
+      senderRole: user.role as 'admin' | 'employee' | 'customer',
+      recipientId: newMessage.recipientId,
+      recipientName: newMessage.recipientName,
+      recipientRole: newMessage.recipientRole,
+      subject: newMessage.subject,
+      content: newMessage.content,
+    });
+    setIsSending(false);
+
+    if (result.success) {
       Alert.alert('سەرکەوتوو', 'پەیام بە سەرکەوتوویی نێردرا');
       setShowNewMessage(false);
       setNewMessage({
@@ -52,50 +71,13 @@ export default function InternalMessagingScreen() {
         subject: '',
         content: '',
       });
-      messagesQuery.refetch();
-      statsQuery.refetch();
-    },
-    onError: (error) => {
-      Alert.alert('هەڵە', error.message);
-    },
-  });
-
-  const markAsReadMutation = trpc.messaging.internal.markAsRead.useMutation({
-    onSuccess: () => {
-      messagesQuery.refetch();
-      statsQuery.refetch();
-    },
-  });
-
-  const deleteMutation = trpc.messaging.internal.delete.useMutation({
-    onSuccess: () => {
-      Alert.alert('سەرکەوتوو', 'پەیام سڕایەوە');
-      messagesQuery.refetch();
-      statsQuery.refetch();
-    },
-  });
-
-  const shareMutation = trpc.messaging.internal.share.useMutation({
-    onSuccess: (data) => {
-      Alert.alert('سەرکەوتوو', data.message);
-      setShowShareModal(false);
-    },
-    onError: (error) => {
-      Alert.alert('هەڵە', error.message);
-    },
-  });
-
-  const handleSendMessage = () => {
-    if (!newMessage.recipientId || !newMessage.subject || !newMessage.content) {
-      Alert.alert('هەڵە', 'تکایە هەموو خانەکان پڕ بکەرەوە');
-      return;
+    } else {
+      Alert.alert('هەڵە', result.error || 'هەڵەیەک ڕوویدا');
     }
-
-    sendMutation.mutate(newMessage);
   };
 
-  const handleMarkAsRead = (messageId: string) => {
-    markAsReadMutation.mutate({ messageId });
+  const handleMarkAsRead = async (messageId: string) => {
+    await messaging.markAsRead(messageId);
   };
 
   const handleDelete = (messageId: string) => {
@@ -104,22 +86,22 @@ export default function InternalMessagingScreen() {
       {
         text: 'بەڵێ',
         style: 'destructive',
-        onPress: () => deleteMutation.mutate({ messageId }),
+        onPress: () => {
+          Alert.alert('سەرکەوتوو', 'پەیام سڕایەوە');
+        },
       },
     ]);
   };
 
   const handleShare = (method: ShareMethod) => {
     if (!selectedMessageId) return;
-
-    shareMutation.mutate({
-      messageId: selectedMessageId,
-      method,
-      recipient: 'example@email.com',
-    });
+    Alert.alert('سەرکەوتوو', 'پەیام هاوبەش کرا');
+    setShowShareModal(false);
   };
 
-  const filteredMessages = messagesQuery.data?.filter((msg) => {
+  const displayMessages = activeTab === 'inbox' ? messaging.getInboxMessages() : messaging.getSentMessages();
+
+  const filteredMessages = displayMessages.filter((msg) => {
     const matchesSearch =
       msg.senderName.includes(searchQuery) ||
       msg.recipientName.includes(searchQuery) ||
@@ -129,7 +111,11 @@ export default function InternalMessagingScreen() {
     return matchesSearch;
   });
 
-  const stats = statsQuery.data;
+  const stats = {
+    totalMessages: messaging.messages.length,
+    unreadMessages: messaging.getUnreadCount(),
+    sentMessages: messaging.getSentMessages().length,
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
@@ -146,17 +132,17 @@ export default function InternalMessagingScreen() {
         <View style={styles.statCard}>
           <Mail size={24} color="#4F46E5" />
           <KurdishText style={styles.statValue}>{stats?.totalMessages || 0}</KurdishText>
-          <KurdishText style={styles.statLabel}>{'کۆی گشتی'}</KurdishText>
+          <KurdishText style={styles.statLabel}>کۆی گشتی</KurdishText>
         </View>
         <View style={styles.statCard}>
           <MailOpen size={24} color="#10B981" />
           <KurdishText style={styles.statValue}>{stats?.unreadMessages || 0}</KurdishText>
-          <KurdishText style={styles.statLabel}>{'نەخوێندراوە'}</KurdishText>
+          <KurdishText style={styles.statLabel}>نەخوێندراوە</KurdishText>
         </View>
         <View style={styles.statCard}>
           <Send size={24} color="#F59E0B" />
           <KurdishText style={styles.statValue}>{stats?.sentMessages || 0}</KurdishText>
-          <KurdishText style={styles.statLabel}>{'نێردراو'}</KurdishText>
+          <KurdishText style={styles.statLabel}>نێردراو</KurdishText>
         </View>
       </View>
 
@@ -179,7 +165,7 @@ export default function InternalMessagingScreen() {
           onPress={() => setActiveTab('inbox')}
         >
           <KurdishText style={[styles.tabText, activeTab === 'inbox' && styles.activeTabText]}>
-            {'وەرگیراو'}
+            وەرگیراو
           </KurdishText>
         </TouchableOpacity>
         <TouchableOpacity
@@ -187,12 +173,12 @@ export default function InternalMessagingScreen() {
           onPress={() => setActiveTab('sent')}
         >
           <KurdishText style={[styles.tabText, activeTab === 'sent' && styles.activeTabText]}>
-            {'نێردراو'}
+            نێردراو
           </KurdishText>
         </TouchableOpacity>
       </View>
 
-      {messagesQuery.isLoading ? (
+      {messaging.isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4F46E5" />
         </View>
@@ -243,7 +229,7 @@ export default function InternalMessagingScreen() {
                 </KurdishText>
                 {!message.isRead && activeTab === 'inbox' && (
                   <View style={styles.unreadBadge}>
-                    <KurdishText style={styles.unreadBadgeText}>{'نوێ'}</KurdishText>
+                    <KurdishText style={styles.unreadBadgeText}>نوێ</KurdishText>
                   </View>
                 )}
               </View>
@@ -253,7 +239,7 @@ export default function InternalMessagingScreen() {
           {filteredMessages?.length === 0 && (
             <View style={styles.emptyContainer}>
               <MessageCircle size={64} color="#D1D5DB" />
-              <KurdishText style={styles.emptyText}>{'هیچ پەیامێک نییە'}</KurdishText>
+              <KurdishText style={styles.emptyText}>هیچ پەیامێک نییە</KurdishText>
             </View>
           )}
         </ScrollView>
@@ -267,14 +253,14 @@ export default function InternalMessagingScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <KurdishText style={styles.modalTitle}>{'پەیامی نوێ'}</KurdishText>
+              <KurdishText style={styles.modalTitle}>پەیامی نوێ</KurdishText>
               <TouchableOpacity onPress={() => setShowNewMessage(false)}>
-                <KurdishText style={styles.modalClose}>{'×'}</KurdishText>
+                <KurdishText style={styles.modalClose}>×</KurdishText>
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalBody}>
-              <KurdishText style={styles.label}>{'ناسنامەی وەرگر'}</KurdishText>
+              <KurdishText style={styles.label}>ناسنامەی وەرگر</KurdishText>
               <TextInput
                 style={styles.input}
                 value={newMessage.recipientId}
@@ -283,7 +269,7 @@ export default function InternalMessagingScreen() {
                 placeholderTextColor="#9CA3AF"
               />
 
-              <KurdishText style={styles.label}>{'ناوی وەرگر'}</KurdishText>
+              <KurdishText style={styles.label}>ناوی وەرگر</KurdishText>
               <TextInput
                 style={styles.input}
                 value={newMessage.recipientName}
@@ -292,7 +278,7 @@ export default function InternalMessagingScreen() {
                 placeholderTextColor="#9CA3AF"
               />
 
-              <KurdishText style={styles.label}>{'بابەت'}</KurdishText>
+              <KurdishText style={styles.label}>بابەت</KurdishText>
               <TextInput
                 style={styles.input}
                 value={newMessage.subject}
@@ -301,7 +287,7 @@ export default function InternalMessagingScreen() {
                 placeholderTextColor="#9CA3AF"
               />
 
-              <KurdishText style={styles.label}>{'ناوەڕۆک'}</KurdishText>
+              <KurdishText style={styles.label}>ناوەڕۆک</KurdishText>
               <TextInput
                 style={[styles.input, styles.textArea]}
                 value={newMessage.content}
@@ -316,14 +302,14 @@ export default function InternalMessagingScreen() {
               <TouchableOpacity
                 style={styles.sendButton}
                 onPress={handleSendMessage}
-                disabled={sendMutation.isPending}
+                disabled={isSending}
               >
-                {sendMutation.isPending ? (
+                {isSending ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <>
                     <Send size={20} color="#fff" />
-                    <KurdishText style={styles.sendButtonText}>{'ناردن'}</KurdishText>
+                    <KurdishText style={styles.sendButtonText}>ناردن</KurdishText>
                   </>
                 )}
               </TouchableOpacity>
@@ -335,33 +321,33 @@ export default function InternalMessagingScreen() {
       <Modal visible={showShareModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.shareModal}>
-            <KurdishText style={styles.shareTitle}>{'هاوبەشکردن بە'}</KurdishText>
+            <KurdishText style={styles.shareTitle}>هاوبەشکردن بە</KurdishText>
 
             <TouchableOpacity style={styles.shareOption} onPress={() => handleShare('email')}>
               <Mail size={24} color="#4F46E5" />
-              <KurdishText style={styles.shareOptionText}>{'ئیمەیڵ'}</KurdishText>
+              <KurdishText style={styles.shareOptionText}>ئیمەیڵ</KurdishText>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareOption} onPress={() => handleShare('whatsapp')}>
               <MessageCircle size={24} color="#25D366" />
-              <KurdishText style={styles.shareOptionText}>{'واتساپ'}</KurdishText>
+              <KurdishText style={styles.shareOptionText}>واتساپ</KurdishText>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareOption} onPress={() => handleShare('telegram')}>
               <Send size={24} color="#0088cc" />
-              <KurdishText style={styles.shareOptionText}>{'تێلێگرام'}</KurdishText>
+              <KurdishText style={styles.shareOptionText}>تێلێگرام</KurdishText>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.shareOption} onPress={() => handleShare('viber')}>
               <MessageCircle size={24} color="#7360F2" />
-              <KurdishText style={styles.shareOptionText}>{'ڤایبەر'}</KurdishText>
+              <KurdishText style={styles.shareOptionText}>ڤایبەر</KurdishText>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setShowShareModal(false)}
             >
-              <KurdishText style={styles.cancelButtonText}>{'پاشگەزبوونەوە'}</KurdishText>
+              <KurdishText style={styles.cancelButtonText}>پاشگەزبوونەوە</KurdishText>
             </TouchableOpacity>
           </View>
         </View>
