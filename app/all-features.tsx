@@ -66,11 +66,7 @@ const features: Feature[] = [
   { id: '22', title: 'بەڕێوەبردنی QR', route: '/customer-qr-management', status: 'working', description: 'دروستکردنی QR بۆ کڕیاران', category: 'QR Code' },
   { id: '23', title: 'سکان کردنی QR', route: '/scan-customer-qr', status: 'working', description: 'سکان کردنی QR کڕیاران', category: 'QR Code' },
   
-  // کارمەندەکان
-  { id: '24', title: 'کارمەندەکان', route: '/employees', status: 'working', description: 'بەڕێوەبردنی کارمەندەکان', category: 'کارمەند' },
-  { id: '25', title: 'دەستکاریکردنی کارمەند', route: '/edit-employee', status: 'working', description: 'دەستکاری زانیاری کارمەند', category: 'کارمەند' },
-  { id: '26', title: 'چالاکیەکانی کارمەند', route: '/employee-activity', status: 'working', description: 'چاودێری چالاکیەکان', category: 'کارمەند' },
-  { id: '27', title: 'دەسەڵاتەکانی کارمەند', route: '/employee-permissions', status: 'working', description: 'بەڕێوەبردنی دەسەڵاتەکان', category: 'کارمەند' },
+
   
   // ڕاپۆرتەکان
   { id: '28', title: 'ڕاپۆرتی مانگانە', route: '/monthly-reports', status: 'working', description: 'ڕاپۆرتەکانی مانگانە', category: 'ڕاپۆرت' },

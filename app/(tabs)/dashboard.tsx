@@ -423,15 +423,7 @@ export default function DashboardScreen() {
                   <KurdishText style={styles.quickActionLabel}>زیادکردنی کڕیار</KurdishText>
                 </TouchableOpacity>
                 
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionYellow]}
-                  onPress={() => router.push('/employees')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconYellow]}>
-                    <Users size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>بەڕێوەبردنی کارمەندان</KurdishText>
-                </TouchableOpacity>
+
                 
                 <TouchableOpacity 
                   style={[styles.quickActionCard, styles.quickActionOrange]}
@@ -493,15 +485,7 @@ export default function DashboardScreen() {
                   <KurdishText style={styles.quickActionLabel}>پەیامەکان</KurdishText>
                 </TouchableOpacity>
                 
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, { backgroundColor: '#FEF3C7', borderWidth: 2, borderColor: '#F59E0B' }]}
-                  onPress={() => router.push('/advanced-features')}
-                >
-                  <View style={[styles.quickActionIconContainer, { backgroundColor: '#F59E0B' }]}>
-                    <Zap size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>تایبەتمەندییە پێشکەوتووەکان</KurdishText>
-                </TouchableOpacity>
+
               </ScrollView>
             </View>
 
