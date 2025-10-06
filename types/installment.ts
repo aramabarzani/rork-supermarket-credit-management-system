@@ -1,76 +1,64 @@
+export interface Installment {
+  id: string;
+  debtId: string;
+  customerId: string;
+  customerName: string;
+  amount: number;
+  dueDate: string;
+  status: 'pending' | 'paid' | 'overdue' | 'cancelled';
+  paidAt?: string;
+  paidBy?: string;
+  paidByName?: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  notes?: string;
+  createdAt: string;
+  createdBy: string;
+  createdByName: string;
+}
+
 export interface InstallmentPlan {
   id: string;
   debtId: string;
   customerId: string;
   customerName: string;
   totalAmount: number;
-  downPayment: number;
-  remainingAmount: number;
   numberOfInstallments: number;
   installmentAmount: number;
   frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly';
   startDate: string;
   endDate: string;
-  status: 'active' | 'completed' | 'cancelled' | 'defaulted';
+  status: 'active' | 'completed' | 'cancelled';
   installments: Installment[];
-  interestRate?: number;
-  totalInterest?: number;
-  lateFeeAmount?: number;
-  notes?: string;
-  notesKurdish?: string;
+  createdAt: string;
   createdBy: string;
   createdByName: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Installment {
-  id: string;
-  planId: string;
-  installmentNumber: number;
-  dueDate: string;
-  amount: number;
-  principalAmount: number;
-  interestAmount: number;
-  paidAmount: number;
-  remainingAmount: number;
-  status: 'pending' | 'paid' | 'partial' | 'overdue' | 'waived';
-  paidDate?: string;
-  lateFee?: number;
-  paymentId?: string;
   notes?: string;
-  notesKurdish?: string;
 }
 
-export interface InstallmentPayment {
+export interface InstallmentReminder {
   id: string;
-  planId: string;
   installmentId: string;
   customerId: string;
   customerName: string;
-  amount: number;
-  paymentMethod: 'cash' | 'bank_transfer' | 'check' | 'card';
-  paymentDate: string;
-  receiptNumber?: string;
-  notes?: string;
-  notesKurdish?: string;
-  createdBy: string;
-  createdByName: string;
+  reminderDate: string;
+  reminderTime: string;
+  message: string;
+  type: 'sms' | 'whatsapp' | 'push' | 'email';
+  status: 'pending' | 'sent' | 'failed';
+  sentAt?: string;
   createdAt: string;
 }
 
-export interface InstallmentSchedule {
-  installmentNumber: number;
-  dueDate: string;
-  amount: number;
-  principalAmount: number;
-  interestAmount: number;
-  balance: number;
+export interface InstallmentReport {
+  totalInstallments: number;
+  paidInstallments: number;
+  pendingInstallments: number;
+  overdueInstallments: number;
+  totalAmount: number;
+  paidAmount: number;
+  pendingAmount: number;
+  overdueAmount: number;
+  collectionRate: number;
+  onTimePaymentRate: number;
 }
-
-export const INSTALLMENT_FREQUENCIES = [
-  { value: 'daily', label: 'Daily', labelKurdish: 'ڕۆژانە' },
-  { value: 'weekly', label: 'Weekly', labelKurdish: 'هەفتانە' },
-  { value: 'biweekly', label: 'Bi-weekly', labelKurdish: 'هەر دوو هەفتە جارێک' },
-  { value: 'monthly', label: 'Monthly', labelKurdish: 'مانگانە' },
-] as const;

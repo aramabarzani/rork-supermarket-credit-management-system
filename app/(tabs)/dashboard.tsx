@@ -492,6 +492,16 @@ export default function DashboardScreen() {
                   </View>
                   <KurdishText style={styles.quickActionLabel}>پەیامەکان</KurdishText>
                 </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.quickActionCard, { backgroundColor: '#FEF3C7', borderWidth: 2, borderColor: '#F59E0B' }]}
+                  onPress={() => router.push('/advanced-features')}
+                >
+                  <View style={[styles.quickActionIconContainer, { backgroundColor: '#F59E0B' }]}>
+                    <Zap size={24} color="#fff" />
+                  </View>
+                  <KurdishText style={styles.quickActionLabel}>تایبەتمەندییە پێشکەوتووەکان</KurdishText>
+                </TouchableOpacity>
               </ScrollView>
             </View>
 
