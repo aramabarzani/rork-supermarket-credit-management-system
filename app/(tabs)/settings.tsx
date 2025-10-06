@@ -89,6 +89,44 @@ export default function SettingsScreen() {
       ],
     },
     {
+      title: 'بەڕێوەبردنی کۆگا و خەرجی',
+      items: [
+        {
+          icon: Settings,
+          title: 'بەڕێوەبردنی کۆگا',
+          subtitle: 'بەڕێوەبردنی کاڵاکان، بڕ و نرخەکان',
+          onPress: () => router.push('/inventory-management'),
+          color: '#10B981',
+        },
+        {
+          icon: Settings,
+          title: 'بەڕێوەبردنی خەرجی',
+          subtitle: 'تۆمارکردن و بەڕێوەبردنی خەرجیەکان',
+          onPress: () => router.push('/expense-management'),
+          color: '#EF4444',
+        },
+        {
+          icon: Settings,
+          title: 'بەڕێوەبردنی کۆمیسیۆن',
+          subtitle: 'حیسابکردن و بەڕێوەبردنی کۆمیسیۆنی کارمەندان',
+          onPress: () => router.push('/commission-management'),
+          color: '#F59E0B',
+        },
+      ],
+    },
+    {
+      title: 'بیرخستنەوە و ئاگاداری',
+      items: [
+        {
+          icon: Settings,
+          title: 'بەڕێوەبردنی بیرخستنەوە',
+          subtitle: 'دروستکردن و بەڕێوەبردنی بیرخستنەوەکان',
+          onPress: () => router.push('/reminder-management'),
+          color: '#3B82F6',
+        },
+      ],
+    },
+    {
       title: 'QR Code',
       items: [
         {
