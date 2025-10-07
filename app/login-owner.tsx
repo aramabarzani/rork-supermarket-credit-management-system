@@ -195,6 +195,16 @@ export default function OwnerLoginScreen() {
                 </View>
 
                 <TouchableOpacity
+                  style={styles.forgotPasswordLink}
+                  onPress={() => setShowForgotPassword(true)}
+                >
+                  <KeyRound size={16} color="#7C3AED" />
+                  <Text style={styles.forgotPasswordLinkText}>
+                    وشەی نهێنیت بیرچووەتەوە؟
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={[styles.loginButton, isSubmitting && styles.loginButtonDisabled]}
                   onPress={handleLogin}
                   disabled={isSubmitting}
@@ -206,16 +216,6 @@ export default function OwnerLoginScreen() {
                       چوونەژوورەوە
                     </Text>
                   )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.forgotPasswordButton}
-                  onPress={() => setShowForgotPassword(true)}
-                >
-                  <KeyRound size={18} color="#7C3AED" />
-                  <Text style={styles.forgotPasswordText}>
-                    وشەی نهێنیت بیرچووەتەوە؟
-                  </Text>
                 </TouchableOpacity>
               </View>
             </Animated.View>
@@ -410,6 +410,20 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
+  },
+  forgotPasswordLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 6,
+    marginTop: 8,
+    marginBottom: 20,
+    paddingVertical: 4,
+  },
+  forgotPasswordLinkText: {
+    color: '#7C3AED',
+    fontSize: 14,
+    fontWeight: '600',
   },
   forgotPasswordButton: {
     flexDirection: 'row',
