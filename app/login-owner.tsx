@@ -112,7 +112,7 @@ export default function OwnerLoginScreen() {
       
       Alert.alert(
         'سەرکەوتوو بوو',
-        'وشەی نهێنی گۆڕدرا. ئێستا دەتوانیت بچیتە ژوورەوە',
+        'وشەی نهێنی گەڕایەوە. ئێستا دەتوانیت بچیتە ژوورەوە',
         [
           {
             text: 'باشە',
@@ -235,7 +235,7 @@ export default function OwnerLoginScreen() {
             >
               <View style={styles.modalContent}>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>گۆڕینی وشەی نهێنی</Text>
+                  <Text style={styles.modalTitle}>گەڕانەوەی وشەی نهێنی</Text>
                   <TouchableOpacity
                     onPress={() => setShowForgotPassword(false)}
                     style={styles.closeButton}
@@ -298,7 +298,7 @@ export default function OwnerLoginScreen() {
                       <ActivityIndicator color="#FFFFFF" />
                     ) : (
                       <Text style={styles.resetButtonText}>
-                        گۆڕینی وشەی نهێنی
+                        گەڕانەوەی وشەی نهێنی
                       </Text>
                     )}
                   </TouchableOpacity>
