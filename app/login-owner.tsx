@@ -11,12 +11,15 @@ import {
   Platform,
   ScrollView,
   Animated,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Crown, Phone, Lock } from 'lucide-react-native';
+import { Crown, Phone, Lock, KeyRound, X } from 'lucide-react-native';
 import { useAuth } from '@/hooks/auth-context';
+import { safeStorage } from '@/utils/storage';
+import { User } from '@/types/auth';
 
 export default function OwnerLoginScreen() {
   const router = useRouter();
@@ -25,6 +28,11 @@ export default function OwnerLoginScreen() {
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(0));
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetPhone, setResetPhone] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -58,6 +66,71 @@ export default function OwnerLoginScreen() {
       Alert.alert('هەڵە', 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetPhone || !newPassword || !confirmPassword) {
+      Alert.alert('هەڵە', 'تکایە هەموو خانەکان پڕبکەرەوە');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert('هەڵە', 'وشەی نهێنی یەکسان نین');
+      return;
+    }
+
+    if (newPassword.length < 4) {
+      Alert.alert('هەڵە', 'وشەی نهێنی دەبێت لانیکەم ٤ پیت بێت');
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const users = await safeStorage.getGlobalItem<User[]>('users', []);
+      
+      if (!users || !Array.isArray(users)) {
+        Alert.alert('هەڵە', 'هەڵەیەک ڕوویدا لە خوێندنەوەی زانیاریەکان');
+        return;
+      }
+
+      const ownerIndex = users.findIndex(
+        u => u.phone === resetPhone && u.role === 'owner'
+      );
+
+      if (ownerIndex === -1) {
+        Alert.alert('هەڵە', 'هیچ حسابێکی خاوەندار بەم ژمارەیە نەدۆزرایەوە');
+        return;
+      }
+
+      users[ownerIndex] = {
+        ...users[ownerIndex],
+        password: newPassword,
+      };
+
+      await safeStorage.setGlobalItem('users', users);
+      
+      Alert.alert(
+        'سەرکەوتوو بوو',
+        'وشەی نهێنی گۆڕدرا. ئێستا دەتوانیت بچیتە ژوورەوە',
+        [
+          {
+            text: 'باشە',
+            onPress: () => {
+              setShowForgotPassword(false);
+              setResetPhone('');
+              setNewPassword('');
+              setConfirmPassword('');
+              setPhone(resetPhone);
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Reset password error:', error);
+      Alert.alert('هەڵە', 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -134,10 +207,106 @@ export default function OwnerLoginScreen() {
                     </Text>
                   )}
                 </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.forgotPasswordButton}
+                  onPress={() => setShowForgotPassword(true)}
+                >
+                  <KeyRound size={18} color="#7C3AED" />
+                  <Text style={styles.forgotPasswordText}>
+                    وشەی نهێنیت بیرچووەتەوە؟
+                  </Text>
+                </TouchableOpacity>
               </View>
             </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
+
+        <Modal
+          visible={showForgotPassword}
+          animationType="slide"
+          transparent={true}
+          onRequestClose={() => setShowForgotPassword(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={styles.modalKeyboardView}
+            >
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>گۆڕینی وشەی نهێنی</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowForgotPassword(false)}
+                    style={styles.closeButton}
+                  >
+                    <X size={24} color="#6B7280" />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.modalScroll}>
+                  <Text style={styles.modalDescription}>
+                    ژمارەی مۆبایلی حسابی خاوەندار بنووسە و وشەی نهێنی نوێ دابنێ
+                  </Text>
+
+                  <View style={styles.modalInputContainer}>
+                    <Phone size={20} color="#6B7280" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="ژمارەی مۆبایل"
+                      placeholderTextColor="#9CA3AF"
+                      value={resetPhone}
+                      onChangeText={setResetPhone}
+                      keyboardType="phone-pad"
+                      autoCapitalize="none"
+                      textAlign="right"
+                    />
+                  </View>
+
+                  <View style={styles.modalInputContainer}>
+                    <Lock size={20} color="#6B7280" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="وشەی نهێنی نوێ"
+                      placeholderTextColor="#9CA3AF"
+                      value={newPassword}
+                      onChangeText={setNewPassword}
+                      secureTextEntry
+                      textAlign="right"
+                    />
+                  </View>
+
+                  <View style={styles.modalInputContainer}>
+                    <Lock size={20} color="#6B7280" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="دووبارەکردنەوەی وشەی نهێنی"
+                      placeholderTextColor="#9CA3AF"
+                      value={confirmPassword}
+                      onChangeText={setConfirmPassword}
+                      secureTextEntry
+                      textAlign="right"
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.resetButton, isResetting && styles.resetButtonDisabled]}
+                    onPress={handleResetPassword}
+                    disabled={isResetting}
+                  >
+                    {isResetting ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.resetButtonText}>
+                        گۆڕینی وشەی نهێنی
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </ScrollView>
+              </View>
+            </KeyboardAvoidingView>
+          </View>
+        </Modal>
       </LinearGradient>
     </SafeAreaView>
   );
@@ -238,6 +407,87 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   loginButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  forgotPasswordButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 12,
+  },
+  forgotPasswordText: {
+    color: '#7C3AED',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalKeyboardView: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalDescription: {
+    fontSize: 15,
+    color: '#6B7280',
+    marginBottom: 24,
+    textAlign: 'right',
+    lineHeight: 22,
+  },
+  modalInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  resetButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 12,
+    height: 54,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  resetButtonDisabled: {
+    opacity: 0.6,
+  },
+  resetButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: '700',
