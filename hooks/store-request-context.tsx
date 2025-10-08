@@ -67,22 +67,38 @@ export const [StoreRequestProvider, useStoreRequests] = createContextHook(() => 
     }
 
     const existingUsers = await safeStorage.getGlobalItem<any[]>('users', []);
+    const existingTenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
+    
     if (existingUsers && Array.isArray(existingUsers)) {
       const existingUserWithPhone = existingUsers.find(
         (u: any) => u.phone === request.ownerPhone && (u.role === 'admin' || u.role === 'owner')
       );
+      
       if (existingUserWithPhone) {
-        console.error('[Store Request] Phone number already used by another active admin/owner:', request.ownerPhone);
-        throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
+        const userTenant = existingTenants?.find((t: any) => t.id === existingUserWithPhone.tenantId);
+        
+        if (userTenant && userTenant.status !== 'deleted') {
+          console.error('[Store Request] Phone number already used by another active admin/owner:', request.ownerPhone);
+          throw new Error(`ژمارەی مۆبایل ${request.ownerPhone} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
+        } else {
+          console.log('[Store Request] Phone number was used by deleted tenant, allowing reuse:', request.ownerPhone);
+        }
       }
 
       if (request.ownerEmail && request.ownerEmail.trim()) {
         const existingUserWithEmail = existingUsers.find(
           (u: any) => u.email === request.ownerEmail && (u.role === 'admin' || u.role === 'owner')
         );
+        
         if (existingUserWithEmail) {
-          console.error('[Store Request] Email already used by another active admin/owner:', request.ownerEmail);
-          throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
+          const userTenant = existingTenants?.find((t: any) => t.id === existingUserWithEmail.tenantId);
+          
+          if (userTenant && userTenant.status !== 'deleted') {
+            console.error('[Store Request] Email already used by another active admin/owner:', request.ownerEmail);
+            throw new Error(`ئیمەیڵ ${request.ownerEmail} پێشتر بۆ بەڕێوەبەرێکی تر بەکارهاتووە`);
+          } else {
+            console.log('[Store Request] Email was used by deleted tenant, allowing reuse:', request.ownerEmail);
+          }
         }
       }
     }
