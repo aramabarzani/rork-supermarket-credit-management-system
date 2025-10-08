@@ -1,8 +1,8 @@
 import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, LoginCredentials, LoginResult } from '@/types/auth';
-import { safeStorage, setCurrentTenantId } from '@/utils/storage';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trpcClient } from '@/lib/trpc';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
@@ -12,17 +12,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   useEffect(() => {
     const loadAuth = async () => {
       try {
-        const storedUser = await safeStorage.getGlobalItem<User>('user');
-        if (storedUser && storedUser.id && storedUser.name) {
-          if (storedUser.tenantId) {
-            setCurrentTenantId(storedUser.tenantId);
-            console.log('[Auth] Tenant context set:', storedUser.tenantId);
-          }
-          setUser(storedUser);
+        const token = await AsyncStorage.getItem('authToken');
+        const storedUser = await AsyncStorage.getItem('user');
+        
+        if (token && storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          console.log('[Auth] User loaded from storage:', parsedUser.role);
         } else {
           setUser(null);
         }
-      } catch {
+      } catch (error) {
+        console.error('[Auth] Error loading user:', error);
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -37,133 +38,103 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('[Auth] Login attempt for role:', credentials.expectedRole || 'any');
       
-      let allUsers: User[] = [];
+      let result;
       
-      try {
-        const globalUsers = await safeStorage.getGlobalItem<User[]>('users', []);
-        if (globalUsers && Array.isArray(globalUsers)) {
-          allUsers = [...globalUsers];
-        }
-      } catch (error) {
-        console.error('[Auth] Error loading global users:', error);
-      }
-      
-
-      
-      console.log('[Auth] Users loaded:', allUsers.length);
-      
-      let foundUser = allUsers.find(
-        u => u.phone === credentials.phone && u.password === credentials.password
-      );
-
-      if (foundUser && credentials.expectedRole && foundUser.role !== credentials.expectedRole) {
-        console.log('[Auth] Role mismatch:', { expected: credentials.expectedRole, actual: foundUser.role });
+      if (credentials.expectedRole === 'owner') {
+        result = await trpcClient.owner.login.mutate({
+          email: credentials.phone,
+          password: credentials.password,
+        });
+      } else if (credentials.expectedRole === 'admin') {
+        result = await trpcClient.admin.login.mutate({
+          email: credentials.phone,
+          password: credentials.password,
+        });
+      } else if (credentials.expectedRole === 'employee') {
+        result = await trpcClient.staff.login.mutate({
+          email: credentials.phone,
+          password: credentials.password,
+        });
+      } else {
         return { 
           success: false, 
-          error: 'ئەم حسابە بۆ ئەم ڕۆڵە نییە. تکایە لە لاپەڕەی دروست بچۆ ژوورەوە' 
+          error: 'تکایە جۆری حساب دیاری بکە' 
         };
       }
 
-      if (foundUser && (foundUser.role === 'admin' || foundUser.role === 'employee' || foundUser.role === 'customer')) {
-        if (!foundUser.tenantId) {
-          console.error('[Auth] User has no tenantId');
-          return { 
-            success: false, 
-            error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە بەڕێوەبەر بکە' 
+      if (result.success && result.token) {
+        await AsyncStorage.setItem('authToken', result.token);
+        
+        let userData: User;
+        
+        if (credentials.expectedRole === 'owner' && 'owner' in result) {
+          userData = {
+            id: result.owner.id,
+            name: result.owner.name,
+            phone: result.owner.phone,
+            email: result.owner.email,
+            role: 'owner',
+            isActive: true,
+            permissions: [],
+            createdAt: new Date().toISOString(),
           };
-        }
-        
-        const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-        const userTenant = tenants?.find((t: any) => t.id === foundUser!.tenantId);
-        
-        if (!userTenant) {
-          console.error('[Auth] Tenant not found for user');
-          return { 
-            success: false, 
-            error: 'هەژماری فرۆشگا نەدۆزرایەوە. پەیوەندی بە پشتیوانی بکە' 
+        } else if (credentials.expectedRole === 'admin' && 'admin' in result) {
+          userData = {
+            id: result.admin.id,
+            name: result.admin.name,
+            phone: result.admin.phone,
+            email: result.admin.email,
+            role: 'admin',
+            isActive: true,
+            permissions: result.admin.permissions || [],
+            createdAt: new Date().toISOString(),
           };
+        } else if (credentials.expectedRole === 'employee' && 'staff' in result) {
+          userData = {
+            id: result.staff.id,
+            name: result.staff.name,
+            phone: result.staff.phone,
+            email: result.staff.email,
+            role: 'employee',
+            isActive: true,
+            permissions: result.staff.permissions || [],
+            createdAt: new Date().toISOString(),
+          };
+        } else {
+          return { success: false, error: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری بەکارهێنەر' };
         }
         
-        if (userTenant.status !== 'active') {
-          console.log('[Auth] Tenant is not active:', userTenant.status);
-          let errorMessage = 'هەژماری فرۆشگا ناچالاکە';
-          if (userTenant.status === 'pending') {
-            errorMessage = 'هەژماری فرۆشگا هێشتا پەسەند نەکراوە. چاوەڕوانی پەسەندکردن بە';
-          } else if (userTenant.status === 'suspended') {
-            errorMessage = 'هەژماری فرۆشگا ڕاگیراوە. پەیوەندی بە پشتیوانی بکە';
-          } else if (userTenant.status === 'expired') {
-            errorMessage = 'هەژماری فرۆشگا بەسەرچووە. تکایە نوێی بکەرەوە';
-          }
-          return { success: false, error: errorMessage };
-        }
+        await AsyncStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        
+        console.log('[Auth] Login successful');
+        return { success: true, user: userData };
       }
+
+      return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
+    } catch (error: any) {
+      console.error('[Auth] Login error:', error);
       
-      if (!foundUser) {
-        console.log('[Auth] User not found or password incorrect');
+      if (error?.data?.code === 'UNAUTHORIZED') {
         return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
       }
       
-      console.log('[Auth] User authenticated:', foundUser.role, foundUser.tenantId ? `(tenant: ${foundUser.tenantId})` : '(no tenant)');
-      
-      if (!foundUser.isActive) {
-        console.log('[Auth] User account is inactive');
-        return { success: false, error: 'حسابەکەت ناچالاککراوە. پەیوەندی بە بەڕێوەبەر بکە' };
+      if (error?.message?.includes('License expired')) {
+        return { success: false, error: 'مۆڵەتەکەت بەسەرچووە. تکایە نوێی بکەرەوە' };
       }
       
-      if (foundUser.lockedUntil && new Date(foundUser.lockedUntil) > new Date()) {
-        console.log('[Auth] User account is locked');
-        return { success: false, error: 'حسابەکەت قەدەغەکراوە. دواتر هەوڵ بدەرەوە' };
-      }
-      
-      const updatedUser = {
-        ...foundUser,
-        lastLoginAt: new Date().toISOString(),
-        failedLoginAttempts: 0,
-      };
-      
-      if (updatedUser.tenantId) {
-        setCurrentTenantId(updatedUser.tenantId);
-        console.log('[Auth] Login - Tenant context set:', updatedUser.tenantId);
-        
-        const tenants = await safeStorage.getGlobalItem<any[]>('tenants', []);
-        if (tenants && Array.isArray(tenants)) {
-          const userTenant = tenants.find((t: any) => t.id === updatedUser.tenantId);
-          if (userTenant) {
-            console.log('[Auth] Tenant found and set:', userTenant.id);
-            await safeStorage.setGlobalItem('currentTenant', userTenant);
-          } else {
-            console.warn('[Auth] Tenant not found for tenantId:', updatedUser.tenantId);
-          }
-        }
-      } else {
-        console.log('[Auth] User has no tenantId (owner or demo user)');
-        setCurrentTenantId(null);
-      }
-      
-      setUser(updatedUser);
-      await safeStorage.setGlobalItem('user', updatedUser);
-      
-      const updatedUsers = allUsers.map(u => 
-        u.id === foundUser.id ? updatedUser : u
-      );
-      await safeStorage.setGlobalItem('users', updatedUsers);
-      
-      console.log('[Auth] Login successful');
-      return { success: true, user: updatedUser };
-    } catch (error) {
-      console.error('[Auth] Login error:', error);
       return { success: false, error: 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە' };
     }
   }, []);
 
   const logout = useCallback(async () => {
     try {
-      setCurrentTenantId(null);
-      console.log('[Auth] Logout - Tenant context cleared');
+      await AsyncStorage.removeItem('authToken');
+      await AsyncStorage.removeItem('user');
       setUser(null);
-      safeStorage.removeItem('user');
-    } catch {
-      console.log('[Auth] Logout error (ignored)');
+      console.log('[Auth] Logout successful');
+    } catch (error) {
+      console.error('[Auth] Logout error:', error);
     }
   }, []);
 
@@ -178,7 +149,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     
     const updatedUser = { ...user, ...updates };
     setUser(updatedUser);
-    safeStorage.setGlobalItem('user', updatedUser);
+    AsyncStorage.setItem('user', JSON.stringify(updatedUser));
   }, [user]);
 
   return useMemo(() => ({
