@@ -118,12 +118,13 @@ export default function UICustomizationScreen() {
             <View style={styles.colorGrid}>
               {COLOR_PRESETS.map((color) => {
                 const isSelected = primaryColor === color.value;
+                const colorStyle = { backgroundColor: color.value };
                 return (
                   <TouchableOpacity
                     key={color.value}
                     style={[
                       styles.colorOption,
-                      { backgroundColor: color.value },
+                      colorStyle,
                       isSelected && styles.colorOptionSelected,
                     ]}
                     onPress={() => setPrimaryColor(color.value)}
@@ -286,12 +287,13 @@ export default function UICustomizationScreen() {
             <View style={styles.colorGrid}>
               {['#F3F4F6', '#FFFFFF', '#1F2937', '#374151', '#EFF6FF', '#FEF2F2'].map((color) => {
                 const isSelected = backgroundColor === color;
+                const bgColorStyle = { backgroundColor: color };
                 return (
                   <TouchableOpacity
                     key={color}
                     style={[
                       styles.colorOption,
-                      { backgroundColor: color },
+                      bgColorStyle,
                       isSelected && styles.colorOptionSelected,
                     ]}
                     onPress={() => setBackgroundColor(color)}
