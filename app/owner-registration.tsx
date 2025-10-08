@@ -13,15 +13,15 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
-import { Crown, User, Phone, Mail, Lock, CheckCircle2, Shield } from 'lucide-react-native';
+import { Crown, User, Phone, Mail, Lock, CheckCircle2, Shield, Store } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { safeStorage } from '@/utils/storage';
-import { User as UserType } from '@/types/auth';
-import { PERMISSIONS } from '@/constants/permissions';
+import { trpcClient } from '@/lib/trpc';
+import { useAuth } from '@/hooks/auth-context';
 
 export default function OwnerRegistrationScreen() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login } = useAuth();
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(50));
 
@@ -31,35 +31,13 @@ export default function OwnerRegistrationScreen() {
     email: '',
     password: '',
     confirmPassword: '',
+    storeName: '',
+    storeAddress: '',
   });
 
   const totalSteps = 2;
 
   React.useEffect(() => {
-    const checkOwnerExists = async () => {
-      try {
-        const existingUsers = await safeStorage.getGlobalItem<UserType[]>('users', []);
-        const ownerExists = existingUsers?.some(u => u.role === 'owner');
-        
-        if (ownerExists) {
-          Alert.alert(
-            'هەڵە',
-            'خاوەندار پێشتر دروست کراوە. تەنها یەک خاوەندار ڕێگەپێدراوە لە سیستەمدا',
-            [
-              {
-                text: 'گەڕانەوە بۆ چوونەژوورەوە',
-                onPress: () => router.replace('/login'),
-              },
-            ],
-            { cancelable: false }
-          );
-        }
-      } catch (error) {
-        console.error('[Owner Registration] Error checking owner:', error);
-      }
-    };
-    
-    checkOwnerExists();
     
     fadeAnim.setValue(0);
     slideAnim.setValue(50);
@@ -90,8 +68,16 @@ export default function OwnerRegistrationScreen() {
       Alert.alert('هەڵە', 'تکایە ژمارەی مۆبایل بنووسە');
       return false;
     }
-    if (formData.phone.length < 11) {
+    if (formData.phone.length < 10) {
       Alert.alert('هەڵە', 'ژمارەی مۆبایل نادروستە');
+      return false;
+    }
+    if (!formData.email.trim()) {
+      Alert.alert('هەڵە', 'تکایە ئیمەیڵ بنووسە');
+      return false;
+    }
+    if (!formData.storeName.trim()) {
+      Alert.alert('هەڵە', 'تکایە ناوی فرۆشگا بنووسە');
       return false;
     }
     return true;
@@ -187,59 +173,21 @@ export default function OwnerRegistrationScreen() {
       console.log('[Owner Registration] Creating owner account:', {
         phone: formData.phone,
         name: formData.name,
+        email: formData.email,
+        storeName: formData.storeName,
       });
 
-      const existingUsers = await safeStorage.getGlobalItem<UserType[]>('users', []);
-      
-      if (!existingUsers || !Array.isArray(existingUsers)) {
-        Alert.alert('هەڵە', 'کێشەیەک لە خوێندنەوەی داتا ڕوویدا');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      const ownerExists = existingUsers.some(u => u.role === 'owner');
-      if (ownerExists) {
-        Alert.alert('هەڵە', 'خاوەندار پێشتر دروست کراوە. تەنها یەک خاوەندار ڕێگەپێدراوە');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      const phoneExists = existingUsers.some(u => u.phone === formData.phone);
-      if (phoneExists) {
-        Alert.alert('هەڵە', 'ئەم ژمارە مۆبایلە پێشتر تۆمار کراوە');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const newOwner: UserType = {
-        id: `owner_${Date.now()}`,
+      const result = await trpcClient.owner.register.mutate({
         name: formData.name,
+        email: formData.email,
         phone: formData.phone,
-        email: formData.email || undefined,
-        role: 'owner',
         password: formData.password,
-        createdAt: new Date().toISOString(),
-        isActive: true,
-        permissions: Object.values(PERMISSIONS).map(p => ({ 
-          id: p, 
-          name: p, 
-          code: p, 
-          description: '' 
-        })),
-        failedLoginAttempts: 0,
-        twoFactorEnabled: false,
-        allowedDevices: 10,
-        currentSessions: [],
-      };
-
-      const updatedUsers = [...existingUsers, newOwner];
-      await safeStorage.setGlobalItem('users', updatedUsers);
-
-      console.log('[Owner Registration] Owner account created successfully:', {
-        id: newOwner.id,
-        name: newOwner.name,
-        phone: newOwner.phone,
+        storeName: formData.storeName,
+        storeAddress: formData.storeAddress || undefined,
+        plan: 'free',
       });
+
+      console.log('[Owner Registration] Owner account created successfully:', result);
 
       Alert.alert(
         'سەرکەوتوو بوو!',
@@ -247,13 +195,33 @@ export default function OwnerRegistrationScreen() {
         [
           {
             text: 'چوونەژوورەوە',
-            onPress: () => router.replace('/login'),
+            onPress: async () => {
+              const loginResult = await login({
+                phone: formData.phone,
+                password: formData.password,
+                expectedRole: 'owner',
+              });
+              
+              if (loginResult.success) {
+                router.replace('/owner-dashboard');
+              } else {
+                router.replace('/login');
+              }
+            },
           },
         ]
       );
     } catch (error: any) {
       console.error('[Owner Registration] Error:', error);
-      const errorMessage = error?.message || 'کێشەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەرەوە';
+      
+      let errorMessage = 'کێشەیەک ڕوویدا. تکایە دووبارە هەوڵ بدەرەوە';
+      
+      if (error?.message?.includes('Email already registered')) {
+        errorMessage = 'ئەم ئیمەیڵە پێشتر تۆمار کراوە';
+      } else if (error?.data?.code === 'CONFLICT') {
+        errorMessage = 'ئەم ئیمەیڵە پێشتر تۆمار کراوە';
+      }
+      
       Alert.alert('هەڵە', errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -353,12 +321,26 @@ export default function OwnerRegistrationScreen() {
         </View>
         <TextInput
           style={styles.input}
-          placeholder="ئیمەیڵ (ئیختیاری)"
+          placeholder="ئیمەیڵ"
           placeholderTextColor="#9ca3af"
           value={formData.email}
           onChangeText={(text) => updateField('email', text)}
           keyboardType="email-address"
           autoCapitalize="none"
+          textAlign="right"
+        />
+      </View>
+
+      <View style={styles.inputGroup}>
+        <View style={styles.inputIconContainer}>
+          <Crown size={20} color="#7C3AED" />
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="ناوی فرۆشگا"
+          placeholderTextColor="#9ca3af"
+          value={formData.storeName}
+          onChangeText={(text) => updateField('storeName', text)}
           textAlign="right"
         />
       </View>
