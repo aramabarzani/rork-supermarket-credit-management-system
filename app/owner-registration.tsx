@@ -36,6 +36,31 @@ export default function OwnerRegistrationScreen() {
   const totalSteps = 2;
 
   React.useEffect(() => {
+    const checkOwnerExists = async () => {
+      try {
+        const existingUsers = await safeStorage.getGlobalItem<UserType[]>('users', []);
+        const ownerExists = existingUsers?.some(u => u.role === 'owner');
+        
+        if (ownerExists) {
+          Alert.alert(
+            'هەڵە',
+            'خاوەندار پێشتر دروست کراوە. تەنها یەک خاوەندار ڕێگەپێدراوە لە سیستەمدا',
+            [
+              {
+                text: 'گەڕانەوە بۆ چوونەژوورەوە',
+                onPress: () => router.replace('/login'),
+              },
+            ],
+            { cancelable: false }
+          );
+        }
+      } catch (error) {
+        console.error('[Owner Registration] Error checking owner:', error);
+      }
+    };
+    
+    checkOwnerExists();
+    
     fadeAnim.setValue(0);
     slideAnim.setValue(50);
     Animated.parallel([

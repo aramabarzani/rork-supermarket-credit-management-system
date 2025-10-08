@@ -11,12 +11,27 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LogIn, Store, Crown, Shield, Users, User as UserIcon } from 'lucide-react-native';
+import { safeStorage } from '@/utils/storage';
 
 export default function LoginScreen() {
   const router = useRouter();
   const [fadeAnim] = useState(new Animated.Value(0));
 
+  const [ownerExists, setOwnerExists] = useState(false);
+
   React.useEffect(() => {
+    const checkOwner = async () => {
+      try {
+        const users = await safeStorage.getGlobalItem<any[]>('users', []);
+        const hasOwner = users?.some(u => u.role === 'owner') || false;
+        setOwnerExists(hasOwner);
+      } catch (error) {
+        console.error('[Login] Error checking owner:', error);
+      }
+    };
+    
+    checkOwner();
+    
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 800,
@@ -136,6 +151,18 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </ScrollView>
 
+          {!ownerExists && (
+            <TouchableOpacity
+              style={styles.ownerRegistrationButton}
+              onPress={() => router.push('/owner-registration')}
+            >
+              <Crown size={22} color="#FFFFFF" />
+              <Text style={styles.ownerRegistrationButtonText}>
+                دروستکردنی حسابی خاوەندار (یەک جار)
+              </Text>
+            </TouchableOpacity>
+          )}
+          
           <TouchableOpacity
             style={styles.registerButtonMain}
             onPress={() => router.push('/store-registration')}
@@ -318,5 +345,22 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
-
+  ownerRegistrationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(124, 58, 237, 0.3)',
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#7C3AED',
+    marginBottom: 16,
+  },
+  ownerRegistrationButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });
