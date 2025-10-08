@@ -42,7 +42,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       
       if (credentials.expectedRole === 'owner') {
         result = await trpcClient.owner.login.mutate({
-          email: credentials.phone,
+          phone: credentials.phone,
           password: credentials.password,
         });
       } else if (credentials.expectedRole === 'admin') {

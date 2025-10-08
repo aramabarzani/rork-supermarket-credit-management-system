@@ -7,7 +7,7 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 
 const loginOwnerSchema = z.object({
-  email: z.string().email(),
+  phone: z.string(),
   password: z.string(),
 });
 
@@ -17,13 +17,13 @@ export default publicProcedure
     const [owner] = await db
       .select()
       .from(owners)
-      .where(eq(owners.email, input.email))
+      .where(eq(owners.phone, input.phone))
       .limit(1);
 
     if (!owner) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "Invalid email or password",
+        message: "Invalid phone or password",
       });
     }
 
@@ -31,7 +31,7 @@ export default publicProcedure
     if (!isValidPassword) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "Invalid email or password",
+        message: "Invalid phone or password",
       });
     }
 
