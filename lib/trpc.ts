@@ -11,8 +11,13 @@ const getBaseUrl = () => {
     return process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   }
 
+  if (process.env.EXPO_PUBLIC_TOOLKIT_URL) {
+    return process.env.EXPO_PUBLIC_TOOLKIT_URL;
+  }
+
+  console.error('[tRPC] No base URL found. Please check environment variables.');
   throw new Error(
-    "No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL"
+    "No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL or EXPO_PUBLIC_TOOLKIT_URL"
   );
 };
 
