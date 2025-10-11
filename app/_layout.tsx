@@ -5,6 +5,7 @@ import { StyleSheet, Platform, View, Text, LogBox } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import "@/backend/hono";
 
 import { AuthProvider } from "@/hooks/auth-context";
 import { DebtProvider } from "@/hooks/debt-context";
@@ -57,6 +58,11 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "گەڕانەوە" }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="login-owner" options={{ headerShown: false }} />
+      <Stack.Screen name="login-admin" options={{ headerShown: false }} />
+      <Stack.Screen name="login-employee" options={{ headerShown: false }} />
+      <Stack.Screen name="login-customer" options={{ headerShown: false }} />
+      <Stack.Screen name="owner-registration" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen 
         name="add-debt" 

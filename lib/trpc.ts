@@ -12,7 +12,7 @@ const getBaseUrl = () => {
   console.log('[tRPC] Environment check:', {
     EXPO_PUBLIC_RORK_API_BASE_URL: process.env.EXPO_PUBLIC_RORK_API_BASE_URL,
     EXPO_PUBLIC_TOOLKIT_URL: process.env.EXPO_PUBLIC_TOOLKIT_URL,
-    manifest: Constants.expoConfig?.extra,
+    platform: Platform.OS,
   });
 
   if (process.env.EXPO_PUBLIC_RORK_API_BASE_URL) {
@@ -26,17 +26,17 @@ const getBaseUrl = () => {
   }
 
   if (Platform.OS === 'web') {
-    const webUrl = window.location.origin;
+    const webUrl = typeof window !== 'undefined' ? window.location.origin : '';
     console.log('[tRPC] Using web origin:', webUrl);
     return webUrl;
   }
 
-  console.error('[tRPC] No base URL found. Please check environment variables.');
-  console.error('[tRPC] Available env keys:', Object.keys(process.env).filter(k => k.startsWith('EXPO')));
+  const devUrl = Constants.expoConfig?.hostUri 
+    ? `http://${Constants.expoConfig.hostUri.split(':').shift()}:8081`
+    : 'http://localhost:8081';
   
-  throw new Error(
-    "No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL or EXPO_PUBLIC_TOOLKIT_URL"
-  );
+  console.log('[tRPC] Using development URL:', devUrl);
+  return devUrl;
 };
 
 export const trpcClient = trpc.createClient({
