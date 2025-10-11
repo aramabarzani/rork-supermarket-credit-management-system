@@ -20,7 +20,7 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react-native';
-import { trpc } from '@/lib/trpc';
+
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
 
@@ -28,16 +28,16 @@ const CustomerAnalyticsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedTab, setSelectedTab] = useState<'overview' | 'inactive' | 'new' | 'highDebt' | 'bestPaying' | 'yearly' | 'bestPayingYearly' | 'groups' | 'activity'>('overview');
 
-  // Queries
-  const statsQuery = trpc.customers.analytics.getStats.useQuery();
-  const inactiveQuery = trpc.customers.analytics.getInactive.useQuery();
-  const newCustomersQuery = trpc.customers.analytics.getNewThisMonth.useQuery();
-  const highDebtQuery = trpc.customers.analytics.getHighDebtThisMonth.useQuery({ minDebt: 100000 });
-  const bestPayingQuery = trpc.customers.analytics.getBestPayingThisMonth.useQuery();
-  const yearlyQuery = trpc.customers.analytics.getHighestDebtYearly.useQuery({ year: 2024 });
-  const bestPayingYearlyQuery = trpc.customers.analytics.getBestPayingYearly.useQuery({ year: 2024 });
-  const groupsQuery = trpc.customers.analytics.getByGroup.useQuery();
-  const activityQuery = trpc.customers.analytics.getActivityLog.useQuery({ limit: 20 });
+  // Mock data - backend disabled
+  const statsQuery = { data: { totalCustomers: 0, inactiveCustomers: 0, newThisMonth: 0, averageDebtPerCustomer: 0 }, refetch: async () => {} };
+  const inactiveQuery = { data: { customers: [], count: 0, totalDebt: 0 }, refetch: async () => {} };
+  const newCustomersQuery = { data: { customers: [], count: 0, totalDebt: 0 }, refetch: async () => {} };
+  const highDebtQuery = { data: { customers: [], count: 0, totalDebt: 0 }, refetch: async () => {} };
+  const bestPayingQuery = { data: { customers: [], count: 0, totalPaid: 0 }, refetch: async () => {} };
+  const yearlyQuery = { data: { customers: [], count: 0, totalDebt: 0 }, refetch: async () => {} };
+  const bestPayingYearlyQuery = { data: { customers: [], count: 0, totalPaid: 0 }, refetch: async () => {} };
+  const groupsQuery = { data: { groups: [], totalGroups: 0 }, refetch: async () => {} };
+  const activityQuery = { data: { activities: [], totalCount: 0, summary: { totalDebtAdded: 0, totalPaymentsMade: 0, profileViews: 0 }, hasMore: false }, refetch: async () => {} };
 
   const onRefresh = async () => {
     setRefreshing(true);

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Search, X, Filter } from 'lucide-react-native';
 import { KurdishText } from './KurdishText';
-import { trpc } from '@/lib/trpc';
+
 
 interface QuickSearchBarProps {
   onResultSelect?: (result: any) => void;
@@ -28,10 +28,8 @@ export function QuickSearchBar({
   const [showResults, setShowResults] = useState<boolean>(false);
   const [showFilters, setShowFilters] = useState<boolean>(false);
 
-  const searchQuery = trpc.search.quick.useQuery(
-    { query, type: types[0] || 'all' },
-    { enabled: query.length > 0 }
-  );
+  // Mock search - backend disabled
+  const searchQuery = { data: null, isLoading: false };
 
   const results = searchQuery.data
     ? [

@@ -17,7 +17,7 @@ import {
   Download,
   Settings,
 } from 'lucide-react-native';
-import { trpc } from '@/lib/trpc';
+
 import { KurdishText } from '@/components/KurdishText';
 import type { SystemValidationReport, ValidationCategory } from '@/types/validation';
 
@@ -25,13 +25,10 @@ export default function SystemValidationScreen() {
   const [isRunning, setIsRunning] = useState(false);
   const [report, setReport] = useState<SystemValidationReport | null>(null);
 
-  const validationQuery = trpc.validation.runSystemValidation.useQuery(undefined, {
-    enabled: false,
-  });
-
-  const statsQuery = trpc.validation.getStats.useQuery();
-
-  const exportMutation = trpc.validation.exportReport.useMutation();
+  // Mock queries - backend disabled
+  const validationQuery = { refetch: async () => ({ data: null }) };
+  const statsQuery = { data: null };
+  const exportMutation = { mutateAsync: async () => ({ success: false }), isPending: false };
 
   const runValidation = async () => {
     setIsRunning(true);

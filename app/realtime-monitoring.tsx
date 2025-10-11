@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Activit
 import { Stack, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Activity, Users, Clock, AlertCircle, Database, TrendingUp } from 'lucide-react-native';
-import { trpc } from '@/lib/trpc';
+
 import { KurdishText } from '@/components/KurdishText';
 import { useAuth } from '@/hooks/auth-context';
 
@@ -12,9 +12,16 @@ export default function RealtimeMonitoringScreen() {
   const { user } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: realtimeStats, isLoading: statsLoading, refetch: refetchStats } = trpc.monitoring.activity.getRealtimeStats.useQuery();
-  const { data: activeUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.monitoring.activity.getActiveUsers.useQuery();
-  const { data: recentActivities, isLoading: activitiesLoading, refetch: refetchActivities } = trpc.monitoring.activity.getRecentActivities.useQuery({ limit: 10 });
+  // Mock data - backend disabled
+  const realtimeStats = null;
+  const statsLoading = false;
+  const refetchStats = async () => {};
+  const activeUsers: any[] = [];
+  const usersLoading = false;
+  const refetchUsers = async () => {};
+  const recentActivities: any[] = [];
+  const activitiesLoading = false;
+  const refetchActivities = async () => {};
 
   const onRefresh = async () => {
     setRefreshing(true);

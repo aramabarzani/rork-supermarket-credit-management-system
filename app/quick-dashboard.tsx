@@ -35,19 +35,19 @@ import {
 import { KurdishText } from '@/components/KurdishText';
 import { GradientCard } from '@/components/GradientCard';
 import { QuickSearchBar } from '@/components/QuickSearchBar';
-import { trpc } from '@/lib/trpc';
+
 
 export default function QuickDashboardScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const statsQuery = trpc.analytics.usage.realtime.useQuery();
-  const quickReportsQuery = trpc.quickReports.getAll.useQuery();
-
-  const generateReportMutation = trpc.quickReports.generate.useMutation();
-  const exportReportMutation = trpc.quickReports.export.useMutation();
-  const emailReportMutation = trpc.quickReports.email.useMutation();
+  // Mock data - backend disabled
+  const statsQuery = { data: null, refetch: async () => {} };
+  const quickReportsQuery = { data: [], refetch: async () => {} };
+  const generateReportMutation = { mutateAsync: async () => {} };
+  const exportReportMutation = { mutateAsync: async () => ({ downloadUrl: '' }) };
+  const emailReportMutation = { mutateAsync: async () => {} };
 
   const onRefresh = async () => {
     setRefreshing(true);

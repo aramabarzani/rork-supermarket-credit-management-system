@@ -16,7 +16,7 @@ import {
 } from 'lucide-react-native';
 import { KurdishText } from './KurdishText';
 import { GradientCard } from './GradientCard';
-import { trpc } from '@/lib/trpc';
+
 
 type BalanceAlert = {
   id: string;
@@ -61,8 +61,9 @@ export const BalanceMonitor: React.FC<BalanceMonitorProps> = ({ onAlertPress }) 
   const [alerts, setAlerts] = useState<BalanceAlert[]>([]);
   const [dismissedAlerts, setDismissedAlerts] = useState<string[]>([]);
 
-  const systemBalanceQuery = trpc.financial.balance.system.useQuery({});
-  const irregularPaymentsQuery = trpc.financial.reports.irregularPayments.useQuery({});
+  // Mock data - backend disabled
+  const systemBalanceQuery = { data: null };
+  const irregularPaymentsQuery = { data: null };
 
   useEffect(() => {
     const checkBalanceDiscrepancies = () => {

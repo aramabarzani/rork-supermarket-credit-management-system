@@ -17,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { KurdishText } from './KurdishText';
 import { GradientCard } from './GradientCard';
-import { trpc } from '@/lib/trpc';
+
 
 type ExportModalProps = {
   visible: boolean;
@@ -68,7 +68,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({ visible, onClose, repo
   const [selectedFormat, setSelectedFormat] = useState<'csv' | 'excel'>('excel');
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportMutation = trpc.financial.reports.export.useMutation();
+  // Mock mutation - backend disabled
+  const exportMutation = { mutateAsync: async () => ({ downloadUrl: '', filename: '', recordsCount: 0 }) };
 
   const handleExport = async (option: ExportOption) => {
     setIsExporting(true);

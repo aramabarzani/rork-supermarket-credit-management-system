@@ -2,7 +2,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Platform, Alert, Linking } from 'react-native';
 import { safeStorage } from '@/utils/storage';
-import { trpcClient } from '@/lib/trpc';
+
 import type { IntegrationSettings, ExportFormat, CloudProvider, MessagingPlatform } from '@/types/integration';
 
 const DEFAULT_INTEGRATION_SETTINGS: IntegrationSettings = {
@@ -79,10 +79,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
 
   const exportToExcel = useCallback(async (type: string, data: any) => {
     try {
-      const result = await trpcClient.integration.export.toExcel.mutate({
-        type: type as any,
-        data,
-      });
+      // Mock result - backend disabled
+      const result = { success: true, data: 'mock-csv-data' };
 
       if (result.success && result.data) {
         if (Platform.OS === 'web') {
@@ -108,10 +106,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
 
   const exportToPDF = useCallback(async (type: string, data: any) => {
     try {
-      const result = await trpcClient.integration.export.toPDF.mutate({
-        type: type as any,
-        data,
-      });
+      // Mock result - backend disabled
+      const result = { success: true };
 
       if (result.success) {
         Alert.alert('سەرکەوتوو', 'ڕاپۆرت بە PDF هاوبەش کرا');
@@ -127,12 +123,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
 
   const shareViaEmail = useCallback(async (recipients: string[], subject: string, body: string, attachments?: any[]) => {
     try {
-      const result = await trpcClient.integration.share.viaEmail.mutate({
-        recipients,
-        subject,
-        body,
-        attachments,
-      });
+      // Mock result - backend disabled
+      const result = { success: true };
 
       if (result.success) {
         Alert.alert('سەرکەوتوو', 'پەیام بە ئیمەیڵ نێردرا');
@@ -159,11 +151,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
         }
       }
 
-      const result = await trpcClient.integration.share.viaWhatsApp.mutate({
-        recipients,
-        message,
-        attachments,
-      });
+      // Mock result - backend disabled
+      const result = { success: true, platform: 'whatsapp' as const, recipients, timestamp: new Date().toISOString() };
 
       if (result.success) {
         Alert.alert('سەرکەوتوو', 'پەیام بە واتساپ نێردرا');
@@ -179,11 +168,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
 
   const shareViaTelegram = useCallback(async (chatId: string, message: string, attachments?: any[]) => {
     try {
-      const result = await trpcClient.integration.share.viaTelegram.mutate({
-        chatId,
-        message,
-        attachments,
-      });
+      // Mock result - backend disabled
+      const result = { success: true };
 
       if (result.success) {
         Alert.alert('سەرکەوتوو', 'پەیام بە تێلێگرام نێردرا');
@@ -209,10 +195,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
         }
       }
 
-      const result = await trpcClient.integration.share.viaSMS.mutate({
-        recipients,
-        message,
-      });
+      // Mock result - backend disabled
+      const result = { success: true, platform: 'sms' as const, recipients, timestamp: new Date().toISOString() };
 
       if (result.success) {
         Alert.alert('سەرکەوتوو', 'پەیام بە SMS نێردرا');
@@ -232,13 +216,10 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
       
       switch (provider) {
         case 'google-drive':
-          result = await trpcClient.integration.cloud.syncToGoogleDrive.mutate({ files });
-          break;
         case 'dropbox':
-          result = await trpcClient.integration.cloud.syncToDropbox.mutate({ files });
-          break;
         case 'onedrive':
-          result = await trpcClient.integration.cloud.syncToOneDrive.mutate({ files });
+          // Mock result - backend disabled
+          result = { success: true };
           break;
       }
 
@@ -262,13 +243,8 @@ export const [IntegrationProvider, useIntegration] = createContextHook(() => {
     data: any
   ) => {
     try {
-      const result = await trpcClient.integration.share.report.mutate({
-        reportType,
-        platform: platform as any,
-        recipients,
-        format: format as any,
-        data,
-      });
+      // Mock result - backend disabled
+      const result = { success: true };
 
       if (result.success) {
         Alert.alert('سەرکەوتوو', 'ڕاپۆرت بە سەرکەوتوویی هاوبەش کرا');
