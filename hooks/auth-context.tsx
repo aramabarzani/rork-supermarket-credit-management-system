@@ -2,7 +2,6 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, LoginCredentials, LoginResult } from '@/types/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { trpcClient } from '@/lib/trpc';
 
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [user, setUser] = useState<User | null>(null);
@@ -38,91 +37,27 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log('[Auth] Login attempt for role:', credentials.expectedRole || 'any');
       
-      let result;
+      const storedUsers = await AsyncStorage.getItem('users');
+      const users = storedUsers ? JSON.parse(storedUsers) : [];
       
-      if (credentials.expectedRole === 'owner') {
-        result = await trpcClient.owner.login.mutate({
-          phone: credentials.phone,
-          password: credentials.password,
-        });
-      } else if (credentials.expectedRole === 'admin') {
-        result = await trpcClient.admin.login.mutate({
-          email: credentials.phone,
-          password: credentials.password,
-        });
-      } else if (credentials.expectedRole === 'employee') {
-        result = await trpcClient.staff.login.mutate({
-          email: credentials.phone,
-          password: credentials.password,
-        });
-      } else {
-        return { 
-          success: false, 
-          error: 'تکایە جۆری حساب دیاری بکە' 
-        };
-      }
-
-      if (result.success && result.token) {
-        await AsyncStorage.setItem('authToken', result.token);
-        
-        let userData: User;
-        
-        if (credentials.expectedRole === 'owner' && 'owner' in result) {
-          userData = {
-            id: result.owner.id,
-            name: result.owner.name,
-            phone: result.owner.phone,
-            email: result.owner.email,
-            role: 'owner',
-            isActive: true,
-            permissions: [],
-            createdAt: new Date().toISOString(),
-          };
-        } else if (credentials.expectedRole === 'admin' && 'admin' in result) {
-          userData = {
-            id: result.admin.id,
-            name: result.admin.name,
-            phone: result.admin.phone,
-            email: result.admin.email,
-            role: 'admin',
-            isActive: true,
-            permissions: result.admin.permissions || [],
-            createdAt: new Date().toISOString(),
-          };
-        } else if (credentials.expectedRole === 'employee' && 'staff' in result) {
-          userData = {
-            id: result.staff.id,
-            name: result.staff.name,
-            phone: result.staff.phone,
-            email: result.staff.email,
-            role: 'employee',
-            isActive: true,
-            permissions: result.staff.permissions || [],
-            createdAt: new Date().toISOString(),
-          };
-        } else {
-          return { success: false, error: 'هەڵەیەک ڕوویدا لە وەرگرتنی زانیاری بەکارهێنەر' };
-        }
-        
-        await AsyncStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        
-        console.log('[Auth] Login successful');
-        return { success: true, user: userData };
-      }
-
-      return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
-    } catch (error: any) {
-      console.error('[Auth] Login error:', error);
+      const foundUser = users.find((u: User) => 
+        u.phone === credentials.phone && 
+        u.role === credentials.expectedRole
+      );
       
-      if (error?.data?.code === 'UNAUTHORIZED') {
+      if (!foundUser) {
         return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
       }
       
-      if (error?.message?.includes('License expired')) {
-        return { success: false, error: 'مۆڵەتەکەت بەسەرچووە. تکایە نوێی بکەرەوە' };
-      }
+      const token = `token_${foundUser.id}_${Date.now()}`;
+      await AsyncStorage.setItem('authToken', token);
+      await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+      setUser(foundUser);
       
+      console.log('[Auth] Login successful');
+      return { success: true, user: foundUser };
+    } catch (error: any) {
+      console.error('[Auth] Login error:', error);
       return { success: false, error: 'هەڵەیەک ڕوویدا. دووبارە هەوڵ بدەرەوە' };
     }
   }, []);
