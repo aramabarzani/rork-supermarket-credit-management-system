@@ -49,8 +49,10 @@ export default function SettingsScreen() {
     return new Date(dateString).toLocaleDateString('ckb-IQ');
   };
 
+  const isOwnerOrAdmin = user?.role === 'owner' || user?.role === 'admin';
+  
   const menuSections = [
-    {
+    ...(isOwnerOrAdmin ? [{
       title: 'بەڕێوەبردنی کارمەندان',
       items: [
         {
@@ -68,8 +70,8 @@ export default function SettingsScreen() {
           color: '#10B981',
         },
       ],
-    },
-    {
+    }] : []),
+    ...(isOwnerOrAdmin ? [{
       title: 'بەڕێوەبردنی قەرز',
       items: [
         {
@@ -87,8 +89,8 @@ export default function SettingsScreen() {
           color: '#F59E0B',
         },
       ],
-    },
-    {
+    }] : []),
+    ...(isOwnerOrAdmin ? [{
       title: 'بەڕێوەبردنی کۆگا و خەرجی',
       items: [
         {
@@ -113,29 +115,10 @@ export default function SettingsScreen() {
           color: '#F59E0B',
         },
       ],
-    },
-    {
-      title: 'بیرخستنەوە و ئاگاداری',
-      items: [
-        {
-          icon: Settings,
-          title: 'بەڕێوەبردنی بیرخستنەوە',
-          subtitle: 'دروستکردن و بەڕێوەبردنی بیرخستنەوەکان',
-          onPress: () => router.push('/reminder-management'),
-          color: '#3B82F6',
-        },
-      ],
-    },
+    }] : []),
     {
       title: 'QR Code',
       items: [
-        {
-          icon: QrCode,
-          title: 'بەڕێوەبردنی QR',
-          subtitle: 'دروستکردن و بەڕێوەبردنی QR Code بۆ کڕیارەکان',
-          onPress: () => router.push('/customer-qr-management'),
-          color: '#8B5CF6',
-        },
         {
           icon: Camera,
           title: 'سکان کردنی QR',
@@ -146,34 +129,8 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: 'پاراستن',
-      items: [
-        {
-          icon: Shield,
-          title: 'بەڕێوەبردنی پاراستن',
-          subtitle: 'ڕێکخستنی پاراستن، تۆماری چوونەژوورەوە و چالاکی',
-          onPress: () => router.push('/security-management'),
-          color: '#EF4444',
-        },
-      ],
-    },
-    {
       title: 'ڕێکخستنەکان',
       items: [
-        {
-          icon: Settings,
-          title: 'ڕێکخستنی سیستەم',
-          subtitle: 'زمان، پارە، ئاگاداری و هیتر',
-          onPress: () => router.push('/system-settings'),
-          color: '#8B5CF6',
-        },
-        {
-          icon: Settings,
-          title: 'دەستکاریکردنی ڕووکار',
-          subtitle: 'ڕەنگ، فۆنت، مۆد و دیزاین',
-          onPress: () => router.push('/ui-customization'),
-          color: '#EC4899',
-        },
         {
           icon: Zap,
           title: 'ڕێکخستنی بەکارهێنان',
@@ -207,8 +164,8 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* License Info */}
-        {license && (
+        {/* License Info - Only for Owner/Admin */}
+        {isOwnerOrAdmin && license && (
           <View style={styles.section}>
             <KurdishText variant="subtitle" color="#1F2937" style={styles.sectionTitle}>
               زانیاری مۆڵەت
