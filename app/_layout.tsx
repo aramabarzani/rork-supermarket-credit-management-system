@@ -589,6 +589,18 @@ function RootLayoutNav() {
           title: "هەموو تایبەتمەندیەکان",
         }} 
       />
+      <Stack.Screen 
+        name="two-factor-setup" 
+        options={{ 
+          title: "ڕێکخستنی دوو فاکتەر",
+        }} 
+      />
+      <Stack.Screen 
+        name="receipt/[id]" 
+        options={{ 
+          title: "وەسڵ",
+        }} 
+      />
 
     </Stack>
   );
