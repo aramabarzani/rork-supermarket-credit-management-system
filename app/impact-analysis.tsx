@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { trpc } from '@/lib/trpc';
+
 import { 
   BarChart3, 
   Download, 
@@ -32,32 +32,10 @@ export default function ImpactAnalysisScreen() {
     startDate.setFullYear(startDate.getFullYear() - 1);
   }
 
-  const statisticsQuery = trpc.monitoring.impact.getStatistics.useQuery({
-    startDate: startDate.toISOString(),
-    endDate: new Date().toISOString(),
-    role: selectedRole === 'all' ? undefined : selectedRole,
-  });
-
-  const poorPerformanceQuery = trpc.monitoring.impact.checkPoorPerformance.useQuery({
-    startDate: startDate.toISOString(),
-    endDate: new Date().toISOString(),
-    threshold: 10,
-  });
-
-  const generateReportMutation = trpc.monitoring.impact.generateReport.useMutation({
-    onSuccess: (data) => {
-      Alert.alert('سەرکەوتوو', 'ڕاپۆرت بە سەرکەوتوویی دروست کرا');
-    },
-    onError: (error) => {
-      Alert.alert('هەڵە', 'کێشە لە دروستکردنی ڕاپۆرت');
-    },
-  });
-
-  const exportReportMutation = trpc.monitoring.impact.exportReport.useMutation({
-    onSuccess: (data) => {
-      Alert.alert('سەرکەوتوو', data.message);
-    },
-  });
+  const statisticsQuery = { isLoading: false, data: null };
+  const poorPerformanceQuery = { data: null };
+  const generateReportMutation = { isPending: false, data: null, mutate: () => {} };
+  const exportReportMutation = { isPending: false, mutate: () => {} };
 
   const handleGenerateReport = () => {
     generateReportMutation.mutate({

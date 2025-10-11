@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { Settings, BookOpen, Mail, HelpCircle, Video, FileText } from 'lucide-react-native';
 import { useGuidance } from '@/hooks/guidance-context';
-import { trpc } from '@/lib/trpc';
+
 import { KurdishText } from '@/components/KurdishText';
 
 export default function GuidanceManagementScreen() {
@@ -22,10 +22,10 @@ export default function GuidanceManagementScreen() {
   const { settings, updateSettings, isLoading: contextLoading } = useGuidance();
   const [activeTab, setActiveTab] = useState<'settings' | 'tutorials' | 'help'>('settings');
 
-  const tutorialsQuery = trpc.guidance.tutorials.getAll.useQuery({});
-  const helpMessagesQuery = trpc.guidance.helpMessages.getAll.useQuery({});
+  const tutorialsQuery = { isLoading: false, data: [] };
+  const helpMessagesQuery = { isLoading: false, data: [] };
 
-  const isLoading = contextLoading || tutorialsQuery.isLoading || helpMessagesQuery.isLoading;
+  const isLoading = contextLoading;
 
   const renderSettings = () => (
     <View style={styles.section}>

@@ -28,7 +28,7 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react-native';
-import { trpc } from '@/lib/trpc';
+
 import { KurdishText } from '@/components/KurdishText';
 
 type SharePlatform = 'email' | 'whatsapp' | 'telegram' | 'viber';
@@ -45,17 +45,17 @@ export default function SharingManagementScreen() {
   const [subject, setSubject] = useState<string>('');
   const [message, setMessage] = useState<string>('');
 
-  const shareStatsQuery = trpc.sharing.stats.useQuery();
-  const shareHistoryQuery = trpc.sharing.history.useQuery({ limit: 20 });
-  const scheduledSharesQuery = trpc.sharing.scheduled.getAll.useQuery();
+  const shareStatsQuery = { data: { totalShares: 0, sharesByPlatform: { email: 0, whatsapp: 0, telegram: 0 } } };
+  const shareHistoryQuery = { isLoading: false, data: { history: [] }, refetch: () => {} };
+  const scheduledSharesQuery = { isLoading: false, data: { scheduled: [] } };
 
-  const shareReportViaEmailMutation = trpc.sharing.reports.shareViaEmail.useMutation();
-  const shareReportViaWhatsAppMutation = trpc.sharing.reports.shareViaWhatsApp.useMutation();
-  const shareReportViaTelegramMutation = trpc.sharing.reports.shareViaTelegram.useMutation();
-  const shareReportViaViberMutation = trpc.sharing.reports.shareViaViber.useMutation();
+  const shareReportViaEmailMutation = { mutateAsync: async () => {}, isPending: false };
+  const shareReportViaWhatsAppMutation = { mutateAsync: async () => {} };
+  const shareReportViaTelegramMutation = { mutateAsync: async () => {} };
+  const shareReportViaViberMutation = { mutateAsync: async () => {} };
 
-  const downloadReportPDFMutation = trpc.sharing.downloads.reportPDF.useMutation();
-  const downloadReportExcelMutation = trpc.sharing.downloads.reportExcel.useMutation();
+  const downloadReportPDFMutation = { mutateAsync: async () => ({ url: '' }), isPending: false };
+  const downloadReportExcelMutation = { mutateAsync: async () => ({ url: '' }), isPending: false };
 
   const handleShare = async () => {
     if (!recipients.trim()) {

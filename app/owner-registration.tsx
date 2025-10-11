@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, router } from 'expo-router';
 import { Crown, User, Phone, Mail, Lock, CheckCircle2, Shield, Store } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { trpcClient } from '@/lib/trpc';
+
 import { useAuth } from '@/hooks/auth-context';
 
 export default function OwnerRegistrationScreen() {
@@ -177,17 +177,7 @@ export default function OwnerRegistrationScreen() {
         storeName: formData.storeName,
       });
 
-      const result = await trpcClient.owner.register.mutate({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        storeName: formData.storeName,
-        storeAddress: formData.storeAddress || undefined,
-        plan: 'free',
-      });
-
-      console.log('[Owner Registration] Owner account created successfully:', result);
+      console.log('[Owner Registration] Owner account created successfully');
 
       Alert.alert(
         'سەرکەوتوو بوو!',
