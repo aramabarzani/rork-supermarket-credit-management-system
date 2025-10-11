@@ -6,10 +6,7 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
-  Modal,
-  TextInput,
   ActivityIndicator,
-  Platform,
   RefreshControl,
   Alert,
 } from 'react-native';
@@ -25,16 +22,8 @@ import {
   LogOut,
   FileText,
   Bell,
-  Calendar,
-  Filter,
-  Download,
-  BarChart3,
-  PieChart,
-  Activity,
   AlertTriangle,
   CheckCircle,
-  Clock,
-  X,
   UserPlus,
   Receipt,
   Search,
@@ -42,20 +31,18 @@ import {
   CreditCard,
   Zap,
   MessageCircle,
+  Sparkles,
 } from 'lucide-react-native';
-import { LineChart, BarChart, PieChart as RNPieChart } from 'react-native-chart-kit';
 import { useAuth } from '@/hooks/auth-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useUsers } from '@/hooks/users-context';
 import { useNotifications } from '@/hooks/notification-context';
 import { useSettings } from '@/hooks/settings-context';
 import { useTenant } from '@/hooks/tenant-context';
-
 import { KurdishText } from '@/components/KurdishText';
+import { COLORS, GRADIENTS, SHADOWS, BORDER_RADIUS, SPACING } from '@/constants/design-system';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const isTablet = screenWidth > 768;
-const isLandscape = screenWidth > screenHeight;
+const { width: screenWidth } = Dimensions.get('window');
 
 export default function DashboardScreen() {
   const router = useRouter();
@@ -68,22 +55,12 @@ export default function DashboardScreen() {
   const notificationContext = useNotifications();
   const { notifications } = notificationContext || {};
   const settingsContext = useSettings();
-  const { settings } = settingsContext || {};
   const tenantContext = useTenant();
   const { currentTenant } = tenantContext || {};
 
-  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'monthly' | 'yearly'>('monthly');
-  const [showFilters, setShowFilters] = useState(false);
-  const [dateFilter, setDateFilter] = useState('');
-  const [customerFilter, setCustomerFilter] = useState('');
-  const [employeeFilter, setEmployeeFilter] = useState('');
-  const [chartType, setChartType] = useState<'line' | 'bar' | 'pie'>('line');
   const [refreshing, setRefreshing] = useState(false);
   const [screenDimensions, setScreenDimensions] = useState(Dimensions.get('window'));
-  const [showQuickActions, setShowQuickActions] = useState(false);
-  const [lastUpdateTime, setLastUpdateTime] = useState(new Date());
   
-  // Update screen dimensions on orientation change
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setScreenDimensions(window);
@@ -92,8 +69,6 @@ export default function DashboardScreen() {
   }, []);
   
   const currentScreenWidth = screenDimensions.width;
-  const currentIsTablet = currentScreenWidth > 768;
-  const currentIsLandscape = currentScreenWidth > screenDimensions.height;
 
   const handleLogout = async () => {
     Alert.alert(
@@ -117,32 +92,8 @@ export default function DashboardScreen() {
   
   const onRefresh = async () => {
     setRefreshing(true);
-    // Simulate data refresh
     await new Promise(resolve => setTimeout(resolve, 1500));
-    setLastUpdateTime(new Date());
     setRefreshing(false);
-  };
-  
-  const handleQuickAction = (action: string) => {
-    console.log('Quick action:', action);
-    setShowQuickActions(false);
-    
-    switch (action) {
-      case 'add-debt':
-        router.push('/add-debt');
-        break;
-      case 'add-payment':
-        router.push('/add-payment');
-        break;
-      case 'view-customers':
-        router.push('/(tabs)/customers');
-        break;
-      case 'view-reports':
-        router.push('/(tabs)/reports');
-        break;
-      default:
-        break;
-    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -154,12 +105,10 @@ export default function DashboardScreen() {
     }).format(amount);
   };
 
-  // Use real data from context
   const allDebts = debts || [];
   const allPayments = payments || [];
   const allCustomers = users?.filter(u => u.role === 'customer') || [];
 
-  // Calculate dashboard statistics
   const dashboardStats = useMemo(() => {
     const totalDebts = allDebts.reduce((sum, debt) => sum + debt.amount, 0);
     const totalPayments = allPayments.reduce((sum, payment) => sum + payment.amount, 0);
@@ -178,57 +127,6 @@ export default function DashboardScreen() {
     };
   }, [allDebts, allPayments, allCustomers]);
 
-  // Chart data - responsive to screen size
-  const getChartLabels = () => {
-    if (currentScreenWidth < 400) {
-      return ['ک٢', 'ش', 'ئا', 'ن', 'ئ', 'ح']; // Short labels for small screens
-    }
-    return ['کانونی دووەم', 'شوبات', 'ئازار', 'نیسان', 'ئایار', 'حوزەیران'];
-  };
-  
-  const chartData = {
-    labels: getChartLabels(),
-    datasets: [
-      {
-        data: [500000, 750000, 600000, 800000, 900000, 650000],
-        color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-        strokeWidth: 2,
-      },
-      {
-        data: [200000, 300000, 400000, 500000, 600000, 550000],
-        color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
-        strokeWidth: 2,
-      },
-    ],
-  };
-  
-  const getChartWidth = () => {
-    const padding = currentIsTablet ? 60 : 40;
-    return Math.min(currentScreenWidth - padding, 800);
-  };
-  
-  const getChartHeight = () => {
-    return currentIsTablet ? 280 : 220;
-  };
-
-  const pieChartData = [
-    {
-      name: 'قەرزی چالاک',
-      population: dashboardStats.remainingDebt,
-      color: '#EF4444',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 12,
-    },
-    {
-      name: 'پارەدراوەتەوە',
-      population: dashboardStats.totalPayments,
-      color: '#10B981',
-      legendFontColor: '#7F7F7F',
-      legendFontSize: 12,
-    },
-  ];
-
-  // Top debtors and best payers
   const topDebtors = useMemo(() => {
     const customerDebts = allCustomers.map(customer => {
       const customerDebtsData = allDebts.filter(d => d.customerId === customer.id);
@@ -262,7 +160,6 @@ export default function DashboardScreen() {
       .slice(0, 3);
   }, [allCustomers, allDebts]);
 
-  // Recent transactions
   const recentDebts = useMemo(() => {
     return [...allDebts]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
@@ -274,658 +171,453 @@ export default function DashboardScreen() {
       .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
       .slice(0, 3);
   }, [allPayments]);
-  const recentNotifications = notifications?.slice(-5) || [];
-
-  const generateQuickReport = () => {
-    console.log('Generating quick PDF report...');
-    // Implementation for PDF generation would go here
-  };
 
   if (!authContext || !debtContext || !usersContext || !notificationContext) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" color="#1E3A8A" />
-          <Text style={{ marginTop: 16, color: '#6B7280' }}>
+      <View style={styles.safeArea}>
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={COLORS.primary[600]} />
+          <Text style={styles.loadingText}>
             چاوەڕوان بە...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   if (isLoading || !isInitialized) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-          <ActivityIndicator size="large" color="#1E3A8A" />
-          <Text style={{ marginTop: 16, color: '#6B7280' }}>
+      <View style={styles.safeArea}>
+        <View style={[styles.container, styles.centerContent]}>
+          <ActivityIndicator size="large" color={COLORS.primary[600]} />
+          <Text style={styles.loadingText}>
             چاوەڕوان بە...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <LinearGradient
-        colors={['#F3F4F6', '#FFFFFF']}
+        colors={[COLORS.background.secondary, COLORS.neutral.white]}
         style={styles.gradient}
       >
-        <View style={styles.container}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={['#1E3A8A']}
-                tintColor="#1E3A8A"
-              />
-            }
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[COLORS.primary[600]]}
+              tintColor={COLORS.primary[600]}
+            />
+          }
+        >
+          <LinearGradient
+            colors={GRADIENTS.royal}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.header}
           >
-            {/* Header */}
-            <View style={[styles.header, currentIsTablet && styles.tabletHeader]}>
-              {/* Business Name Display */}
-              <View style={styles.businessNameContainer}>
-                <KurdishText style={[styles.businessName, currentIsTablet && styles.tabletBusinessName]}>
+            <View style={styles.headerContent}>
+              <View style={styles.userInfo}>
+                <View style={styles.welcomeRow}>
+                  <Sparkles size={20} color={COLORS.warning[400]} />
+                  <KurdishText style={styles.welcomeText}>
+                    بەخێربێیت
+                  </KurdishText>
+                </View>
+                <KurdishText style={styles.nameText}>
+                  {user?.name || 'بەڕێوەبەر'}
+                </KurdishText>
+                <KurdishText style={styles.storeText}>
                   {user?.storeNameKurdish || user?.storeName || currentTenant?.storeNameKurdish || currentTenant?.storeName || 'سیستەمی بەڕێوەبردنی قەرز'}
                 </KurdishText>
               </View>
-              
-              <View style={styles.headerContent}>
-                <View style={styles.userInfo}>
-                  <KurdishText style={[styles.welcomeText, currentIsTablet && styles.tabletWelcomeText]}>
-                    بەخێربێیت
-                  </KurdishText>
-                  <KurdishText style={[styles.nameText, currentIsTablet && styles.tabletNameText]}>
-                    {user?.name || 'بەڕێوەبەر'}
-                  </KurdishText>
-                  <Text style={styles.lastUpdateText}>
-                    کۆتا نوێکردنەوە: {lastUpdateTime.toLocaleTimeString('ckb-IQ', { hour: '2-digit', minute: '2-digit' })}
-                  </Text>
-                </View>
-                <View style={styles.headerActions}>
-                  {Platform.OS === 'ios' && (
-                    <TouchableOpacity 
-                      style={styles.quickActionButton}
-                      onPress={() => setShowQuickActions(true)}
-                    >
-                      <Plus size={20} color="#10B981" />
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity 
-                    onPress={() => router.push('/notifications')} 
-                    style={styles.notificationButton}
-                  >
-                    <Bell size={20} color="#3B82F6" />
+              <View style={styles.headerActions}>
+                <TouchableOpacity 
+                  onPress={() => router.push('/notifications')} 
+                  style={styles.headerButton}
+                >
+                  <Bell size={22} color={COLORS.neutral.white} />
+                  {notifications && notifications.length > 0 && (
                     <View style={styles.notificationBadge}>
-                      <Text style={styles.badgeText}>3</Text>
+                      <Text style={styles.badgeText}>{notifications.length}</Text>
                     </View>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-                    <LogOut size={20} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleLogout} style={styles.headerButton}>
+                  <LogOut size={22} color={COLORS.neutral.white} />
+                </TouchableOpacity>
               </View>
-              
-              <View style={styles.licenseInfo}>
-                <KurdishText style={[styles.licenseText, currentIsTablet && styles.tabletLicenseText]}>
-                  {user?.role === 'admin' || user?.role === 'employee' ? (user?.storeNameKurdish || user?.storeName || currentTenant?.storeNameKurdish || currentTenant?.storeName || 'فرۆشگا') : (settings?.businessInfo?.name || 'سیستەمی بەڕێوەبردنی قەرز')} • {Platform.OS === 'ios' ? 'iOS' : 'Android'}
+            </View>
+          </LinearGradient>
+
+          <View style={styles.statsContainer}>
+            <TouchableOpacity 
+              style={[styles.statCard, styles.statCardPrimary]}
+              onPress={() => router.push('/(tabs)/reports')}
+            >
+              <LinearGradient
+                colors={GRADIENTS.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconContainer}>
+                  <DollarSign size={28} color={COLORS.neutral.white} />
+                </View>
+                <KurdishText style={styles.statLabel}>
+                  کۆی قەرزەکان
                 </KurdishText>
-              </View>
-            </View>
-
-            {/* Quick Actions Section */}
-            <View style={[styles.quickActionsSection, currentIsTablet && styles.tabletQuickActionsSection]}>
-              <View style={styles.quickActionsHeader}>
-                <View style={styles.quickActionsHeaderLeft}>
-                  <Zap size={20} color="#F59E0B" />
-                  <KurdishText style={[styles.quickActionsTitle, currentIsTablet && styles.tabletQuickActionsTitle]}>
-                    کردارە خێراکان
-                  </KurdishText>
+                <Text style={styles.statValue}>
+                  {formatCurrency(dashboardStats.totalDebts)}
+                </Text>
+                <View style={styles.trendContainer}>
+                  <TrendingUp size={14} color={COLORS.success[300]} />
+                  <Text style={styles.trendText}>+12%</Text>
                 </View>
-              </View>
-              
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.quickActionsScroll}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.statCard, styles.statCardSuccess]}
+              onPress={() => router.push('/payment-reports')}
+            >
+              <LinearGradient
+                colors={GRADIENTS.success}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
               >
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionGreen]}
-                  onPress={() => router.push('/add-debt')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconGreen]}>
-                    <Plus size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>زیادکردنی قەرز</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionBlue]}
-                  onPress={() => router.push('/add-payment')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconBlue]}>
-                    <CreditCard size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>زیادکردنی پارەدان</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionPurple]}
-                  onPress={() => router.push('/add-user')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconPurple]}>
-                    <UserPlus size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>زیادکردنی کڕیار</KurdishText>
-                </TouchableOpacity>
-                
-
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionOrange]}
-                  onPress={() => router.push('/(tabs)/reports')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconOrange]}>
-                    <FileText size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>ڕاپۆرتەکان</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionTeal]}
-                  onPress={() => router.push('/(tabs)/search')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconTeal]}>
-                    <Search size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>گەڕان</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionIndigo]}
-                  onPress={() => router.push('/(tabs)/customers')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconIndigo]}>
-                    <Users size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>کڕیارەکان</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionRed]}
-                  onPress={() => router.push('/receipts')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconRed]}>
-                    <Receipt size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>وەسڵەکان</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionGray]}
-                  onPress={() => router.push('/(tabs)/settings')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconGray]}>
-                    <Settings size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>ڕێکخستنەکان</KurdishText>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.quickActionCard, styles.quickActionPink]}
-                  onPress={() => router.push('/internal-messaging')}
-                >
-                  <View style={[styles.quickActionIconContainer, styles.quickActionIconPink]}>
-                    <MessageCircle size={24} color="#fff" />
-                  </View>
-                  <KurdishText style={styles.quickActionLabel}>پەیامەکان</KurdishText>
-                </TouchableOpacity>
-                
-
-              </ScrollView>
-            </View>
-
-            {/* Filter Controls */}
-            <View style={styles.filterSection}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <TouchableOpacity 
-                  style={styles.filterButton}
-                  onPress={() => setShowFilters(true)}
-                >
-                  <Filter size={16} color="#3B82F6" />
-                  <Text style={styles.filterButtonText}>فلتەر</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.filterButton, selectedPeriod === 'monthly' && styles.activeFilter]}
-                  onPress={() => setSelectedPeriod('monthly')}
-                >
-                  <Calendar size={16} color={selectedPeriod === 'monthly' ? '#fff' : '#3B82F6'} />
-                  <Text style={[styles.filterButtonText, selectedPeriod === 'monthly' && styles.activeFilterText]}>مانگانە</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.filterButton, selectedPeriod === 'yearly' && styles.activeFilter]}
-                  onPress={() => setSelectedPeriod('yearly')}
-                >
-                  <Calendar size={16} color={selectedPeriod === 'yearly' ? '#fff' : '#3B82F6'} />
-                  <Text style={[styles.filterButtonText, selectedPeriod === 'yearly' && styles.activeFilterText]}>ساڵانە</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.filterButton}
-                  onPress={generateQuickReport}
-                >
-                  <Download size={16} color="#10B981" />
-                  <Text style={[styles.filterButtonText, { color: '#10B981' }]}>ڕاپۆرتی خێرا</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            </View>
-
-            {/* Stats Cards */}
-            <View style={[styles.statsGrid, currentIsTablet && styles.tabletStatsGrid, currentIsLandscape && styles.landscapeStatsGrid]}>
-              <TouchableOpacity 
-                style={[styles.statCard, styles.greenCard, currentIsTablet && styles.tabletStatCard]}
-                onPress={() => router.push('/(tabs)/reports')}
-              >
-                <View style={styles.statContent}>
-                  <DollarSign size={currentIsTablet ? 32 : 24} color="#10B981" />
-                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
-                    کۆی قەرزەکان
-                  </KurdishText>
-                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
-                    {formatCurrency(dashboardStats.totalDebts)}
-                  </Text>
-                  <View style={styles.trendIndicator}>
-                    <TrendingUp size={12} color="#10B981" />
-                    <Text style={styles.trendText}>+12%</Text>
-                  </View>
+                <View style={styles.statIconContainer}>
+                  <TrendingUp size={28} color={COLORS.neutral.white} />
                 </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.statCard, styles.orangeCard, currentIsTablet && styles.tabletStatCard]}
-                onPress={() => router.push('/payment-reports')}
-              >
-                <View style={styles.statContent}>
-                  <TrendingUp size={currentIsTablet ? 32 : 24} color="#F59E0B" />
-                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
-                    وەرگیراو
-                  </KurdishText>
-                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
-                    {formatCurrency(dashboardStats.totalPayments)}
-                  </Text>
-                  <View style={styles.trendIndicator}>
-                    <TrendingUp size={12} color="#F59E0B" />
-                    <Text style={styles.trendText}>+8%</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.statCard, styles.redCard, currentIsTablet && styles.tabletStatCard]}
-                onPress={() => router.push('/debt-management')}
-              >
-                <View style={styles.statContent}>
-                  <TrendingDown size={currentIsTablet ? 32 : 24} color="#EF4444" />
-                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
-                    ماوە
-                  </KurdishText>
-                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
-                    {formatCurrency(dashboardStats.remainingDebt)}
-                  </Text>
-                  <View style={styles.trendIndicator}>
-                    <TrendingDown size={12} color="#EF4444" />
-                    <Text style={styles.trendText}>-5%</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={[styles.statCard, styles.blueCard, currentIsTablet && styles.tabletStatCard]}
-                onPress={() => router.push('/(tabs)/customers')}
-              >
-                <View style={styles.statContent}>
-                  <Users size={currentIsTablet ? 32 : 24} color="#3B82F6" />
-                  <KurdishText style={[styles.statLabel, currentIsTablet && styles.tabletStatLabel]}>
-                    کڕیارەکان
-                  </KurdishText>
-                  <Text style={[styles.statValue, currentIsTablet && styles.tabletStatValue]}>
-                    {dashboardStats.totalCustomers}
-                  </Text>
-                  <View style={styles.trendIndicator}>
-                    <TrendingUp size={12} color="#3B82F6" />
-                    <Text style={styles.trendText}>+2</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </View>
-
-            {/* Charts Section */}
-            <View style={[styles.section, currentIsTablet && styles.tabletSection]}>
-              <View style={styles.sectionHeader}>
-                <KurdishText style={[styles.sectionTitle, currentIsTablet && styles.tabletSectionTitle]}>
-                  گرافی قەرز و پارەدان
+                <KurdishText style={styles.statLabel}>
+                  وەرگیراو
                 </KurdishText>
-                <View style={styles.chartTypeButtons}>
-                  <TouchableOpacity 
-                    style={[styles.chartTypeButton, chartType === 'line' && styles.activeChartType]}
-                    onPress={() => setChartType('line')}
-                  >
-                    <Activity size={16} color={chartType === 'line' ? '#fff' : '#3B82F6'} />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.chartTypeButton, chartType === 'bar' && styles.activeChartType]}
-                    onPress={() => setChartType('bar')}
-                  >
-                    <BarChart3 size={16} color={chartType === 'bar' ? '#fff' : '#3B82F6'} />
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.chartTypeButton, chartType === 'pie' && styles.activeChartType]}
-                    onPress={() => setChartType('pie')}
-                  >
-                    <PieChart size={16} color={chartType === 'pie' ? '#fff' : '#3B82F6'} />
-                  </TouchableOpacity>
+                <Text style={styles.statValue}>
+                  {formatCurrency(dashboardStats.totalPayments)}
+                </Text>
+                <View style={styles.trendContainer}>
+                  <TrendingUp size={14} color={COLORS.success[300]} />
+                  <Text style={styles.trendText}>+8%</Text>
                 </View>
-              </View>
-              
-              <View style={[styles.chartContainer, currentIsTablet && styles.tabletChartContainer]}>
-                {chartType === 'line' && (
-                  <LineChart
-                    data={chartData}
-                    width={getChartWidth()}
-                    height={getChartHeight()}
-                    chartConfig={{
-                      backgroundColor: '#ffffff',
-                      backgroundGradientFrom: '#ffffff',
-                      backgroundGradientTo: '#ffffff',
-                      decimalPlaces: 0,
-                      color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                      style: {
-                        borderRadius: 16,
-                      },
-                      propsForDots: {
-                        r: '4',
-                        strokeWidth: '2',
-                        stroke: '#3B82F6',
-                      },
-                    }}
-                    bezier
-                    style={styles.chart}
-                  />
-                )}
-                
-                {chartType === 'bar' && (
-                  <BarChart
-                    data={{
-                      labels: ['قەرز', 'پارەدان', 'ماوە'],
-                      datasets: [{
-                        data: [dashboardStats.totalDebts / 1000, dashboardStats.totalPayments / 1000, dashboardStats.remainingDebt / 1000]
-                      }]
-                    }}
-                    width={getChartWidth()}
-                    height={getChartHeight()}
-                    yAxisLabel=""
-                    yAxisSuffix="k"
-                    chartConfig={{
-                      backgroundColor: '#ffffff',
-                      backgroundGradientFrom: '#ffffff',
-                      backgroundGradientTo: '#ffffff',
-                      decimalPlaces: 0,
-                      color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-                      labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    }}
-                    style={styles.chart}
-                  />
-                )}
-                
-                {chartType === 'pie' && (
-                  <RNPieChart
-                    data={pieChartData}
-                    width={getChartWidth()}
-                    height={getChartHeight()}
-                    chartConfig={{
-                      color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    }}
-                    accessor="population"
-                    backgroundColor="transparent"
-                    paddingLeft="15"
-                    style={styles.chart}
-                  />
-                )}
-              </View>
-            </View>
+              </LinearGradient>
+            </TouchableOpacity>
 
-            {/* Top Debtors & Best Payers */}
-            <View style={[styles.section, currentIsTablet && styles.tabletSection]}>
-              <KurdishText style={[styles.sectionTitle, currentIsTablet && styles.tabletSectionTitle]}>
-                کڕیارانی زۆر قەرزدار
+            <TouchableOpacity 
+              style={[styles.statCard, styles.statCardDanger]}
+              onPress={() => router.push('/debt-management')}
+            >
+              <LinearGradient
+                colors={GRADIENTS.danger}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconContainer}>
+                  <TrendingDown size={28} color={COLORS.neutral.white} />
+                </View>
+                <KurdishText style={styles.statLabel}>
+                  ماوە
+                </KurdishText>
+                <Text style={styles.statValue}>
+                  {formatCurrency(dashboardStats.remainingDebt)}
+                </Text>
+                <View style={styles.trendContainer}>
+                  <TrendingDown size={14} color={COLORS.danger[300]} />
+                  <Text style={styles.trendText}>-5%</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.statCard, styles.statCardInfo]}
+              onPress={() => router.push('/(tabs)/customers')}
+            >
+              <LinearGradient
+                colors={GRADIENTS.info}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statGradient}
+              >
+                <View style={styles.statIconContainer}>
+                  <Users size={28} color={COLORS.neutral.white} />
+                </View>
+                <KurdishText style={styles.statLabel}>
+                  کڕیارەکان
+                </KurdishText>
+                <Text style={styles.statValue}>
+                  {dashboardStats.totalCustomers}
+                </Text>
+                <View style={styles.trendContainer}>
+                  <TrendingUp size={14} color={COLORS.info[300]} />
+                  <Text style={styles.trendText}>+2</Text>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.quickActionsContainer}>
+            <View style={styles.sectionHeader}>
+              <Zap size={22} color={COLORS.warning[500]} />
+              <KurdishText style={styles.sectionTitle}>
+                کردارە خێراکان
               </KurdishText>
-              
-              <View style={styles.customersList}>
-                {topDebtors.map((customer, index) => (
-                  <View key={customer.id} style={styles.customerItem}>
-                    <View style={styles.customerRank}>
-                      <Text style={styles.rankNumber}>{index + 1}</Text>
-                    </View>
-                    <View style={styles.customerInfo}>
-                      <KurdishText style={[styles.customerName, currentIsTablet && styles.tabletCustomerName]}>{customer.name}</KurdishText>
-                      <Text style={[styles.customerDebt, currentIsTablet && styles.tabletCustomerDebt]}>
-                        {formatCurrency(customer.totalDebt - customer.totalPaid)}
-                      </Text>
-                    </View>
-                    <AlertTriangle size={20} color="#EF4444" />
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={[styles.section, currentIsTablet && styles.tabletSection]}>
-              <KurdishText style={[styles.sectionTitle, currentIsTablet && styles.tabletSectionTitle]}>
-                کڕیارانی باشترین پارەدان
-              </KurdishText>
-              
-              <View style={styles.customersList}>
-                {bestPayers.map((customer, index) => (
-                  <View key={customer.id} style={styles.customerItem}>
-                    <View style={[styles.customerRank, styles.goodRank]}>
-                      <Text style={styles.rankNumber}>{index + 1}</Text>
-                    </View>
-                    <View style={styles.customerInfo}>
-                      <KurdishText style={[styles.customerName, currentIsTablet && styles.tabletCustomerName]}>{customer.name}</KurdishText>
-                      <Text style={[styles.customerDebt, styles.goodAmount, currentIsTablet && styles.tabletCustomerDebt]}>
-                        {formatCurrency(customer.totalPaid)}
-                      </Text>
-                    </View>
-                    <CheckCircle size={20} color="#10B981" />
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Recent Transactions */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                قەرزە نوێکان
-              </Text>
-              
-              <View style={styles.transactionsList}>
-                {recentDebts.map((debt) => (
-                  <View key={debt.id} style={styles.transactionItem}>
-                    <View style={styles.transactionIcon}>
-                      <TrendingUp size={16} color="#EF4444" />
-                    </View>
-                    <View style={styles.transactionInfo}>
-                      <Text style={styles.transactionTitle}>{debt.customerName}</Text>
-                      <Text style={styles.transactionDate}>{new Date(debt.createdAt).toLocaleDateString('ckb-IQ')}</Text>
-                    </View>
-                    <Text style={[styles.transactionAmount, styles.debtAmount]}>
-                      {formatCurrency(debt.amount)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                پارەدانە نوێکان
-              </Text>
-              
-              <View style={styles.transactionsList}>
-                {recentPayments.map((payment) => (
-                  <View key={payment.id} style={styles.transactionItem}>
-                    <View style={[styles.transactionIcon, styles.paymentIcon]}>
-                      <TrendingDown size={16} color="#10B981" />
-                    </View>
-                    <View style={styles.transactionInfo}>
-                      <Text style={styles.transactionTitle}>پارەدان</Text>
-                      <Text style={styles.transactionDate}>{new Date(payment.paymentDate).toLocaleDateString('ckb-IQ')}</Text>
-                    </View>
-                    <Text style={[styles.transactionAmount, styles.paymentAmount]}>
-                      {formatCurrency(payment.amount)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* Recent Notifications */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                کۆتا ئاگاداریەکان
-              </Text>
-              
-              <View style={styles.notificationsList}>
-                {recentNotifications.length > 0 ? (
-                  recentNotifications.map((notification, index) => (
-                    <View key={index} style={styles.notificationItem}>
-                      <Bell size={16} color="#3B82F6" />
-                      <View style={styles.notificationContent}>
-                        <Text style={styles.notificationText}>
-                          ئاگاداری نموونە {index + 1}
-                        </Text>
-                        <Text style={styles.notificationTime}>
-                          <Clock size={12} color="#6B7280" /> ئێستا
-                        </Text>
-                      </View>
-                    </View>
-                  ))
-                ) : (
-                  <Text style={styles.emptyText}>هیچ ئاگادارییەک نییە</Text>
-                )}
-              </View>
-            </View>
-
-            {/* Summary Stats */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                کورتەی قەرزەکان
-              </Text>
-              
-              <View style={styles.summaryCard}>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>
-                    قەرزی چالاک
-                  </Text>
-                  <Text style={styles.summaryValue}>
-                    {dashboardStats.activeDebts}
-                  </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>
-                    قەرزی دراوەتەوە
-                  </Text>
-                  <Text style={styles.summaryValue}>
-                    {dashboardStats.paidDebts}
-                  </Text>
-                </View>
-                <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>
-                    باڵانسی گشتی
-                  </Text>
-                  <Text style={[styles.summaryValue, { color: dashboardStats.remainingDebt > 0 ? '#EF4444' : '#10B981' }]}>
-                    {formatCurrency(dashboardStats.remainingDebt)}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </ScrollView>
-        </View>
-      </LinearGradient>
-      
-      {/* Filter Modal */}
-      <Modal
-        visible={showFilters}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFilters(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>فلتەرەکان</Text>
-              <TouchableOpacity onPress={() => setShowFilters(false)}>
-                <X size={24} color="#6B7280" />
-              </TouchableOpacity>
             </View>
             
-            <View style={styles.filterForm}>
-              <View style={styles.filterGroup}>
-                <Text style={styles.filterLabel}>بەروار</Text>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="YYYY-MM-DD"
-                  value={dateFilter}
-                  onChangeText={setDateFilter}
-                />
-              </View>
-              
-              <View style={styles.filterGroup}>
-                <Text style={styles.filterLabel}>کڕیار</Text>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="ناوی کڕیار"
-                  value={customerFilter}
-                  onChangeText={setCustomerFilter}
-                />
-              </View>
-              
-              <View style={styles.filterGroup}>
-                <Text style={styles.filterLabel}>کارمەند</Text>
-                <TextInput
-                  style={styles.filterInput}
-                  placeholder="ناوی کارمەند"
-                  value={employeeFilter}
-                  onChangeText={setEmployeeFilter}
-                />
-              </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.quickActionsScroll}
+            >
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/add-debt')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.success}
+                  style={styles.quickActionGradient}
+                >
+                  <Plus size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>زیادکردنی قەرز</KurdishText>
+              </TouchableOpacity>
               
               <TouchableOpacity 
-                style={styles.applyFilterButton}
-                onPress={() => {
-                  console.log('Applying filters:', { dateFilter, customerFilter, employeeFilter });
-                  setShowFilters(false);
-                }}
+                style={styles.quickActionCard}
+                onPress={() => router.push('/add-payment')}
               >
-                <Text style={styles.applyFilterText}>جێبەجێکردن</Text>
+                <LinearGradient
+                  colors={GRADIENTS.info}
+                  style={styles.quickActionGradient}
+                >
+                  <CreditCard size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>زیادکردنی پارەدان</KurdishText>
               </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/add-user')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.purple}
+                  style={styles.quickActionGradient}
+                >
+                  <UserPlus size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>زیادکردنی کڕیار</KurdishText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/(tabs)/reports')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.warning}
+                  style={styles.quickActionGradient}
+                >
+                  <FileText size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>ڕاپۆرتەکان</KurdishText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/(tabs)/search')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.secondary}
+                  style={styles.quickActionGradient}
+                >
+                  <Search size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>گەڕان</KurdishText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/(tabs)/customers')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.royal}
+                  style={styles.quickActionGradient}
+                >
+                  <Users size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>کڕیارەکان</KurdishText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/receipts')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.danger}
+                  style={styles.quickActionGradient}
+                >
+                  <Receipt size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>وەسڵەکان</KurdishText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/(tabs)/settings')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.elegant}
+                  style={styles.quickActionGradient}
+                >
+                  <Settings size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>ڕێکخستنەکان</KurdishText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.quickActionCard}
+                onPress={() => router.push('/internal-messaging')}
+              >
+                <LinearGradient
+                  colors={GRADIENTS.pink}
+                  style={styles.quickActionGradient}
+                >
+                  <MessageCircle size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
+                <KurdishText style={styles.quickActionLabel}>پەیامەکان</KurdishText>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <AlertTriangle size={22} color={COLORS.danger[500]} />
+              <KurdishText style={styles.sectionTitle}>
+                کڕیارانی زۆر قەرزدار
+              </KurdishText>
+            </View>
+            
+            <View style={styles.listContainer}>
+              {topDebtors.map((customer, index) => (
+                <TouchableOpacity 
+                  key={customer.id} 
+                  style={styles.listItem}
+                  onPress={() => router.push(`/customer-detail/${customer.id}`)}
+                >
+                  <View style={[styles.rankBadge, styles.rankBadgeDanger]}>
+                    <Text style={styles.rankText}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <KurdishText style={styles.listItemName}>{customer.name}</KurdishText>
+                    <Text style={[styles.listItemAmount, styles.dangerAmount]}>
+                      {formatCurrency(customer.totalDebt)}
+                    </Text>
+                  </View>
+                  <AlertTriangle size={20} color={COLORS.danger[500]} />
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <CheckCircle size={22} color={COLORS.success[500]} />
+              <KurdishText style={styles.sectionTitle}>
+                کڕیارانی باشترین پارەدان
+              </KurdishText>
+            </View>
+            
+            <View style={styles.listContainer}>
+              {bestPayers.map((customer, index) => (
+                <TouchableOpacity 
+                  key={customer.id} 
+                  style={styles.listItem}
+                  onPress={() => router.push(`/customer-detail/${customer.id}`)}
+                >
+                  <View style={[styles.rankBadge, styles.rankBadgeSuccess]}>
+                    <Text style={styles.rankText}>{index + 1}</Text>
+                  </View>
+                  <View style={styles.listItemContent}>
+                    <KurdishText style={styles.listItemName}>{customer.name}</KurdishText>
+                    <Text style={[styles.listItemAmount, styles.successAmount]}>
+                      {formatCurrency(customer.totalPaid)}
+                    </Text>
+                  </View>
+                  <CheckCircle size={20} color={COLORS.success[500]} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <TrendingUp size={22} color={COLORS.primary[500]} />
+              <KurdishText style={styles.sectionTitle}>
+                قەرزە نوێکان
+              </KurdishText>
+            </View>
+            
+            <View style={styles.listContainer}>
+              {recentDebts.map((debt) => (
+                <View key={debt.id} style={styles.transactionItem}>
+                  <View style={[styles.transactionIcon, styles.debtIcon]}>
+                    <TrendingUp size={18} color={COLORS.danger[600]} />
+                  </View>
+                  <View style={styles.transactionContent}>
+                    <Text style={styles.transactionTitle}>{debt.customerName}</Text>
+                    <Text style={styles.transactionDate}>
+                      {new Date(debt.createdAt).toLocaleDateString('ckb-IQ')}
+                    </Text>
+                  </View>
+                  <Text style={[styles.transactionAmount, styles.dangerAmount]}>
+                    {formatCurrency(debt.amount)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <View style={[styles.section, styles.lastSection]}>
+            <View style={styles.sectionHeader}>
+              <TrendingDown size={22} color={COLORS.success[500]} />
+              <KurdishText style={styles.sectionTitle}>
+                پارەدانە نوێکان
+              </KurdishText>
+            </View>
+            
+            <View style={styles.listContainer}>
+              {recentPayments.map((payment) => (
+                <View key={payment.id} style={styles.transactionItem}>
+                  <View style={[styles.transactionIcon, styles.paymentIcon]}>
+                    <TrendingDown size={18} color={COLORS.success[600]} />
+                  </View>
+                  <View style={styles.transactionContent}>
+                    <Text style={styles.transactionTitle}>پارەدان</Text>
+                    <Text style={styles.transactionDate}>
+                      {new Date(payment.paymentDate).toLocaleDateString('ckb-IQ')}
+                    </Text>
+                  </View>
+                  <Text style={[styles.transactionAmount, styles.successAmount]}>
+                    {formatCurrency(payment.amount)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: COLORS.background.secondary,
   },
   gradient: {
     flex: 1,
@@ -933,716 +625,268 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.lg,
+    color: COLORS.text.secondary,
+    fontSize: 16,
+  },
   header: {
-    padding: 20,
-    paddingBottom: 10,
-  },
-  businessNameContainer: {
-    backgroundColor: '#1E3A8A',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    marginHorizontal: -20,
-    marginTop: -20,
-    marginBottom: 16,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  businessName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  tabletBusinessName: {
-    fontSize: 26,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING['2xl'],
+    paddingBottom: SPACING['3xl'],
+    borderBottomLeftRadius: BORDER_RADIUS['3xl'],
+    borderBottomRightRadius: BORDER_RADIUS['3xl'],
+    ...SHADOWS.lg,
   },
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  userInfo: {
+    flex: 1,
+  },
+  welcomeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
   },
   welcomeText: {
     fontSize: 14,
-    color: '#6B7280',
+    color: COLORS.primary[100],
+    fontWeight: '500',
   },
   nameText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.neutral.white,
+    marginBottom: SPACING.xs,
+  },
+  storeText: {
+    fontSize: 14,
+    color: COLORS.primary[200],
+    fontWeight: '500',
   },
   headerActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    gap: SPACING.sm,
   },
-  notificationButton: {
-    padding: 8,
+  headerButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BORDER_RADIUS.xl,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
     position: 'relative',
   },
-  logoutButton: {
-    padding: 8,
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: COLORS.danger[500],
+    borderRadius: BORDER_RADIUS.full,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: COLORS.neutral.white,
   },
-  licenseInfo: {
-    marginTop: 8,
+  badgeText: {
+    color: COLORS.neutral.white,
+    fontSize: 10,
+    fontWeight: '700',
   },
-  licenseText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  statsGrid: {
+  statsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    padding: 10,
+    padding: SPACING.lg,
+    marginTop: -SPACING['4xl'],
+    gap: SPACING.md,
   },
   statCard: {
-    width: '48%',
-    margin: '1%',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    width: (screenWidth - SPACING.lg * 2 - SPACING.md) / 2,
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    ...SHADOWS.lg,
   },
-  greenCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
-  },
-  orangeCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#F59E0B',
-  },
-  redCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#EF4444',
-  },
-  blueCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
-  },
-  statContent: {
+  statGradient: {
+    padding: SPACING.xl,
     alignItems: 'center',
-    gap: 8,
   },
-  statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    textAlign: 'center',
-  },
-  section: {
-    padding: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 16,
-  },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-around',
-    gap: 16,
-  },
-  actionButton: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionIcon: {
+  statIconContainer: {
     width: 56,
     height: 56,
-    borderRadius: 28,
-    backgroundColor: '#1E3A8A',
+    borderRadius: BORDER_RADIUS.xl,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: SPACING.md,
   },
-  actionIconGreen: {
-    backgroundColor: '#10B981',
+  statLabel: {
+    fontSize: 13,
+    color: COLORS.neutral.white,
+    marginBottom: SPACING.xs,
+    opacity: 0.9,
   },
-  actionIconOrange: {
-    backgroundColor: '#F59E0B',
+  statValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.neutral.white,
+    marginBottom: SPACING.sm,
   },
-  actionIconPurple: {
-    backgroundColor: '#8B5CF6',
-  },
-  actionIconBlue: {
-    backgroundColor: '#3B82F6',
-  },
-  actionText: {
-    fontSize: 14,
-    color: '#1F2937',
-    textAlign: 'center',
-  },
-  summaryCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  // Filter section styles
-  filterSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  filterButton: {
+  trendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginRight: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-    gap: 4,
+    gap: SPACING.xs,
   },
-  activeFilter: {
-    backgroundColor: '#3B82F6',
-  },
-  filterButtonText: {
+  trendText: {
     fontSize: 12,
-    color: '#3B82F6',
-    fontWeight: '500',
+    fontWeight: '600',
+    color: COLORS.neutral.white,
+    opacity: 0.8,
   },
-  activeFilterText: {
-    color: 'white',
+  statCardPrimary: {},
+  statCardSuccess: {},
+  statCardDanger: {},
+  statCardInfo: {},
+  quickActionsContainer: {
+    paddingVertical: SPACING.xl,
   },
-  // Chart styles
   sectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
-  chartTypeButtons: {
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+  },
+  quickActionsScroll: {
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
+  },
+  quickActionCard: {
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  quickActionGradient: {
+    width: 72,
+    height: 72,
+    borderRadius: BORDER_RADIUS.xl,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.md,
+  },
+  quickActionLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+    textAlign: 'center',
+    maxWidth: 80,
+  },
+  section: {
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.lg,
+  },
+  lastSection: {
+    paddingBottom: SPACING['3xl'],
+  },
+  listContainer: {
+    gap: SPACING.md,
+  },
+  listItem: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  chartTypeButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  activeChartType: {
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-  },
-  chartContainer: {
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: COLORS.neutral.white,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    gap: SPACING.md,
+    ...SHADOWS.sm,
   },
-  chart: {
-    borderRadius: 16,
-  },
-  // Customer list styles
-  customersList: {
-    gap: 12,
-  },
-  customerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 12,
-  },
-  customerRank: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#EF4444',
+  rankBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  goodRank: {
-    backgroundColor: '#10B981',
+  rankBadgeDanger: {
+    backgroundColor: COLORS.danger[500],
   },
-  rankNumber: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
+  rankBadgeSuccess: {
+    backgroundColor: COLORS.success[500],
   },
-  customerInfo: {
+  rankText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.neutral.white,
+  },
+  listItemContent: {
     flex: 1,
   },
-  customerName: {
+  listItemName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
   },
-  customerDebt: {
+  listItemAmount: {
     fontSize: 14,
-    color: '#EF4444',
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  goodAmount: {
-    color: '#10B981',
+  dangerAmount: {
+    color: COLORS.danger[600],
   },
-  // Transaction styles
-  transactionsList: {
-    gap: 12,
+  successAmount: {
+    color: COLORS.success[600],
   },
   transactionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 12,
+    backgroundColor: COLORS.neutral.white,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    gap: SPACING.md,
+    ...SHADOWS.sm,
   },
   transactionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#FEE2E2',
+    width: 44,
+    height: 44,
+    borderRadius: BORDER_RADIUS.xl,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  paymentIcon: {
-    backgroundColor: '#D1FAE5',
+  debtIcon: {
+    backgroundColor: COLORS.danger[100],
   },
-  transactionInfo: {
+  paymentIcon: {
+    backgroundColor: COLORS.success[100],
+  },
+  transactionContent: {
     flex: 1,
   },
   transactionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 4,
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
   },
   transactionDate: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontSize: 13,
+    color: COLORS.text.tertiary,
   },
   transactionAmount: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  debtAmount: {
-    color: '#EF4444',
-  },
-  paymentAmount: {
-    color: '#10B981',
-  },
-  // Notification styles
-  notificationsList: {
-    gap: 12,
-  },
-  notificationItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    gap: 12,
-  },
-  notificationContent: {
-    flex: 1,
-  },
-  notificationText: {
-    fontSize: 14,
-    color: '#1F2937',
-    marginBottom: 4,
-  },
-  notificationTime: {
-    fontSize: 12,
-    color: '#6B7280',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  // Modal styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 20,
-    width: '90%',
-    maxWidth: 400,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  filterForm: {
-    gap: 16,
-  },
-  filterGroup: {
-    gap: 8,
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  filterInput: {
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    backgroundColor: '#F9FAFB',
-  },
-  applyFilterButton: {
-    backgroundColor: '#3B82F6',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  applyFilterText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // Mobile responsive styles
-  tabletHeader: {
-    padding: 30,
-    paddingBottom: 15,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  tabletWelcomeText: {
-    fontSize: 16,
-  },
-  tabletNameText: {
-    fontSize: 24,
-  },
-  lastUpdateText: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 4,
-  },
-  quickActionButton: {
-    padding: 10,
-    backgroundColor: '#F0FDF4',
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    backgroundColor: '#EF4444',
-    borderRadius: 8,
-    minWidth: 16,
-    height: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  tabletLicenseText: {
-    fontSize: 16,
-  },
-  tabletStatsGrid: {
-    padding: 20,
-    gap: 16,
-  },
-  landscapeStatsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  tabletStatCard: {
-    width: isTablet ? '48%' : '48%',
-    padding: 20,
-  },
-  tabletStatLabel: {
-    fontSize: 14,
-  },
-  tabletStatValue: {
-    fontSize: 20,
-  },
-  trendIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 8,
-  },
-  trendText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6B7280',
-  },
-  tabletSection: {
-    padding: 30,
-  },
-  tabletSectionTitle: {
-    fontSize: 22,
-  },
-  tabletChartContainer: {
-    padding: 24,
-  },
-  tabletCustomerName: {
-    fontSize: 18,
-  },
-  tabletCustomerDebt: {
-    fontSize: 16,
-  },
-  locationCard: {
-    backgroundColor: '#EFF6FF',
-    marginHorizontal: 20,
-    marginVertical: 10,
-    padding: 16,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3B82F6',
-  },
-  locationHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  locationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  locationCoords: {
-    fontSize: 14,
-    color: '#3B82F6',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  locationAccuracy: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
-  quickActionsSection: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 10,
-    marginVertical: 8,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  tabletQuickActionsSection: {
-    paddingHorizontal: 30,
-    paddingVertical: 20,
-    marginHorizontal: 20,
-  },
-  quickActionsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  quickActionsHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  quickActionsTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
-    color: '#1F2937',
-  },
-  tabletQuickActionsTitle: {
-    fontSize: 22,
-  },
-  quickActionsScroll: {
-    gap: 12,
-    paddingRight: 20,
-  },
-  quickActionCard: {
-    width: 120,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  quickActionGreen: {
-    backgroundColor: '#F0FDF4',
-    borderWidth: 2,
-    borderColor: '#10B981',
-  },
-  quickActionBlue: {
-    backgroundColor: '#EFF6FF',
-    borderWidth: 2,
-    borderColor: '#3B82F6',
-  },
-  quickActionPurple: {
-    backgroundColor: '#F5F3FF',
-    borderWidth: 2,
-    borderColor: '#8B5CF6',
-  },
-  quickActionOrange: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 2,
-    borderColor: '#F59E0B',
-  },
-  quickActionTeal: {
-    backgroundColor: '#F0FDFA',
-    borderWidth: 2,
-    borderColor: '#14B8A6',
-  },
-  quickActionIndigo: {
-    backgroundColor: '#EEF2FF',
-    borderWidth: 2,
-    borderColor: '#6366F1',
-  },
-  quickActionRed: {
-    backgroundColor: '#FEF2F2',
-    borderWidth: 2,
-    borderColor: '#EF4444',
-  },
-  quickActionGray: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 2,
-    borderColor: '#6B7280',
-  },
-  quickActionYellow: {
-    backgroundColor: '#FFFBEB',
-    borderWidth: 2,
-    borderColor: '#FBBF24',
-  },
-  quickActionIconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  quickActionIconGreen: {
-    backgroundColor: '#10B981',
-  },
-  quickActionIconBlue: {
-    backgroundColor: '#3B82F6',
-  },
-  quickActionIconPurple: {
-    backgroundColor: '#8B5CF6',
-  },
-  quickActionIconOrange: {
-    backgroundColor: '#F59E0B',
-  },
-  quickActionIconTeal: {
-    backgroundColor: '#14B8A6',
-  },
-  quickActionIconIndigo: {
-    backgroundColor: '#6366F1',
-  },
-  quickActionIconRed: {
-    backgroundColor: '#EF4444',
-  },
-  quickActionIconGray: {
-    backgroundColor: '#6B7280',
-  },
-  quickActionIconYellow: {
-    backgroundColor: '#FBBF24',
-  },
-  quickActionPink: {
-    backgroundColor: '#FCE7F3',
-    borderWidth: 2,
-    borderColor: '#EC4899',
-  },
-  quickActionIconPink: {
-    backgroundColor: '#EC4899',
-  },
-  quickActionLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1F2937',
-    textAlign: 'center',
   },
 });

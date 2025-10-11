@@ -9,32 +9,30 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { 
   Search,
   Plus,
   User,
   Phone,
-  DollarSign,
-  Trash2,
   MapPin,
   CreditCard,
   Mail,
   Users,
-  Filter,
   Star,
   Award,
   QrCode,
+  Trash2,
 } from 'lucide-react-native';
 import { KurdishText } from '@/components/KurdishText';
-import { GradientCard } from '@/components/GradientCard';
 import { useUsers } from '@/hooks/users-context';
 import { useDebts } from '@/hooks/debt-context';
 import { useAuth } from '@/hooks/auth-context';
 import { PERMISSIONS } from '@/constants/permissions';
 import { getCustomerGroupName, getCustomerGroupColor, CUSTOMER_GROUPS, CustomerGroupId } from '@/constants/customer-groups';
 import { getCustomerRatingName, getCustomerRatingColor, CUSTOMER_RATINGS, CustomerRatingId, calculateCustomerRating } from '@/constants/customer-ratings';
+import { COLORS, GRADIENTS, SHADOWS, BORDER_RADIUS, SPACING } from '@/constants/design-system';
 
 export default function CustomersScreen() {
   const router = useRouter();
@@ -52,8 +50,8 @@ export default function CustomersScreen() {
   if (!usersContext || !debtsContext || !authContext) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color="#1E3A8A" />
-        <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16 }}>
+        <ActivityIndicator size="large" color={COLORS.primary[600]} />
+        <KurdishText style={styles.loadingText}>
           چاوەڕوان بە...
         </KurdishText>
       </View>
@@ -131,7 +129,6 @@ export default function CustomersScreen() {
     const totalPaid = totalOriginalDebt - totalDebt;
     const activeDebts = debts.filter(d => d.status !== 'paid').length;
     
-    // Calculate or use existing customer rating
     const customerRating = item.customerRating || calculateCustomerRating(
       totalOriginalDebt,
       totalPaid,
@@ -143,177 +140,178 @@ export default function CustomersScreen() {
     return (
       <TouchableOpacity
         onPress={() => router.push(`/customer-detail/${item.id}`)}
+        style={styles.customerCard}
       >
-        <GradientCard style={styles.customerCard}>
+        <LinearGradient
+          colors={[COLORS.neutral.white, COLORS.background.secondary]}
+          style={styles.customerGradient}
+        >
           <View style={styles.customerHeader}>
-            <View style={styles.customerInfo}>
-              <View style={styles.customerInfoRow}>
-                <View style={styles.avatar}>
-                  <User size={24} color="#1E3A8A" />
-                </View>
-                {hasPermission(PERMISSIONS.GENERATE_CUSTOMER_QR) && (
-                  <TouchableOpacity
-                    onPress={() => router.push('/customer-qr-management')}
-                    style={styles.qrButton}
-                  >
-                    <QrCode size={20} color="#1E3A8A" />
-                  </TouchableOpacity>
-                )}
+            <View style={styles.customerMainInfo}>
+              <View style={styles.avatarContainer}>
+                <LinearGradient
+                  colors={GRADIENTS.primary}
+                  style={styles.avatar}
+                >
+                  <User size={24} color={COLORS.neutral.white} />
+                </LinearGradient>
               </View>
-              <View>
-                <KurdishText variant="subtitle" color="#1F2937">
+              <View style={styles.customerNameSection}>
+                <KurdishText style={styles.customerName}>
                   {item.name}
                 </KurdishText>
-                <View style={styles.customerDetails}>
-                  <View style={styles.detailRow}>
-                    <Phone size={14} color="#6B7280" />
-                    <KurdishText variant="caption" color="#6B7280" style={{ marginLeft: 4 }}>
-                      {item.phone}
-                    </KurdishText>
-                  </View>
-                  {item.address && (
-                    <View style={styles.detailRow}>
-                      <MapPin size={14} color="#6B7280" />
-                      <KurdishText variant="caption" color="#6B7280" style={{ marginLeft: 4 }} numberOfLines={1}>
-                        {item.address}
-                      </KurdishText>
-                    </View>
-                  )}
-                  {item.nationalId && (
-                    <View style={styles.detailRow}>
-                      <CreditCard size={14} color="#6B7280" />
-                      <KurdishText variant="caption" color="#6B7280" style={{ marginLeft: 4 }}>
-                        {item.nationalId}
-                      </KurdishText>
-                    </View>
-                  )}
-                  {item.email && (
-                    <View style={styles.detailRow}>
-                      <Mail size={14} color="#6B7280" />
-                      <KurdishText variant="caption" color="#6B7280" style={{ marginLeft: 4 }} numberOfLines={1}>
-                        {item.email}
-                      </KurdishText>
-                    </View>
-                  )}
-                  {item.customerGroup && (
-                    <View style={styles.detailRow}>
-                      <Users size={14} color={getCustomerGroupColor(item.customerGroup)} />
-                      <KurdishText 
-                        variant="caption" 
-                        color={getCustomerGroupColor(item.customerGroup)} 
-                        style={{ marginLeft: 4 }}
-                      >
-                        {getCustomerGroupName(item.customerGroup)}
-                      </KurdishText>
-                    </View>
-                  )}
-                  {/* Customer Rating */}
-                  <View style={styles.detailRow}>
-                    <Award size={14} color={getCustomerRatingColor(customerRating)} />
-                    <KurdishText 
-                      variant="caption" 
-                      color={getCustomerRatingColor(customerRating)} 
-                      style={{ marginLeft: 4 }}
-                    >
-                      {getCustomerRatingName(customerRating)}
-                    </KurdishText>
-                  </View>
+                <View style={styles.ratingBadge}>
+                  <Award size={14} color={getCustomerRatingColor(customerRating)} />
+                  <KurdishText style={[styles.ratingText, { color: getCustomerRatingColor(customerRating) }]}>
+                    {getCustomerRatingName(customerRating)}
+                  </KurdishText>
                 </View>
               </View>
             </View>
-            {hasPermission(PERMISSIONS.DELETE_CUSTOMER) && (
-              <TouchableOpacity
-                onPress={() => handleDeleteCustomer(item.id, item.name)}
-                style={styles.deleteButton}
-              >
-                <Trash2 size={20} color="#EF4444" />
-              </TouchableOpacity>
+            <View style={styles.customerActions}>
+              {hasPermission(PERMISSIONS.GENERATE_CUSTOMER_QR) && (
+                <TouchableOpacity
+                  onPress={() => router.push('/customer-qr-management')}
+                  style={styles.actionButton}
+                >
+                  <QrCode size={18} color={COLORS.primary[600]} />
+                </TouchableOpacity>
+              )}
+              {hasPermission(PERMISSIONS.DELETE_CUSTOMER) && (
+                <TouchableOpacity
+                  onPress={() => handleDeleteCustomer(item.id, item.name)}
+                  style={[styles.actionButton, styles.deleteButton]}
+                >
+                  <Trash2 size={18} color={COLORS.danger[600]} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+          
+          <View style={styles.customerDetails}>
+            <View style={styles.detailRow}>
+              <Phone size={14} color={COLORS.text.tertiary} />
+              <KurdishText style={styles.detailText}>
+                {item.phone}
+              </KurdishText>
+            </View>
+            {item.address && (
+              <View style={styles.detailRow}>
+                <MapPin size={14} color={COLORS.text.tertiary} />
+                <KurdishText style={styles.detailText} numberOfLines={1}>
+                  {item.address}
+                </KurdishText>
+              </View>
+            )}
+            {item.nationalId && (
+              <View style={styles.detailRow}>
+                <CreditCard size={14} color={COLORS.text.tertiary} />
+                <KurdishText style={styles.detailText}>
+                  {item.nationalId}
+                </KurdishText>
+              </View>
+            )}
+            {item.email && (
+              <View style={styles.detailRow}>
+                <Mail size={14} color={COLORS.text.tertiary} />
+                <KurdishText style={styles.detailText} numberOfLines={1}>
+                  {item.email}
+                </KurdishText>
+              </View>
+            )}
+            {item.customerGroup && (
+              <View style={styles.detailRow}>
+                <Users size={14} color={getCustomerGroupColor(item.customerGroup)} />
+                <KurdishText 
+                  style={[styles.detailText, { color: getCustomerGroupColor(item.customerGroup) }]}
+                >
+                  {getCustomerGroupName(item.customerGroup)}
+                </KurdishText>
+              </View>
             )}
           </View>
           
           <View style={styles.debtInfo}>
             <View style={styles.debtItem}>
-              <KurdishText variant="caption" color="#6B7280">
+              <KurdishText style={styles.debtLabel}>
                 کۆی قەرز
               </KurdishText>
-              <KurdishText variant="body" color="#EF4444">
+              <KurdishText style={[styles.debtValue, styles.debtDanger]}>
                 {formatCurrency(totalDebt)}
               </KurdishText>
             </View>
+            <View style={styles.debtDivider} />
             <View style={styles.debtItem}>
-              <KurdishText variant="caption" color="#6B7280">
+              <KurdishText style={styles.debtLabel}>
                 قەرزی چالاک
               </KurdishText>
-              <KurdishText variant="body" color="#1F2937">
+              <KurdishText style={styles.debtValue}>
                 {activeDebts}
               </KurdishText>
             </View>
           </View>
-        </GradientCard>
+        </LinearGradient>
       </TouchableOpacity>
     );
   };
 
   if (isLoading && !refreshing) {
     return (
-      <SafeAreaView style={styles.container} edges={['bottom']}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1E3A8A" />
-          <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16 }}>
-            بارکردنی کڕیاران...
-          </KurdishText>
-        </View>
-      </SafeAreaView>
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color={COLORS.primary[600]} />
+        <KurdishText style={styles.loadingText}>
+          بارکردنی کڕیاران...
+        </KurdishText>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={GRADIENTS.royal}
+        style={styles.header}
+      >
         <View style={styles.searchContainer}>
-          <Search size={20} color="#6B7280" />
+          <Search size={20} color={COLORS.neutral.white} />
           <TextInput
             style={styles.searchInput}
-            placeholder="گەڕان بە ناو، مۆبایل، ئیمەیڵ، گروپ..."
-            placeholderTextColor="#9CA3AF"
+            placeholder="گەڕان بە ناو، مۆبایل، ئیمەیڵ..."
+            placeholderTextColor="rgba(255, 255, 255, 0.6)"
             value={searchQuery}
             onChangeText={setSearchQuery}
             textAlign="right"
           />
         </View>
         
-        {/* Group Filter */}
-        <View style={styles.filterContainer}>
+        <View style={styles.filterRow}>
           <TouchableOpacity
-            style={styles.filterButton}
+            style={styles.filterChip}
             onPress={() => setShowGroupFilter(!showGroupFilter)}
           >
-            <Users size={20} color="#1E3A8A" />
-            <KurdishText variant="body" color="#1E3A8A">
+            <Users size={16} color={COLORS.neutral.white} />
+            <KurdishText style={styles.filterChipText}>
               {selectedGroup === 'all' ? 'هەموو گروپەکان' : getCustomerGroupName(selectedGroup)}
             </KurdishText>
           </TouchableOpacity>
-        </View>
-        
-        {/* Rating Filter */}
-        <View style={styles.filterContainer}>
+          
           <TouchableOpacity
-            style={styles.filterButton}
+            style={styles.filterChip}
             onPress={() => setShowRatingFilter(!showRatingFilter)}
           >
-            <Star size={20} color="#1E3A8A" />
-            <KurdishText variant="body" color="#1E3A8A">
+            <Star size={16} color={COLORS.neutral.white} />
+            <KurdishText style={styles.filterChipText}>
               {selectedRating === 'all' ? 'هەموو پلەکان' : getCustomerRatingName(selectedRating)}
             </KurdishText>
           </TouchableOpacity>
         </View>
         
         {showGroupFilter && (
-          <View style={styles.groupFilterContainer}>
+          <View style={styles.filterOptions}>
             <TouchableOpacity
               style={[
-                styles.groupFilterButton,
-                selectedGroup === 'all' && styles.groupFilterButtonActive,
+                styles.filterOption,
+                selectedGroup === 'all' && styles.filterOptionActive,
               ]}
               onPress={() => {
                 setSelectedGroup('all');
@@ -321,8 +319,10 @@ export default function CustomersScreen() {
               }}
             >
               <KurdishText 
-                variant="caption" 
-                color={selectedGroup === 'all' ? 'white' : '#6B7280'}
+                style={[
+                  styles.filterOptionText,
+                  selectedGroup === 'all' && styles.filterOptionTextActive,
+                ]}
               >
                 هەموو گروپەکان
               </KurdishText>
@@ -331,11 +331,8 @@ export default function CustomersScreen() {
               <TouchableOpacity
                 key={group.id}
                 style={[
-                  styles.groupFilterButton,
-                  selectedGroup === group.id && {
-                    backgroundColor: group.color,
-                    borderColor: group.color,
-                  },
+                  styles.filterOption,
+                  selectedGroup === group.id && styles.filterOptionActive,
                 ]}
                 onPress={() => {
                   setSelectedGroup(group.id);
@@ -343,8 +340,10 @@ export default function CustomersScreen() {
                 }}
               >
                 <KurdishText 
-                  variant="caption" 
-                  color={selectedGroup === group.id ? 'white' : '#6B7280'}
+                  style={[
+                    styles.filterOptionText,
+                    selectedGroup === group.id && styles.filterOptionTextActive,
+                  ]}
                 >
                   {group.name}
                 </KurdishText>
@@ -354,11 +353,11 @@ export default function CustomersScreen() {
         )}
         
         {showRatingFilter && (
-          <View style={styles.groupFilterContainer}>
+          <View style={styles.filterOptions}>
             <TouchableOpacity
               style={[
-                styles.groupFilterButton,
-                selectedRating === 'all' && styles.groupFilterButtonActive,
+                styles.filterOption,
+                selectedRating === 'all' && styles.filterOptionActive,
               ]}
               onPress={() => {
                 setSelectedRating('all');
@@ -366,8 +365,10 @@ export default function CustomersScreen() {
               }}
             >
               <KurdishText 
-                variant="caption" 
-                color={selectedRating === 'all' ? 'white' : '#6B7280'}
+                style={[
+                  styles.filterOptionText,
+                  selectedRating === 'all' && styles.filterOptionTextActive,
+                ]}
               >
                 هەموو پلەکان
               </KurdishText>
@@ -376,11 +377,8 @@ export default function CustomersScreen() {
               <TouchableOpacity
                 key={rating.id}
                 style={[
-                  styles.groupFilterButton,
-                  selectedRating === rating.id && {
-                    backgroundColor: rating.color,
-                    borderColor: rating.color,
-                  },
+                  styles.filterOption,
+                  selectedRating === rating.id && styles.filterOptionActive,
                 ]}
                 onPress={() => {
                   setSelectedRating(rating.id);
@@ -388,8 +386,10 @@ export default function CustomersScreen() {
                 }}
               >
                 <KurdishText 
-                  variant="caption" 
-                  color={selectedRating === rating.id ? 'white' : '#6B7280'}
+                  style={[
+                    styles.filterOptionText,
+                    selectedRating === rating.id && styles.filterOptionTextActive,
+                  ]}
                 >
                   {rating.name}
                 </KurdishText>
@@ -397,19 +397,7 @@ export default function CustomersScreen() {
             ))}
           </View>
         )}
-        
-        {hasPermission(PERMISSIONS.ADD_CUSTOMER) && (
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => router.push('/add-user')}
-          >
-            <Plus size={24} color="white" />
-            <KurdishText variant="body" color="white">
-              کڕیاری نوێ
-            </KurdishText>
-          </TouchableOpacity>
-        )}
-      </View>
+      </LinearGradient>
 
       <FlatList
         data={filteredCustomers}
@@ -421,158 +409,259 @@ export default function CustomersScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={['#1E3A8A']}
-            tintColor="#1E3A8A"
+            colors={[COLORS.primary[600]]}
+            tintColor={COLORS.primary[600]}
           />
         }
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <User size={48} color="#9CA3AF" />
-            <KurdishText variant="body" color="#6B7280" style={{ marginTop: 16, textAlign: 'center' }}>
+            <User size={64} color={COLORS.text.tertiary} />
+            <KurdishText style={styles.emptyTitle}>
               هیچ کڕیارێک نەدۆزرایەوە
             </KurdishText>
-            <KurdishText variant="caption" color="#9CA3AF" style={{ marginTop: 8, textAlign: 'center' }}>
+            <KurdishText style={styles.emptySubtitle}>
               گەڕان بە ناو، مۆبایل، ئیمەیڵ، گروپ، پلە یان ناسنامە
             </KurdishText>
           </View>
         }
       />
-    </SafeAreaView>
+
+      {hasPermission(PERMISSIONS.ADD_CUSTOMER) && (
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => router.push('/add-user')}
+        >
+          <LinearGradient
+            colors={GRADIENTS.primary}
+            style={styles.fabGradient}
+          >
+            <Plus size={28} color={COLORS.neutral.white} />
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
-  },
-  header: {
-    padding: 16,
-    gap: 12,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 48,
-    gap: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#1F2937',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1E3A8A',
-    borderRadius: 12,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  listContent: {
-    padding: 16,
-    paddingTop: 0,
-  },
-  customerCard: {
-    marginBottom: 12,
-  },
-  customerHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  customerInfo: {
-    flex: 1,
-  },
-  customerInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  qrButton: {
-    padding: 8,
-    backgroundColor: '#E0E7FF',
-    borderRadius: 8,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#E0E7FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  customerDetails: {
-    marginTop: 4,
-    gap: 2,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  deleteButton: {
-    padding: 8,
-  },
-  debtInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  debtItem: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 48,
-  },
-  filterContainer: {
-    marginBottom: 8,
-  },
-  filterButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#E0E7FF',
-  },
-  groupFilterContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
-  },
-  groupFilterButton: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  groupFilterButtonActive: {
-    backgroundColor: '#1E3A8A',
-    borderColor: '#1E3A8A',
+    backgroundColor: COLORS.background.secondary,
   },
   centerContent: {
     justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingContainer: {
+  loadingText: {
+    marginTop: SPACING.lg,
+    color: COLORS.text.secondary,
+    fontSize: 16,
+  },
+  header: {
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING['2xl'],
+    borderBottomLeftRadius: BORDER_RADIUS['2xl'],
+    borderBottomRightRadius: BORDER_RADIUS['2xl'],
+    ...SHADOWS.lg,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: BORDER_RADIUS.xl,
+    paddingHorizontal: SPACING.lg,
+    height: 48,
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  searchInput: {
     flex: 1,
+    fontSize: 16,
+    color: COLORS.neutral.white,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: BORDER_RADIUS.xl,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  filterChipText: {
+    fontSize: 13,
+    color: COLORS.neutral.white,
+    fontWeight: '600',
+  },
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  filterOption: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: BORDER_RADIUS.xl,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  filterOptionActive: {
+    backgroundColor: COLORS.neutral.white,
+  },
+  filterOptionText: {
+    fontSize: 13,
+    color: COLORS.neutral.white,
+    fontWeight: '600',
+  },
+  filterOptionTextActive: {
+    color: COLORS.primary[600],
+  },
+  listContent: {
+    padding: SPACING.lg,
+    paddingBottom: 100,
+  },
+  customerCard: {
+    marginBottom: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    ...SHADOWS.md,
+  },
+  customerGradient: {
+    padding: SPACING.lg,
+  },
+  customerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.md,
+  },
+  customerMainInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: SPACING.md,
+  },
+  avatarContainer: {
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    ...SHADOWS.sm,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  customerNameSection: {
+    flex: 1,
+  },
+  customerName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+    marginBottom: SPACING.xs,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  ratingText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  customerActions: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.primary[50],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    backgroundColor: COLORS.danger[50],
+  },
+  customerDetails: {
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  detailText: {
+    fontSize: 14,
+    color: COLORS.text.secondary,
+    flex: 1,
+  },
+  debtInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.background.tertiary,
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.md,
+  },
+  debtItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  debtDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: COLORS.border.medium,
+  },
+  debtLabel: {
+    fontSize: 12,
+    color: COLORS.text.tertiary,
+    marginBottom: SPACING.xs,
+  },
+  debtValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text.primary,
+  },
+  debtDanger: {
+    color: COLORS.danger[600],
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING['6xl'],
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.text.tertiary,
+    textAlign: 'center',
+    paddingHorizontal: SPACING['2xl'],
+  },
+  fab: {
+    position: 'absolute',
+    bottom: SPACING['2xl'],
+    right: SPACING.xl,
+    borderRadius: BORDER_RADIUS.full,
+    overflow: 'hidden',
+    ...SHADOWS.xl,
+  },
+  fabGradient: {
+    width: 64,
+    height: 64,
     justifyContent: 'center',
     alignItems: 'center',
   },

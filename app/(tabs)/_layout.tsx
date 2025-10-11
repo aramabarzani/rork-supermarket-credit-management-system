@@ -3,7 +3,7 @@ import { Home, Users, FileText, Settings, Search } from "lucide-react-native";
 import React from "react";
 import { Platform } from "react-native";
 import { useAuth } from "@/hooks/auth-context";
-import { COLORS } from "@/constants/design-system";
+import { COLORS, SHADOWS } from "@/constants/design-system";
 
 export default function TabLayout() {
   const { user, isLoading, isInitialized } = useAuth();
@@ -26,49 +26,23 @@ export default function TabLayout() {
       initialRouteName="dashboard"
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary[600],
-        tabBarInactiveTintColor: COLORS.gray[400],
-        headerShown: true,
-        headerStyle: {
-          backgroundColor: COLORS.primary[600],
-          ...Platform.select({
-            ios: {
-              shadowColor: COLORS.primary[900],
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-            },
-            android: {
-              elevation: 5,
-            },
-          }),
-        },
-        headerTintColor: COLORS.neutral.white,
-        headerTitleAlign: 'center',
-        headerTitleStyle: {
-          fontWeight: '700',
-          fontSize: 18,
-        },
+        tabBarInactiveTintColor: COLORS.gray[500],
+        headerShown: false,
         tabBarStyle: {
           backgroundColor: COLORS.neutral.white,
           borderTopWidth: 0,
-          ...Platform.select({
-            ios: {
-              shadowColor: COLORS.gray[900],
-              shadowOffset: { width: 0, height: -2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-            },
-            android: {
-              elevation: 8,
-            },
-          }),
+          height: Platform.OS === 'ios' ? 88 : 68,
+          paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+          paddingTop: 12,
+          ...SHADOWS.xl,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
+          marginTop: 4,
         },
         tabBarIconStyle: {
-          marginTop: 4,
+          marginTop: 0,
         },
       }}
     >

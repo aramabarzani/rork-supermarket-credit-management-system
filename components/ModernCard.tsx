@@ -4,10 +4,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS, BORDER_RADIUS, SPACING } from '@/constants/design-system';
 
 interface ModernCardProps extends ViewProps {
-  variant?: 'default' | 'gradient' | 'outlined' | 'glass';
+  variant?: 'default' | 'gradient' | 'outlined' | 'glass' | 'elevated';
   gradientColors?: [string, string, ...string[]];
   onPress?: () => void;
-  elevation?: 'sm' | 'md' | 'lg' | 'xl';
+  elevation?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
 export const ModernCard: React.FC<ModernCardProps> = ({
@@ -23,6 +23,7 @@ export const ModernCard: React.FC<ModernCardProps> = ({
     styles.container,
     variant === 'outlined' && styles.outlined,
     variant === 'glass' && styles.glass,
+    variant === 'elevated' && styles.elevated,
     SHADOWS[elevation],
     style,
   ];
@@ -68,19 +69,23 @@ export const ModernCard: React.FC<ModernCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.xl,
     backgroundColor: COLORS.neutral.white,
     overflow: 'hidden',
   },
   outlined: {
-    borderWidth: 1.5,
-    borderColor: COLORS.border.medium,
+    borderWidth: 2,
+    borderColor: COLORS.primary[200],
     backgroundColor: COLORS.neutral.white,
   },
   glass: {
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.5)',
+  },
+  elevated: {
+    backgroundColor: COLORS.neutral.white,
+    borderWidth: 0,
   },
   gradientBackground: {
     position: 'absolute',
@@ -90,6 +95,6 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
   content: {
-    padding: SPACING.lg,
+    padding: SPACING.xl,
   },
 });

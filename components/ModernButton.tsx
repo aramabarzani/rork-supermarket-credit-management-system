@@ -118,7 +118,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
     variant === 'ghost' && styles.ghost,
     fullWidth && styles.fullWidth,
     isDisabled && styles.disabled,
-    !gradient && { backgroundColor: colors.bg },
+    !gradient && variant !== 'outline' && variant !== 'ghost' && { backgroundColor: colors.bg },
   ];
 
   const renderContent = () => (
@@ -171,7 +171,7 @@ export const ModernButton: React.FC<ModernButtonProps> = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: BORDER_RADIUS.md,
+    borderRadius: BORDER_RADIUS.xl,
     overflow: 'hidden',
   },
   gradient: {
@@ -196,8 +196,8 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
   },
   outline: {
-    borderWidth: 1.5,
-    borderColor: COLORS.primary[600],
+    borderWidth: 2,
+    borderColor: COLORS.primary[500],
     backgroundColor: 'transparent',
   },
   ghost: {
