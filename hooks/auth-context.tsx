@@ -49,6 +49,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return { success: false, error: 'زمارەی مۆبایل یان وشەی نهێنی هەڵەیە' };
       }
       
+      if (!foundUser.isActive) {
+        return { success: false, error: 'ئەم هەژمارە ڕاگیراوە. پەیوەندی بە بەڕێوەبەر بکە' };
+      }
+      
       const token = `token_${foundUser.id}_${Date.now()}`;
       await AsyncStorage.setItem('authToken', token);
       await AsyncStorage.setItem('user', JSON.stringify(foundUser));
