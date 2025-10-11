@@ -11,7 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LogIn, Store, Crown, Shield, Users, User as UserIcon } from 'lucide-react-native';
-import { safeStorage } from '@/utils/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -22,9 +22,9 @@ export default function LoginScreen() {
   React.useEffect(() => {
     const checkOwner = async () => {
       try {
-        const users = await safeStorage.getGlobalItem<any[]>('users', []);
-        const hasOwner = users?.some(u => u.role === 'owner') || false;
-        setOwnerExists(hasOwner);
+        const ownerCreated = await AsyncStorage.getItem('owner_created');
+        setOwnerExists(ownerCreated === 'true');
+        console.log('[Login] Owner exists:', ownerCreated === 'true');
       } catch (error) {
         console.error('[Login] Error checking owner:', error);
       }

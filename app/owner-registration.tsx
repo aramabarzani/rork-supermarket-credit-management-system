@@ -17,6 +17,8 @@ import { Crown, User, Phone, Mail, Lock, CheckCircle2, Shield, Store } from 'luc
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useAuth } from '@/hooks/auth-context';
+import { safeStorage } from '@/utils/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function OwnerRegistrationScreen() {
   const [currentStep, setCurrentStep] = useState(1);
@@ -177,6 +179,24 @@ export default function OwnerRegistrationScreen() {
         storeName: formData.storeName,
       });
 
+      const newOwner = {
+        id: `owner_${Date.now()}`,
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        role: 'owner' as const,
+        storeName: formData.storeName,
+        storeAddress: formData.storeAddress,
+        createdAt: new Date().toISOString(),
+        isActive: true,
+      };
+
+      const existingUsers = await safeStorage.getGlobalItem<any[]>('users', []) || [];
+      const updatedUsers = [...existingUsers, newOwner];
+      await safeStorage.setGlobalItem('users', updatedUsers);
+      
+      await AsyncStorage.setItem('owner_created', 'true');
+      
       console.log('[Owner Registration] Owner account created successfully');
 
       Alert.alert(
