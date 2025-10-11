@@ -26,23 +26,30 @@ export default function TabLayout() {
       initialRouteName="dashboard"
       screenOptions={{
         tabBarActiveTintColor: COLORS.primary[600],
-        tabBarInactiveTintColor: COLORS.gray[500],
+        tabBarInactiveTintColor: COLORS.gray[400],
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: COLORS.neutral.white,
-          borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 88 : 68,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 12,
-          paddingTop: 12,
-          ...SHADOWS.xl,
+          position: 'absolute',
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(20px)',
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border.light,
+          height: Platform.OS === 'ios' ? 90 : 70,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 14,
+          paddingTop: 10,
+          marginHorizontal: 16,
+          marginBottom: Platform.OS === 'ios' ? 20 : 16,
+          borderRadius: 24,
+          ...SHADOWS['2xl'],
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: 4,
+          fontSize: 10,
+          fontWeight: '700',
+          marginTop: 2,
+          letterSpacing: 0.3,
         },
         tabBarIconStyle: {
-          marginTop: 0,
+          marginTop: 4,
         },
       }}
     >
